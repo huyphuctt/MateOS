@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Win11 React OS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+      :root {
+        --black-0: #000;
+      }
+      body {
+        font-family: 'Outfit', sans-serif;
+        font-size: 14px;
+        overflow: hidden;
+        user-select: none;
+      }
+      .desktop-text-shadow {
+        text-shadow: .1rem .1rem .2rem color-mix(in srgb, var(--black-0) 75%, transparent);
+      }
+      .desktop-icon-shadow {
+        filter: drop-shadow(.1rem .1rem .2rem color-mix(in srgb, var(--black-0) 75%, transparent));
+      }
+      /* Custom Scrollbar for apps */
+      ::-webkit-scrollbar {
+        width: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: rgba(156, 163, 175, 0.5);
+        border-radius: 4px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: rgba(156, 163, 175, 0.8);
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "react": "https://esm.sh/react@^19.2.3",
+    "@google/genai": "https://esm.sh/@google/genai@^1.35.0",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "lucide-react": "https://esm.sh/lucide-react@^0.562.0"
+  }
+}
+</script>
+</head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
