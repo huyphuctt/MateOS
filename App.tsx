@@ -166,6 +166,10 @@ const App: React.FC = () => {
       alert("Recovery link sent to your email.");
   };
 
+  const handleManageAccount = () => {
+      alert("Manage Account interface pending implementation.");
+  };
+
   // --- OS Logic ---
 
   type AppRegistryItem = {
@@ -340,6 +344,8 @@ const App: React.FC = () => {
                     onOpenSettings={() => openApp(AppId.SETTINGS)}
                     onLogout={handleSwitchAccount}
                     recentItems={recentItems}
+                    username={username}
+                    onOpenUserProfile={() => openApp(AppId.SETTINGS)}
                 />
             )}
 
@@ -393,6 +399,8 @@ const App: React.FC = () => {
                         setTheme={setTheme} 
                         hideTaskbar={hideTaskbar} 
                         setHideTaskbar={setHideTaskbar} 
+                        username={username}
+                        onManageAccount={handleManageAccount}
                     />
                 ) : (
                     window.component
@@ -409,6 +417,8 @@ const App: React.FC = () => {
                     onClose={() => setStartMenuOpen(false)}
                     onLogout={handleSwitchAccount}
                     recentItems={recentItems}
+                    username={username}
+                    onOpenUserProfile={() => openApp(AppId.SETTINGS)}
                 />
             ) : (
                 <Launchpad

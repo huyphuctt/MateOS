@@ -9,9 +9,20 @@ interface StartMenuProps {
   onClose: () => void;
   onLogout: () => void;
   recentItems: RecentItem[];
+  username: string;
+  onOpenUserProfile: () => void;
 }
 
-export const StartMenu: React.FC<StartMenuProps> = ({ isOpen, onAppClick, appIcons, onClose, onLogout, recentItems }) => {
+export const StartMenu: React.FC<StartMenuProps> = ({ 
+    isOpen, 
+    onAppClick, 
+    appIcons, 
+    onClose, 
+    onLogout, 
+    recentItems,
+    username,
+    onOpenUserProfile
+}) => {
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -110,11 +121,15 @@ export const StartMenu: React.FC<StartMenuProps> = ({ isOpen, onAppClick, appIco
 
       {/* Footer */}
       <div className="h-16 bg-gray-100/40 dark:bg-[#1a1a1a]/40 border-t border-gray-200/30 dark:border-gray-700/30 flex items-center justify-between px-8 rounded-b-lg backdrop-blur-md">
-        <button className="flex items-center gap-3 hover:bg-white/50 dark:hover:bg-white/10 px-3 py-2 rounded-md transition-colors">
+        <button 
+            onClick={onOpenUserProfile}
+            className="flex items-center gap-3 hover:bg-white/50 dark:hover:bg-white/10 px-3 py-2 rounded-md transition-colors"
+        >
             <div className="w-8 h-8 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center">
+                {/* Fallback avatar logic */}
                 <User size={16} className="text-gray-600 dark:text-gray-200"/>
             </div>
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-200">Admin User</span>
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-200">{username || 'Guest User'}</span>
         </button>
         <button 
             onClick={onLogout}

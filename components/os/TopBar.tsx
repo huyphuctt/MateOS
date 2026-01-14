@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Wifi, Battery, Search, Command, X } from 'lucide-react';
+import { Wifi, Battery, Search, Command, X, UserCircle } from 'lucide-react';
 import { RecentItem } from '../../types';
 
 interface TopBarProps {
@@ -7,9 +7,18 @@ interface TopBarProps {
   onOpenSettings: () => void;
   onLogout: () => void;
   recentItems: RecentItem[];
+  username: string;
+  onOpenUserProfile: () => void;
 }
 
-export const TopBar: React.FC<TopBarProps> = ({ activeAppTitle = 'MateOS', onOpenSettings, onLogout, recentItems }) => {
+export const TopBar: React.FC<TopBarProps> = ({ 
+    activeAppTitle = 'MateOS', 
+    onOpenSettings, 
+    onLogout, 
+    recentItems, 
+    username,
+    onOpenUserProfile
+}) => {
   const [time, setTime] = useState(new Date());
   const [menuOpen, setMenuOpen] = useState(false);
   const [panelOpen, setPanelOpen] = useState(false);
@@ -63,7 +72,7 @@ export const TopBar: React.FC<TopBarProps> = ({ activeAppTitle = 'MateOS', onOpe
 
   return (
     <>
-        <div className="absolute top-0 left-0 right-0 h-7 bg-white/30 dark:bg-black/30 backdrop-blur-xl border-b border-white/10 flex items-center justify-between px-4 z-[9999] text-xs font-medium text-gray-800 dark:text-gray-100 select-none">
+        <div className="absolute top-0 left-0 right-0 h-7 bg-white/30 dark:bg-black/30 backdrop-blur-xl border-b border-white/10 flex items-center justify-between px-4 z-[9999] text-xs font-medium text-gray-800 dark:text-gray-100 select-none rounded-t-2xl">
         <div className="flex items-center gap-4 h-full relative" ref={menuRef}>
             <div 
                 className={`px-2 py-1 rounded transition-colors cursor-pointer ${menuOpen ? 'bg-white/20' : 'hover:bg-white/20'}`}
@@ -75,6 +84,14 @@ export const TopBar: React.FC<TopBarProps> = ({ activeAppTitle = 'MateOS', onOpe
             {/* Dropdown Menu */}
             {menuOpen && (
                 <div className="absolute top-full left-0 mt-1 w-56 bg-white/95 dark:bg-[#1e1e1e]/95 backdrop-blur-2xl rounded-lg shadow-[0_10px_40px_rgba(0,0,0,0.2)] border border-white/20 dark:border-gray-700/50 p-1.5 flex flex-col z-[10000] animate-in fade-in zoom-in-95 duration-100">
+                    <button 
+                        onClick={() => { onOpenUserProfile(); setMenuOpen(false); }}
+                        className="text-left px-3 py-1.5 rounded hover:bg-blue-500 hover:text-white text-gray-800 dark:text-gray-100 transition-colors flex items-center gap-2 group"
+                    >
+                        <UserCircle size={14} className="text-gray-500 group-hover:text-white" />
+                        <span className="truncate max-w-[160px]">{username || 'User'}</span>
+                    </button>
+                    <div className="h-[1px] bg-gray-400/20 my-1 mx-2"></div>
                     <button 
                         onClick={() => { onOpenSettings(); setMenuOpen(false); }}
                         className="text-left px-3 py-1.5 rounded hover:bg-blue-500 hover:text-white text-gray-800 dark:text-gray-100 transition-colors"
