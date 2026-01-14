@@ -9,7 +9,9 @@ import {
   Calculator,
   Trash2,
   FolderClosed,
-  Compass
+  Compass,
+  Calendar,
+  Command
 } from 'lucide-react';
 
 import { Taskbar } from './components/os/Taskbar';
@@ -23,7 +25,7 @@ import { TopBar } from './components/os/TopBar';
 import { Launchpad } from './components/os/Launchpad';
 import { BootScreen } from './components/os/BootScreen';
 import { LoginScreen } from './components/os/LoginScreen';
-import { AppId, WindowState, Theme, AuthMode } from './types';
+import { AppId, WindowState, Theme, AuthMode, RecentItem } from './types';
 
 // Constants
 const SESSION_MAX_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
@@ -53,6 +55,42 @@ const App: React.FC = () => {
   const [startMenuOpen, setStartMenuOpen] = useState(false);
   const [nextZIndex, setNextZIndex] = useState(10);
   
+  // --- Global Data ---
+  const recentItems: RecentItem[] = [
+    { 
+        id: 1, 
+        title: 'Team Meeting', 
+        description: '10:00 AM - 11:00 AM', 
+        type: 'calendar', 
+        timestamp: 'Now',
+        icon: <Calendar size={18} className="text-red-500" />
+    },
+    { 
+        id: 2, 
+        title: 'Project Alpha Specs.pdf', 
+        description: 'Edited 2h ago', 
+        type: 'file', 
+        timestamp: '2h ago',
+        icon: <FileText size={18} className="text-blue-500" />
+    },
+    { 
+        id: 3, 
+        title: 'Screenshot 2024-05-20', 
+        description: 'Desktop', 
+        type: 'image', 
+        timestamp: 'Yesterday',
+        icon: <ImageIcon size={18} className="text-purple-500" />
+    },
+    { 
+        id: 4, 
+        title: 'System Update', 
+        description: 'Successfully installed', 
+        type: 'system', 
+        timestamp: 'Yesterday',
+        icon: <Command size={18} className="text-gray-500" />
+    },
+  ];
+
   // --- Effects ---
 
   // Persist theme
@@ -301,6 +339,7 @@ const App: React.FC = () => {
                     activeAppTitle={activeAppTitle} 
                     onOpenSettings={() => openApp(AppId.SETTINGS)}
                     onLogout={handleSwitchAccount}
+                    recentItems={recentItems}
                 />
             )}
 
@@ -369,6 +408,7 @@ const App: React.FC = () => {
                     appIcons={appIcons}
                     onClose={() => setStartMenuOpen(false)}
                     onLogout={handleSwitchAccount}
+                    recentItems={recentItems}
                 />
             ) : (
                 <Launchpad

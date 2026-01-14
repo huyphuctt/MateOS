@@ -1,13 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Apple, Wifi, Battery, Search, Command, Calendar, FileText, Image as ImageIcon, X } from 'lucide-react';
+import { Wifi, Battery, Search, Command, X } from 'lucide-react';
+import { RecentItem } from '../../types';
 
 interface TopBarProps {
   activeAppTitle?: string;
   onOpenSettings: () => void;
   onLogout: () => void;
+  recentItems: RecentItem[];
 }
 
-export const TopBar: React.FC<TopBarProps> = ({ activeAppTitle = 'MateOS', onOpenSettings, onLogout }) => {
+export const TopBar: React.FC<TopBarProps> = ({ activeAppTitle = 'MateOS', onOpenSettings, onLogout, recentItems }) => {
   const [time, setTime] = useState(new Date());
   const [menuOpen, setMenuOpen] = useState(false);
   const [panelOpen, setPanelOpen] = useState(false);
@@ -58,13 +60,6 @@ export const TopBar: React.FC<TopBarProps> = ({ activeAppTitle = 'MateOS', onOpe
   const formatDate = (date: Date) => {
     return date.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
   };
-
-  const recentItems = [
-    { id: 1, title: 'Team Meeting', desc: '10:00 AM - 11:00 AM', type: 'calendar', icon: <Calendar size={16} className="text-red-500" />, time: 'Now' },
-    { id: 2, title: 'Project Alpha Specs.pdf', desc: 'Edited 2h ago', type: 'file', icon: <FileText size={16} className="text-blue-500" />, time: '2h ago' },
-    { id: 3, title: 'Screenshot 2024-05-20', desc: 'Desktop', type: 'image', icon: <ImageIcon size={16} className="text-purple-500" />, time: 'Yesterday' },
-    { id: 4, title: 'System Update', desc: 'Successfully installed', type: 'system', icon: <Command size={16} className="text-gray-500" />, time: 'Yesterday' },
-  ];
 
   return (
     <>
@@ -121,7 +116,7 @@ export const TopBar: React.FC<TopBarProps> = ({ activeAppTitle = 'MateOS', onOpe
         {/* Slide Panel (Notification Center) */}
         <div 
             ref={panelRef}
-            className={`fixed top-7 right-0 bottom-0 w-80 bg-white/80 dark:bg-[#1e1e1e]/80 backdrop-blur-3xl border-l border-white/20 dark:border-gray-700/30 shadow-2xl z-[9998] transition-transform duration-300 ease-[cubic-bezier(0.25,1,0.5,1)] transform ${panelOpen ? 'translate-x-0' : 'translate-x-full'}`}
+            className={`fixed top-7 right-0 bottom-0 w-80 bg-white/80 dark:bg-[#1e1e1e]/80 backdrop-blur-3xl border-l border-white/20 dark:border-gray-700/30 shadow-2xl z-[10000] transition-transform duration-300 ease-[cubic-bezier(0.25,1,0.5,1)] transform ${panelOpen ? 'translate-x-0' : 'translate-x-full'}`}
         >
             <div className="p-4 flex flex-col h-full overflow-hidden">
                 <div className="flex items-center justify-between mb-6 shrink-0">
@@ -134,16 +129,16 @@ export const TopBar: React.FC<TopBarProps> = ({ activeAppTitle = 'MateOS', onOpe
                 <div className="flex-1 overflow-y-auto space-y-3 pr-1">
                     {/* Recent Items List */}
                     {recentItems.map(item => (
-                        <div key={item.id} className="bg-white/40 dark:bg-white/5 border border-white/40 dark:border-white/5 p-3 rounded-xl flex items-start gap-3 hover:bg-white/60 dark:hover:bg-white/10 transition-colors cursor-default shadow-sm backdrop-blur-sm group">
+                        <div key={item.id} className="bg-white/50 dark:bg-white/5 border border-white/40 dark:border-white/10 p-3 rounded-xl flex items-start gap-3 hover:bg-white/80 dark:hover:bg-white/10 transition-colors cursor-default shadow-sm group">
                             <div className="w-10 h-10 rounded-full bg-white dark:bg-gray-700 flex items-center justify-center shrink-0 shadow-sm group-hover:scale-105 transition-transform">
                                 {item.icon}
                             </div>
                             <div className="flex-1 min-w-0">
                                 <div className="flex justify-between items-start">
                                     <h4 className="font-medium text-gray-800 dark:text-gray-200 text-sm truncate pr-2">{item.title}</h4>
-                                    <span className="text-[10px] text-gray-500 whitespace-nowrap">{item.time}</span>
+                                    <span className="text-[10px] text-gray-500 whitespace-nowrap">{item.timestamp}</span>
                                 </div>
-                                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{item.desc}</p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{item.description}</p>
                             </div>
                         </div>
                     ))}

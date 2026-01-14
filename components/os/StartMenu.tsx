@@ -1,6 +1,6 @@
 import React, { useRef, useEffect } from 'react';
-import { Search, Power, Settings, User } from 'lucide-react';
-import { AppId } from '../../types';
+import { Search, Power, User } from 'lucide-react';
+import { AppId, RecentItem } from '../../types';
 
 interface StartMenuProps {
   isOpen: boolean;
@@ -8,9 +8,10 @@ interface StartMenuProps {
   appIcons: Record<AppId, React.ReactNode>;
   onClose: () => void;
   onLogout: () => void;
+  recentItems: RecentItem[];
 }
 
-export const StartMenu: React.FC<StartMenuProps> = ({ isOpen, onAppClick, appIcons, onClose, onLogout }) => {
+export const StartMenu: React.FC<StartMenuProps> = ({ isOpen, onAppClick, appIcons, onClose, onLogout, recentItems }) => {
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -35,13 +36,6 @@ export const StartMenu: React.FC<StartMenuProps> = ({ isOpen, onAppClick, appIco
     { id: AppId.PHOTOS, name: 'Photos' },
     { id: AppId.SETTINGS, name: 'Settings' },
     { id: AppId.CALCULATOR, name: 'Calculator' },
-  ];
-
-  const recommended = [
-    { name: 'Project_Alpha_Q3.pdf', time: '12m ago' },
-    { name: 'Gemini_API_Key.txt', time: '2h ago' },
-    { name: 'Vacation_Plans.docx', time: 'Yesterday' },
-    { name: 'Budget_2025.xlsx', time: 'Yesterday' },
   ];
 
   return (
@@ -88,21 +82,26 @@ export const StartMenu: React.FC<StartMenuProps> = ({ isOpen, onAppClick, appIco
             ))}
         </div>
 
-        {/* Recommended Section */}
+        {/* Recommended Section (Recent Items) */}
         <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100 ml-2">Recommended</h3>
             <button className="text-xs bg-white/50 dark:bg-[#333]/50 px-2 py-1 rounded border border-gray-200/50 dark:border-gray-600/50 text-gray-600 dark:text-gray-300 shadow-sm backdrop-blur-sm">More &gt;</button>
         </div>
 
         <div className="grid grid-cols-2 gap-2">
-            {recommended.map((item, i) => (
-                <button key={i} className="flex items-center gap-3 p-3 hover:bg-white/50 dark:hover:bg-white/5 rounded-md text-left transition-colors">
-                    <div className="w-8 h-8 bg-blue-100/80 dark:bg-blue-900/40 rounded flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold text-xs">
-                        {item.name.split('.').pop()?.toUpperCase()}
+            {recentItems.map((item, i) => (
+                <button key={item.id} className="flex items-center gap-3 p-3 hover:bg-white/50 dark:hover:bg-white/5 rounded-md text-left transition-colors group">
+                     {/* Use icon from global data, fallback to generic styling if icon isn't standard */}
+                    <div className="w-8 h-8 bg-blue-100/80 dark:bg-blue-900/40 rounded flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold text-xs shadow-sm overflow-hidden group-hover:scale-105 transition-transform">
+                        {item.icon ? (
+                            React.cloneElement(item.icon as React.ReactElement<any>, { size: 16 })
+                        ) : (
+                            item.title.split('.').pop()?.toUpperCase().substring(0, 3) || 'DOC'
+                        )}
                     </div>
                     <div className="flex flex-col min-w-0">
-                        <span className="text-sm text-gray-800 dark:text-gray-200 font-medium truncate">{item.name}</span>
-                        <span className="text-xs text-gray-500 dark:text-gray-400">{item.time}</span>
+                        <span className="text-sm text-gray-800 dark:text-gray-200 font-medium truncate">{item.title}</span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">{item.timestamp}</span>
                     </div>
                 </button>
             ))}

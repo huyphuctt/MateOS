@@ -34,3 +34,12 @@ export interface AppConfig {
   defaultSize?: { width: number; height: number };
   preferredPosition?: { x: number; y: number };
 }
+
+export interface RecentItem {
+  id: number | string;
+  title: string;
+  description: string;
+  timestamp: string;
+  type: 'calendar' | 'file' | 'image' | 'system';
+  icon?: ReactNode;
+}
