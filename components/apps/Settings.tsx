@@ -1,13 +1,15 @@
 import React from 'react';
-import { Monitor, Layout, Smartphone } from 'lucide-react';
+import { Monitor, Layout, Smartphone, Check } from 'lucide-react';
 import { Theme } from '../../types';
 
 interface SettingsAppProps {
   theme: Theme;
   setTheme: (theme: Theme) => void;
+  hideTaskbar: boolean;
+  setHideTaskbar: (hide: boolean) => void;
 }
 
-export const SettingsApp: React.FC<SettingsAppProps> = ({ theme, setTheme }) => {
+export const SettingsApp: React.FC<SettingsAppProps> = ({ theme, setTheme, hideTaskbar, setHideTaskbar }) => {
   return (
     <div className="flex flex-col h-full bg-[#f3f3f3] dark:bg-[#202020] text-gray-900 dark:text-gray-100">
       <div className="p-6 border-b border-gray-200 dark:border-gray-700">
@@ -61,6 +63,36 @@ export const SettingsApp: React.FC<SettingsAppProps> = ({ theme, setTheme }) => 
                         <div className="flex items-center justify-between w-full px-2">
                             <span className="font-medium">Aqua Layout</span>
                             {theme === 'aqua' && <div className="w-3 h-3 bg-blue-500 rounded-full"></div>}
+                        </div>
+                    </button>
+                </div>
+            </section>
+
+             {/* Taskbar Behaviors */}
+             <section>
+                <h2 className="text-lg font-medium mb-4 flex items-center gap-2">
+                    <Monitor size={20} />
+                    Taskbar Behaviors
+                </h2>
+                
+                <div className="bg-white/50 dark:bg-gray-800/50 rounded-xl p-1">
+                    <button 
+                        onClick={() => setHideTaskbar(!hideTaskbar)}
+                        className="w-full flex items-center justify-between p-3 hover:bg-white/50 dark:hover:bg-gray-700/50 rounded-lg transition-colors text-left"
+                    >
+                        <div className="flex flex-col">
+                            <span className="font-medium">{theme === 'aqua' ? 'Automatically hide and show the Dock' : 'Automatically hide the taskbar'}</span>
+                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                                {hideTaskbar ? 'Taskbar will appear when you hover near the bottom of the screen' : 'Taskbar is always visible'}
+                            </span>
+                        </div>
+                        <div className={`
+                            w-6 h-6 rounded-md border flex items-center justify-center transition-colors
+                            ${hideTaskbar 
+                                ? 'bg-blue-500 border-blue-500' 
+                                : 'bg-transparent border-gray-400 dark:border-gray-500'}
+                        `}>
+                            {hideTaskbar && <Check size={16} className="text-white" />}
                         </div>
                     </button>
                 </div>

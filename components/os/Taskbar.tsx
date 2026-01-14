@@ -10,6 +10,7 @@ interface TaskbarProps {
   startMenuOpen: boolean;
   appIcons: Record<AppId, React.ReactNode>;
   theme: Theme;
+  hideTaskbar: boolean;
 }
 
 export const Taskbar: React.FC<TaskbarProps> = ({
@@ -19,7 +20,8 @@ export const Taskbar: React.FC<TaskbarProps> = ({
   onStartClick,
   startMenuOpen,
   appIcons,
-  theme
+  theme,
+  hideTaskbar
 }) => {
   const [time, setTime] = useState(new Date());
 
@@ -39,12 +41,20 @@ export const Taskbar: React.FC<TaskbarProps> = ({
   // MacOS Dock Style
   if (theme === 'aqua') {
       return (
-        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-[9999]">
-             <div className="flex items-end gap-2 px-4 py-2 bg-white/40 dark:bg-black/40 backdrop-blur-2xl rounded-2xl border border-white/20 shadow-2xl">
+        <div className={`absolute bottom-0 left-0 right-0 h-20 flex justify-center z-[9999] pointer-events-none group/dock`}>
+             {/* Invisible Trigger Strip for easier revealing */}
+             <div className="absolute bottom-0 w-full h-2 bg-transparent pointer-events-auto" />
+             
+             <div 
+                className={`
+                    pointer-events-auto flex items-end gap-2 px-4 py-2 bg-white/40 dark:bg-black/40 backdrop-blur-2xl rounded-2xl border border-white/20 shadow-2xl transition-transform duration-300 ease-in-out origin-bottom mb-2
+                    ${hideTaskbar ? 'translate-y-[calc(100%-4px)] group-hover/dock:translate-y-0' : 'translate-y-0'}
+                `}
+             >
                  {/* Launchpad Button */}
                 <button 
                     onClick={onStartClick}
-                    className="group relative p-2 rounded-xl hover:bg-white/40 dark:hover:bg-white/20 transition-all duration-300 active:scale-95"
+                    className="group/icon relative p-2 rounded-xl hover:bg-white/40 dark:hover:bg-white/20 transition-all duration-300 active:scale-95"
                 >
                      <div className="w-10 h-10 bg-gradient-to-b from-gray-300 to-gray-400 rounded-xl flex items-center justify-center shadow-lg">
                         <Rocket className="w-6 h-6 text-white fill-white" />
@@ -62,7 +72,7 @@ export const Taskbar: React.FC<TaskbarProps> = ({
                         <button
                             key={appId}
                             onClick={() => onAppClick(appId)}
-                            className="group relative p-1 transition-all duration-300 hover:-translate-y-2 active:scale-95 active:-translate-y-1"
+                            className="group/icon relative p-1 transition-all duration-300 hover:-translate-y-2 active:scale-95 active:-translate-y-1"
                         >
                             <div className="w-12 h-12 flex items-center justify-center transition-transform">
                                 {/* We assume icons are passed as elements, we scale them up slightly */}
@@ -74,7 +84,7 @@ export const Taskbar: React.FC<TaskbarProps> = ({
                                 <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-black/60 dark:bg-white/60 rounded-full" />
                             )}
                             {/* Tooltip */}
-                            <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
+                            <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover/icon:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
                                 {appId.charAt(0).toUpperCase() + appId.slice(1)}
                             </div>
                         </button>
@@ -87,7 +97,13 @@ export const Taskbar: React.FC<TaskbarProps> = ({
 
   // Windows Taskbar Style
   return (
-    <div className="absolute bottom-0 left-0 right-0 h-12 bg-white/70 dark:bg-black/70 backdrop-blur-xl border-t border-white/30 dark:border-white/10 flex items-center justify-between px-3 z-[9999] shadow-lg">
+    <div 
+        className={`
+            absolute bottom-0 left-0 right-0 h-12 bg-white/70 dark:bg-black/70 backdrop-blur-xl border-t border-white/30 dark:border-white/10 flex items-center justify-between px-3 z-[9999] shadow-lg
+            transition-transform duration-300 ease-in-out
+            ${hideTaskbar ? 'translate-y-[calc(100%-6px)] hover:translate-y-0' : 'translate-y-0'}
+        `}
+    >
       {/* Weather Widget Placeholder */}
       <div className="w-48 hidden md:flex items-center gap-2 pl-2 hover:bg-white/40 dark:hover:bg-white/10 p-1 rounded-md transition-colors cursor-pointer group">
          <div className="relative w-6 h-6">

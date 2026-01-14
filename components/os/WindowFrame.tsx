@@ -12,6 +12,7 @@ interface WindowFrameProps {
   onMove: (id: AppId, x: number, y: number) => void;
   children: React.ReactNode;
   theme: Theme;
+  hideTaskbar: boolean;
 }
 
 export const WindowFrame: React.FC<WindowFrameProps> = ({
@@ -23,7 +24,8 @@ export const WindowFrame: React.FC<WindowFrameProps> = ({
   onFocus,
   onMove,
   children,
-  theme
+  theme,
+  hideTaskbar
 }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
@@ -64,7 +66,7 @@ export const WindowFrame: React.FC<WindowFrameProps> = ({
         const rawY = e.clientY - dragOffset.current.y;
         
         // Viewport boundaries
-        const taskbarHeight = theme === 'aero' ? 48 : 80; // Larger buffer for dock
+        const taskbarHeight = hideTaskbar ? 6 : (theme === 'aero' ? 48 : 80);
         const topBarHeight = theme === 'aqua' ? 28 : 0;
 
         const maxX = window.innerWidth - windowState.size.width;
@@ -90,7 +92,7 @@ export const WindowFrame: React.FC<WindowFrameProps> = ({
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isDragging, onMove, windowState.id, windowState.size.width, windowState.size.height, theme]);
+  }, [isDragging, onMove, windowState.id, windowState.size.width, windowState.size.height, theme, hideTaskbar]);
 
   // Animation State Calculation
   const isVisible = isMounted && !windowState.isMinimized && !isClosing;
@@ -138,6 +140,16 @@ export const WindowFrame: React.FC<WindowFrameProps> = ({
     </div>
   );
 
+  const getBottomOffset = () => {
+      if (!windowState.isMaximized) return undefined;
+      
+      if (theme === 'aqua') {
+          return hideTaskbar ? '6px' : '72px';
+      }
+      // Aero
+      return hideTaskbar ? '6px' : '42px';
+  };
+
   return (
     <div
       className={`absolute flex flex-col bg-white/80 dark:bg-[#121212]/80 backdrop-blur-2xl rounded-lg shadow-2xl overflow-hidden border border-white/40 dark:border-white/10 
@@ -152,7 +164,7 @@ export const WindowFrame: React.FC<WindowFrameProps> = ({
         left: windowState.isMaximized ? 0 : windowState.position.x,
         top: windowState.isMaximized ? (theme === 'aqua' ? 25 : 0) : windowState.position.y,
         right: windowState.isMaximized ? 0 : undefined,
-        bottom: windowState.isMaximized ? (theme === 'aqua' ? '72px' : '42px') : undefined,
+        bottom: getBottomOffset(),
         width: windowState.isMaximized ? 'auto' : windowState.size.width,
         height: windowState.isMaximized ? 'auto' : windowState.size.height,
         zIndex: windowState.zIndex,

@@ -33,6 +33,7 @@ const Placeholder = ({ text }: { text: string }) => (
 const App: React.FC = () => {
   // --- State ---
   const [theme, setTheme] = useState<Theme>('aero');
+  const [hideTaskbar, setHideTaskbar] = useState(false);
   const [windows, setWindows] = useState<WindowState[]>([]);
   const [activeWindowId, setActiveWindowId] = useState<AppId | null>(null);
   const [startMenuOpen, setStartMenuOpen] = useState(false);
@@ -226,9 +227,15 @@ const App: React.FC = () => {
           onFocus={focusWindow}
           onMove={moveWindow}
           theme={theme}
+          hideTaskbar={hideTaskbar}
         >
           {window.id === AppId.SETTINGS ? (
-              <SettingsApp theme={theme} setTheme={setTheme} />
+              <SettingsApp 
+                theme={theme} 
+                setTheme={setTheme} 
+                hideTaskbar={hideTaskbar} 
+                setHideTaskbar={setHideTaskbar} 
+              />
           ) : (
               window.component
           )}
@@ -271,6 +278,7 @@ const App: React.FC = () => {
         startMenuOpen={startMenuOpen}
         appIcons={appIcons}
         theme={theme}
+        hideTaskbar={hideTaskbar}
       />
     </div>
   );
