@@ -53,7 +53,7 @@ export const BrowserApp: React.FC = () => {
             </div>
         )}
         <iframe 
-            src="https://www.bing.com/search?q=windows+11" 
+            src="https://www.bing.com/search?q=mateos+desktop" 
             className="w-full h-full border-none"
             title="Browser Content"
             sandbox="allow-scripts allow-same-origin allow-popups"

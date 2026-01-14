@@ -1,5 +1,5 @@
 {
   "name": "MateOS",
-  "description": "A fully functional Windows 11 clone built with React and Tailwind CSS, featuring a Gemini-powered Copilot AI assistant, draggable windows, and a realistic desktop environment.",
+  "description": "A fully functional desktop environment built with React and Tailwind CSS, featuring a Gemini-powered Copilot AI assistant, draggable windows, and a realistic interface.",
   "requestFramePermissions": []
 }

@@ -38,7 +38,7 @@ export const Taskbar: React.FC<TaskbarProps> = ({
     return date.toLocaleDateString([], { month: 'numeric', day: 'numeric', year: 'numeric' });
   };
 
-  // MacOS Dock Style
+  // Aqua Dock Style
   if (theme === 'aqua') {
       return (
         <div className={`absolute bottom-0 left-0 right-0 h-20 flex justify-center z-[9999] pointer-events-none group/dock`}>
@@ -95,7 +95,7 @@ export const Taskbar: React.FC<TaskbarProps> = ({
       );
   }
 
-  // Windows Taskbar Style
+  // Aero Taskbar Style
   return (
     <div 
         className={`

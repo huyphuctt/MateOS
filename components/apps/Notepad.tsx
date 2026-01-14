@@ -21,7 +21,7 @@ export const NotepadApp: React.FC = () => {
       <div className="h-6 bg-white/40 dark:bg-[#007acc]/80 text-gray-600 dark:text-white text-xs flex items-center px-2 justify-end gap-4 border-t border-gray-200/30 dark:border-gray-700/30">
         <span>Ln {text.split('\n').length}, Col {text.length}</span>
         <span>UTF-8</span>
-        <span>Windows (CRLF)</span>
+        <span>CRLF</span>
       </div>
     </div>
   );

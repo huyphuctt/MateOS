@@ -97,8 +97,8 @@ export const WindowFrame: React.FC<WindowFrameProps> = ({
   // Animation State Calculation
   const isVisible = isMounted && !windowState.isMinimized && !isClosing;
 
-  // Render Windows Style Controls
-  const renderWindowsControls = () => (
+  // Render Aero Style Controls
+  const renderAeroControls = () => (
     <div className="flex items-center h-full">
       <button
         onClick={(e) => { e.stopPropagation(); onMinimize(windowState.id); }}
@@ -125,8 +125,8 @@ export const WindowFrame: React.FC<WindowFrameProps> = ({
     </div>
   );
 
-  // Render MacOS Style Controls
-  const renderMacControls = () => (
+  // Render Aqua Style Controls
+  const renderAquaControls = () => (
     <div className="flex items-center gap-2 pl-2 h-full group">
        <button onClick={handleClose} className="w-3 h-3 rounded-full bg-[#FF5F57] flex items-center justify-center border border-black/10">
           <X size={8} className="text-black/50 opacity-0 group-hover:opacity-100" />
@@ -179,7 +179,7 @@ export const WindowFrame: React.FC<WindowFrameProps> = ({
         onDoubleClick={() => onMaximize(windowState.id)}
       >
         {theme === 'aqua' ? (
-             <div className="h-full flex items-center">{renderMacControls()}</div>
+             <div className="h-full flex items-center">{renderAquaControls()}</div>
         ) : (
             <>
                 <div className="flex items-center gap-2 px-2 flex-1 h-full overflow-hidden">
@@ -190,7 +190,7 @@ export const WindowFrame: React.FC<WindowFrameProps> = ({
                     </div>
                     <span className="text-xs font-medium text-gray-700 dark:text-gray-200 truncate leading-none pt-[1px]">{windowState.title}</span>
                 </div>
-                {renderWindowsControls()}
+                {renderAeroControls()}
             </>
         )}
       </div>

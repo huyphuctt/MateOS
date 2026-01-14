@@ -14,7 +14,7 @@ class GeminiService {
     this.chatSession = this.ai.chats.create({
       model: 'gemini-3-flash-preview',
       config: {
-        systemInstruction: "You are Copilot, a helpful Windows AI assistant. Keep responses concise, friendly, and helpful. You can help with code, writing, or general questions.",
+        systemInstruction: "You are Copilot, a helpful MateOS AI assistant. Keep responses concise, friendly, and helpful. You can help with code, writing, or general questions.",
       },
     });
   }

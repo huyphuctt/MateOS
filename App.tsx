@@ -169,10 +169,10 @@ const App: React.FC = () => {
       if (theme === 'aqua') {
           return 'url("https://images.unsplash.com/photo-1490730141103-6cac27aaab94?q=80&w=3870&auto=format&fit=crop")'; // Monterey style abstract
       }
-      return 'url("https://images.unsplash.com/photo-1542831371-29b0f74f9713?q=80&w=3870&auto=format&fit=crop")'; // Win 11 abstract
+      return 'url("https://images.unsplash.com/photo-1542831371-29b0f74f9713?q=80&w=3870&auto=format&fit=crop")'; // Aero abstract
   };
 
-  // Determine active app title for MacOS TopBar
+  // Determine active app title for Aqua TopBar
   const activeWindow = windows.find(w => w.id === activeWindowId);
   const activeAppTitle = activeWindow ? activeWindow.title : 'Finder';
 
@@ -181,8 +181,9 @@ const App: React.FC = () => {
         className="relative w-screen h-screen overflow-hidden bg-cover bg-center select-none transition-all duration-700"
         style={{ backgroundImage: getBackground() }}
         onClick={handleDesktopClick}
+        onContextMenu={(e) => e.preventDefault()}
     >
-      {/* MacOS Top Bar */}
+      {/* Aqua Top Bar */}
       {theme === 'aqua' && <TopBar activeAppTitle={activeAppTitle} />}
 
       {/* Desktop Icons */}
