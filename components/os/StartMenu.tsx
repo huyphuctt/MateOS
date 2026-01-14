@@ -7,9 +7,10 @@ interface StartMenuProps {
   onAppClick: (id: AppId) => void;
   appIcons: Record<AppId, React.ReactNode>;
   onClose: () => void;
+  onLogout: () => void;
 }
 
-export const StartMenu: React.FC<StartMenuProps> = ({ isOpen, onAppClick, appIcons, onClose }) => {
+export const StartMenu: React.FC<StartMenuProps> = ({ isOpen, onAppClick, appIcons, onClose, onLogout }) => {
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -116,7 +117,10 @@ export const StartMenu: React.FC<StartMenuProps> = ({ isOpen, onAppClick, appIco
             </div>
             <span className="text-sm font-medium text-gray-700 dark:text-gray-200">Admin User</span>
         </button>
-        <button className="p-3 hover:bg-white/50 dark:hover:bg-white/10 rounded-md transition-colors">
+        <button 
+            onClick={onLogout}
+            className="p-3 hover:bg-white/50 dark:hover:bg-white/10 rounded-md transition-colors"
+        >
             <Power size={20} className="text-gray-700 dark:text-gray-200" />
         </button>
       </div>

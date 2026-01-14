@@ -117,11 +117,13 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
             ) : (
                 <input
                 type="text"
+                name="username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="Username"
                 className="w-48 bg-white/20 hover:bg-white/30 text-white placeholder-white/70 text-center rounded-full py-1.5 px-4 focus:outline-none focus:ring-2 focus:ring-white/40 transition-all border border-transparent focus:border-white/20 backdrop-blur-md"
                 autoFocus
+                autoComplete="username"
                 />
             )}
             </div>
@@ -130,11 +132,13 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
             <div className="relative w-48 group">
             <input
                 type="password"
+                name="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter Password"
                 className="w-full bg-white/20 hover:bg-white/30 text-white placeholder-white/50 text-center rounded-full py-1.5 px-8 focus:outline-none focus:ring-2 focus:ring-white/40 transition-all border border-transparent focus:border-white/20 backdrop-blur-md"
                 autoFocus={mode === 'partial'}
+                autoComplete="current-password"
             />
             
             <button 
@@ -169,7 +173,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
                         <div className="w-8 h-8 rounded-full border border-white/30 flex items-center justify-center bg-black/20 group-hover:bg-white/20 transition-colors backdrop-blur-sm">
                             <XCircle size={16} className="text-white" />
                         </div>
-                        <span className="text-[10px] text-white font-medium">Switch User</span>
+                        <span className="text-xs text-white font-medium">Switch User</span>
                     </button>
                 )}
             </div>
@@ -258,6 +262,19 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
         }
         .animate-fade-in {
             animation: fadeIn 0.3s ease-out forwards;
+        }
+
+        /* FIX: Override Browser Autofill Styles 
+           Uses transition hack to delay the background color change indefinitely, 
+           keeping the input transparent.
+        */
+        input:-webkit-autofill,
+        input:-webkit-autofill:hover, 
+        input:-webkit-autofill:focus, 
+        input:-webkit-autofill:active {
+            -webkit-text-fill-color: white !important;
+            transition: background-color 5000s ease-in-out 0s;
+            caret-color: white;
         }
       `}</style>
     </div>

@@ -42,13 +42,24 @@ const App: React.FC = () => {
   const [username, setUsername] = useState<string>('');
   
   // --- OS State ---
-  const [theme, setTheme] = useState<Theme>('aqua'); // Default to Aqua for Ventura feel
+  const [theme, setTheme] = useState<Theme>(() => {
+    const saved = localStorage.getItem('mateos_theme');
+    return (saved === 'aero' || saved === 'aqua') ? saved : 'aqua';
+  });
+  
   const [hideTaskbar, setHideTaskbar] = useState(false);
   const [windows, setWindows] = useState<WindowState[]>([]);
   const [activeWindowId, setActiveWindowId] = useState<AppId | null>(null);
   const [startMenuOpen, setStartMenuOpen] = useState(false);
   const [nextZIndex, setNextZIndex] = useState(10);
   
+  // --- Effects ---
+
+  // Persist theme
+  useEffect(() => {
+    localStorage.setItem('mateos_theme', theme);
+  }, [theme]);
+
   // --- Auth Logic (Screen Routing) ---
   useEffect(() => {
     checkSession();
@@ -106,6 +117,11 @@ const App: React.FC = () => {
     // Clear last login to force full login, but keep user data for autofill if we wanted (here we just clear state)
     setAuthMode('login_full');
     setUsername('');
+
+    // Clear OS state
+    setWindows([]);
+    setActiveWindowId(null);
+    setStartMenuOpen(false);
   };
 
   const handleForgotPassword = () => {
@@ -246,7 +262,7 @@ const App: React.FC = () => {
   };
 
   const activeWindow = windows.find(w => w.id === activeWindowId);
-  const activeAppTitle = activeWindow ? activeWindow.title : 'Finder';
+  const activeAppTitle = activeWindow ? activeWindow.title : 'MateOS';
 
   return (
     <div 
@@ -280,7 +296,13 @@ const App: React.FC = () => {
       {authMode === 'desktop' && (
         <>
             {/* Aqua Top Bar */}
-            {theme === 'aqua' && <TopBar activeAppTitle={activeAppTitle} />}
+            {theme === 'aqua' && (
+                <TopBar 
+                    activeAppTitle={activeAppTitle} 
+                    onOpenSettings={() => openApp(AppId.SETTINGS)}
+                    onLogout={handleSwitchAccount}
+                />
+            )}
 
             {/* Desktop Icons */}
             <div className={`absolute left-4 flex flex-col gap-6 z-0 ${theme === 'aqua' ? 'top-12 right-4 items-end left-auto' : 'top-4 items-center'}`}>
@@ -346,6 +368,7 @@ const App: React.FC = () => {
                     onAppClick={openApp} 
                     appIcons={appIcons}
                     onClose={() => setStartMenuOpen(false)}
+                    onLogout={handleSwitchAccount}
                 />
             ) : (
                 <Launchpad

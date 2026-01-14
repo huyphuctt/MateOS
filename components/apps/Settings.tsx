@@ -24,7 +24,7 @@ export const SettingsApp: React.FC<SettingsAppProps> = ({ theme, setTheme, hideT
             <section>
                 <h2 className="text-lg font-medium mb-4 flex items-center gap-2">
                     <Layout size={20} />
-                    Operating System Theme
+                    Theme
                 </h2>
                 
                 <div className="grid grid-cols-2 gap-4">
