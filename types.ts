@@ -11,6 +11,8 @@ export enum AppId {
 
 export type Theme = 'aero' | 'aqua';
 
+export type AuthMode = 'boot' | 'login_full' | 'login_partial' | 'desktop';
+
 export interface WindowState {
   id: AppId;
   title: string;
