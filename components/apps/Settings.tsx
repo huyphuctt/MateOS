@@ -27,40 +27,40 @@ export const SettingsApp: React.FC<SettingsAppProps> = ({ theme, setTheme }) => 
                 
                 <div className="grid grid-cols-2 gap-4">
                     <button 
-                        onClick={() => setTheme('windows')}
+                        onClick={() => setTheme('aero')}
                         className={`
                             relative flex flex-col items-center gap-3 p-4 rounded-xl border-2 transition-all duration-200
-                            ${theme === 'windows' 
+                            ${theme === 'aero' 
                                 ? 'border-blue-500 bg-white dark:bg-gray-800 shadow-md scale-[1.02]' 
                                 : 'border-transparent bg-white/50 dark:bg-gray-800/50 hover:bg-white dark:hover:bg-gray-800'}
                         `}
                     >
                         <div className="w-full aspect-video bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg flex items-center justify-center relative overflow-hidden">
                             <div className="absolute bottom-0 w-full h-3 bg-white/30 backdrop-blur-sm"></div>
-                            <div className="text-white font-bold text-xl">Win 11</div>
+                            <div className="text-white font-bold text-xl">Aero</div>
                         </div>
                         <div className="flex items-center justify-between w-full px-2">
-                            <span className="font-medium">Windows 11</span>
-                            {theme === 'windows' && <div className="w-3 h-3 bg-blue-500 rounded-full"></div>}
+                            <span className="font-medium">Aero Layout</span>
+                            {theme === 'aero' && <div className="w-3 h-3 bg-blue-500 rounded-full"></div>}
                         </div>
                     </button>
 
                     <button 
-                        onClick={() => setTheme('macos')}
+                        onClick={() => setTheme('aqua')}
                         className={`
                             relative flex flex-col items-center gap-3 p-4 rounded-xl border-2 transition-all duration-200
-                            ${theme === 'macos' 
+                            ${theme === 'aqua' 
                                 ? 'border-blue-500 bg-white dark:bg-gray-800 shadow-md scale-[1.02]' 
                                 : 'border-transparent bg-white/50 dark:bg-gray-800/50 hover:bg-white dark:hover:bg-gray-800'}
                         `}
                     >
                          <div className="w-full aspect-video bg-gradient-to-br from-purple-400 to-pink-600 rounded-lg flex items-center justify-center relative overflow-hidden">
                             <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-1/2 h-2 bg-white/30 backdrop-blur-sm rounded-full"></div>
-                            <div className="text-white font-bold text-xl">macOS</div>
+                            <div className="text-white font-bold text-xl">Aqua</div>
                         </div>
                         <div className="flex items-center justify-between w-full px-2">
-                            <span className="font-medium">macOS Sequoia</span>
-                            {theme === 'macos' && <div className="w-3 h-3 bg-blue-500 rounded-full"></div>}
+                            <span className="font-medium">Aqua Layout</span>
+                            {theme === 'aqua' && <div className="w-3 h-3 bg-blue-500 rounded-full"></div>}
                         </div>
                     </button>
                 </div>

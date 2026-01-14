@@ -32,7 +32,7 @@ const Placeholder = ({ text }: { text: string }) => (
 
 const App: React.FC = () => {
   // --- State ---
-  const [theme, setTheme] = useState<Theme>('windows');
+  const [theme, setTheme] = useState<Theme>('aero');
   const [windows, setWindows] = useState<WindowState[]>([]);
   const [activeWindowId, setActiveWindowId] = useState<AppId | null>(null);
   const [startMenuOpen, setStartMenuOpen] = useState(false);
@@ -62,8 +62,8 @@ const App: React.FC = () => {
       defaultSize: { width: 600, height: 400 }
     },
     [AppId.BROWSER]: {
-      title: theme === 'macos' ? 'Safari' : 'Edge Browser',
-      icon: theme === 'macos' ? <Compass className="text-blue-500" size={20} /> : <Globe className="text-green-500" size={20} />,
+      title: theme === 'aqua' ? 'Safari' : 'Edge Browser',
+      icon: theme === 'aqua' ? <Compass className="text-blue-500" size={20} /> : <Globe className="text-green-500" size={20} />,
       component: <BrowserApp />,
       defaultSize: { width: 800, height: 600 }
     },
@@ -117,7 +117,7 @@ const App: React.FC = () => {
       size: app.defaultSize || { width: 600, height: 400 },
       position: app.preferredPosition || { 
         x: 50 + (windows.length * 30), 
-        y: (theme === 'macos' ? 80 : 50) + (windows.length * 30) 
+        y: (theme === 'aqua' ? 80 : 50) + (windows.length * 30) 
       }
     };
 
@@ -165,7 +165,7 @@ const App: React.FC = () => {
   ) as Record<AppId, React.ReactNode>;
 
   const getBackground = () => {
-      if (theme === 'macos') {
+      if (theme === 'aqua') {
           return 'url("https://images.unsplash.com/photo-1490730141103-6cac27aaab94?q=80&w=3870&auto=format&fit=crop")'; // Monterey style abstract
       }
       return 'url("https://images.unsplash.com/photo-1542831371-29b0f74f9713?q=80&w=3870&auto=format&fit=crop")'; // Win 11 abstract
@@ -182,10 +182,10 @@ const App: React.FC = () => {
         onClick={handleDesktopClick}
     >
       {/* MacOS Top Bar */}
-      {theme === 'macos' && <TopBar activeAppTitle={activeAppTitle} />}
+      {theme === 'aqua' && <TopBar activeAppTitle={activeAppTitle} />}
 
       {/* Desktop Icons */}
-      <div className={`absolute left-4 flex flex-col gap-6 z-0 ${theme === 'macos' ? 'top-12 right-4 items-end left-auto' : 'top-4 items-center'}`}>
+      <div className={`absolute left-4 flex flex-col gap-6 z-0 ${theme === 'aqua' ? 'top-12 right-4 items-end left-auto' : 'top-4 items-center'}`}>
         <button 
             onDoubleClick={() => openApp(AppId.NOTEPAD)}
             className="w-20 flex flex-col items-center gap-1 group text-white hover:bg-white/10 rounded p-2 transition-colors"
@@ -205,12 +205,12 @@ const App: React.FC = () => {
             onDoubleClick={() => openApp(AppId.BROWSER)}
             className="w-20 flex flex-col items-center gap-1 group text-white hover:bg-white/10 rounded p-2 transition-colors"
         >
-            {theme === 'macos' ? (
+            {theme === 'aqua' ? (
                  <Compass className="w-10 h-10 text-blue-400 desktop-icon-shadow" />
             ) : (
                  <Globe className="w-10 h-10 text-blue-400 desktop-icon-shadow" />
             )}
-            <span className="text-xs text-center desktop-text-shadow font-medium">{theme === 'macos' ? 'Safari' : 'Edge'}</span>
+            <span className="text-xs text-center desktop-text-shadow font-medium">{theme === 'aqua' ? 'Safari' : 'Edge'}</span>
         </button>
       </div>
 
@@ -236,7 +236,7 @@ const App: React.FC = () => {
       ))}
 
       {/* Start Menu or Launchpad */}
-      {theme === 'windows' ? (
+      {theme === 'aero' ? (
           <StartMenu 
             isOpen={startMenuOpen} 
             onAppClick={openApp} 

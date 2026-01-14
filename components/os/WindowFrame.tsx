@@ -64,8 +64,8 @@ export const WindowFrame: React.FC<WindowFrameProps> = ({
         const rawY = e.clientY - dragOffset.current.y;
         
         // Viewport boundaries
-        const taskbarHeight = theme === 'windows' ? 48 : 80; // Larger buffer for dock
-        const topBarHeight = theme === 'macos' ? 28 : 0;
+        const taskbarHeight = theme === 'aero' ? 48 : 80; // Larger buffer for dock
+        const topBarHeight = theme === 'aqua' ? 28 : 0;
 
         const maxX = window.innerWidth - windowState.size.width;
         const maxY = window.innerHeight - windowState.size.height - taskbarHeight;
@@ -143,16 +143,16 @@ export const WindowFrame: React.FC<WindowFrameProps> = ({
       className={`absolute flex flex-col bg-white/80 dark:bg-[#121212]/80 backdrop-blur-2xl rounded-lg shadow-2xl overflow-hidden border border-white/40 dark:border-white/10 
         transition-all duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1.0)] origin-bottom
         ${isActive ? 'z-50 shadow-[0_20px_60px_rgba(0,0,0,0.3)]' : 'z-0'}
-        ${(windowState.isMaximized && theme === 'windows') ? 'rounded-b-none border-b-0' : ''}
+        ${(windowState.isMaximized && theme === 'aero') ? 'rounded-b-none border-b-0' : ''}
         ${isVisible 
             ? 'opacity-100 scale-100 translate-y-0 pointer-events-auto' 
             : 'opacity-0 scale-95 translate-y-12 pointer-events-none'}
       `}
       style={{
         left: windowState.isMaximized ? 0 : windowState.position.x,
-        top: windowState.isMaximized ? (theme === 'macos' ? 28 : 0) : windowState.position.y,
+        top: windowState.isMaximized ? (theme === 'aqua' ? 25 : 0) : windowState.position.y,
         right: windowState.isMaximized ? 0 : undefined,
-        bottom: windowState.isMaximized ? (theme === 'macos' ? '80px' : '42px') : undefined,
+        bottom: windowState.isMaximized ? (theme === 'aqua' ? '72px' : '42px') : undefined,
         width: windowState.isMaximized ? 'auto' : windowState.size.width,
         height: windowState.isMaximized ? 'auto' : windowState.size.height,
         zIndex: windowState.zIndex,
@@ -162,11 +162,11 @@ export const WindowFrame: React.FC<WindowFrameProps> = ({
     >
       {/* Title Bar */}
       <div
-        className={`h-9 flex items-center px-2 bg-white/30 dark:bg-white/5 select-none border-b border-white/20 dark:border-white/5 ${theme === 'macos' ? 'justify-start' : 'justify-between'}`}
+        className={`h-9 flex items-center px-2 bg-white/30 dark:bg-white/5 select-none border-b border-white/20 dark:border-white/5 ${theme === 'aqua' ? 'justify-start' : 'justify-between'}`}
         onMouseDown={handleMouseDown}
         onDoubleClick={() => onMaximize(windowState.id)}
       >
-        {theme === 'macos' ? (
+        {theme === 'aqua' ? (
              <div className="h-full flex items-center">{renderMacControls()}</div>
         ) : (
             <>

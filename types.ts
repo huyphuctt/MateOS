@@ -9,7 +9,7 @@ export enum AppId {
   CALCULATOR = 'calculator'
 }
 
-export type Theme = 'windows' | 'macos';
+export type Theme = 'aero' | 'aqua';
 
 export interface WindowState {
   id: AppId;
