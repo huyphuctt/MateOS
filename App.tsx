@@ -41,11 +41,34 @@ const Placeholder = ({ text }: { text: string }) => (
 
 const App: React.FC = () => {
   // --- Auth State ---
-  // Initialize state based on whether we've booted before to avoid flash
-  const [authMode, setAuthMode] = useState<AuthMode>(() => 
-    localStorage.getItem('mateos_boot_completed') ? 'login_full' : 'boot'
-  );
-  const [username, setUsername] = useState<string>('');
+  // Initialize state based on localStorage to prevent UI flash and handle lock screen correctly
+  const [username, setUsername] = useState<string>(() => {
+    const localUser = localStorage.getItem('mateos_user');
+    if (localUser) {
+        try {
+            return JSON.parse(localUser).username;
+        } catch (e) {
+            return '';
+        }
+    }
+    return '';
+  });
+
+  const [authMode, setAuthMode] = useState<AuthMode>(() => {
+    const bootCompleted = localStorage.getItem('mateos_boot_completed');
+    if (!bootCompleted) return 'boot';
+
+    const isLocked = localStorage.getItem('mateos_is_locked') === 'true';
+    const localUser = localStorage.getItem('mateos_user');
+    
+    // If specifically locked and we have user data, go straight to partial login
+    if (isLocked && localUser) {
+        return 'login_partial';
+    }
+
+    // Default to full login, session check will upgrade to desktop if valid
+    return 'login_full';
+  });
   
   // --- OS State ---
   const [theme, setTheme] = useState<Theme>(() => {
@@ -96,6 +119,7 @@ const App: React.FC = () => {
     const lastLoginStr = localStorage.getItem('mateos_last_login');
     const bootCompleted = localStorage.getItem('mateos_boot_completed');
     const token = localStorage.getItem('mateos_token');
+    const isLocked = localStorage.getItem('mateos_is_locked') === 'true';
     const now = Date.now();
 
     // 1. Boot Sequence Check (Skip if already booted once on this device)
@@ -140,8 +164,7 @@ const App: React.FC = () => {
                 return;
             }
         } catch (error) {
-            // On error, default to partial login to be safe, or ignore if we want to be lenient on network error.
-            // Requirement says "if invalid, set to login_partial".
+            // On error, default to partial login to be safe.
             setAuthMode('login_partial');
             setUsername(usernameStr);
             return;
@@ -153,7 +176,15 @@ const App: React.FC = () => {
         return;
     }
 
-    // 5. Valid Session
+    // 5. Manual Lock Check
+    // If the user manually locked the screen, ensure it stays locked even if token is valid.
+    if (isLocked) {
+        setAuthMode('login_partial');
+        setUsername(usernameStr);
+        return;
+    }
+
+    // 6. Valid Session
     if (!isBackgroundCheck) {
         setAuthMode('desktop');
         setUsername(usernameStr);
@@ -193,6 +224,7 @@ const App: React.FC = () => {
     const now = Date.now();
     localStorage.setItem('mateos_user', JSON.stringify({ username: user.username }));
     localStorage.setItem('mateos_last_login', now.toString());
+    localStorage.removeItem('mateos_is_locked'); // Clear lock state
     
     if (user.token) {
         localStorage.setItem('mateos_token', user.token);
@@ -220,6 +252,7 @@ const App: React.FC = () => {
     localStorage.removeItem('mateos_user');
     localStorage.removeItem('mateos_last_login');
     localStorage.removeItem('mateos_token');
+    localStorage.removeItem('mateos_is_locked');
     // Note: We do NOT clear mateos_boot_completed
 
     // Reset OS visual state to defaults (clearing user preferences)
@@ -237,6 +270,7 @@ const App: React.FC = () => {
   };
   
   const handleLock = () => {
+      localStorage.setItem('mateos_is_locked', 'true');
       setAuthMode('login_partial');
   };
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ArrowRight, UserCircle2, XCircle, HelpCircle, RefreshCw, Check, Mail, AlertCircle, User } from 'lucide-react';
 import { authService } from '../../services/api';
 
@@ -30,6 +30,13 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
 
   // Recovery Form State
   const [recoveryEmail, setRecoveryEmail] = useState('');
+
+  // Sync savedUsername prop to state when it changes (e.g. after async session check)
+  useEffect(() => {
+    if (savedUsername) {
+        setUsername(savedUsername);
+    }
+  }, [savedUsername]);
 
   // --- Handlers ---
 
