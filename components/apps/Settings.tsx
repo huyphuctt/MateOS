@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Monitor, Palette, Check, Search, User, Shield, CreditCard, UserCircle, Image as ImageIcon, Upload } from 'lucide-react';
+import { Monitor, Palette, Check, Search, User, Shield, CreditCard, UserCircle, Image as ImageIcon, Upload, Camera } from 'lucide-react';
 import { Theme } from '../../types';
 import { WALLPAPERS } from '../../data/mock';
 
@@ -12,6 +12,8 @@ interface SettingsAppProps {
   onManageAccount?: () => void;
   wallpaper: string;
   setWallpaper: (url: string) => void;
+  userAvatar?: string | null;
+  setUserAvatar: (avatar: string) => void;
 }
 
 type SettingsSection = 'user' | 'theme' | 'taskbar' | 'wallpaper';
@@ -24,7 +26,9 @@ export const SettingsApp: React.FC<SettingsAppProps> = ({
     username,
     onManageAccount,
     wallpaper,
-    setWallpaper
+    setWallpaper,
+    userAvatar,
+    setUserAvatar
 }) => {
   const [activeSection, setActiveSection] = useState<SettingsSection>('user');
 
@@ -35,6 +39,19 @@ export const SettingsApp: React.FC<SettingsAppProps> = ({
       reader.onload = (e) => {
         if (e.target?.result && typeof e.target.result === 'string') {
           setWallpaper(e.target.result);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleAvatarUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        if (e.target?.result && typeof e.target.result === 'string') {
+          setUserAvatar(e.target.result);
         }
       };
       reader.readAsDataURL(file);
@@ -56,8 +73,12 @@ export const SettingsApp: React.FC<SettingsAppProps> = ({
                 : 'border-transparent hover:bg-white/50 dark:hover:bg-white/5'
             }`}
         >
-            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-lg font-bold shadow-sm shrink-0">
-                {(username || 'User').charAt(0).toUpperCase()}
+             <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-lg font-bold shadow-sm shrink-0 overflow-hidden">
+                {userAvatar ? (
+                    <img src={userAvatar} className="w-full h-full object-cover" alt="User" />
+                ) : (
+                    (username || 'User').charAt(0).toUpperCase()
+                )}
             </div>
             <div className="flex flex-col items-start overflow-hidden min-w-0">
                 <span className="font-semibold text-sm truncate w-full text-left text-gray-900 dark:text-white">{username || 'Guest User'}</span>
@@ -123,12 +144,26 @@ export const SettingsApp: React.FC<SettingsAppProps> = ({
             {activeSection === 'user' && (
                 <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 space-y-8">
                     <div className="flex items-center gap-6">
-                        <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-3xl font-bold shadow-lg">
-                            {(username || 'User').charAt(0).toUpperCase()}
-                        </div>
+                        <label className="relative group cursor-pointer">
+                             <div className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-3xl font-bold shadow-lg overflow-hidden border-4 border-white dark:border-[#1e1e1e]">
+                                {userAvatar ? (
+                                    <img src={userAvatar} className="w-full h-full object-cover" alt="User" />
+                                ) : (
+                                    (username || 'User').charAt(0).toUpperCase()
+                                )}
+                             </div>
+                             <div className="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                 <Camera className="text-white" size={24} />
+                             </div>
+                             <input type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
+                        </label>
                         <div>
                             <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{username || 'Guest User'}</h2>
                             <p className="text-gray-500 dark:text-gray-400">{username ? `${username.toLowerCase().replace(/\s+/g, '.')}@mateos.com` : 'guest@mateos.com'}</p>
+                            <label className="mt-2 inline-block text-sm text-blue-500 hover:underline cursor-pointer">
+                                Change Profile Photo
+                                <input type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
+                            </label>
                         </div>
                     </div>
 

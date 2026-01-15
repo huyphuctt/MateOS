@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowRight, UserCircle2, XCircle, HelpCircle, RefreshCw, ChevronLeft, Check, Mail, AlertCircle } from 'lucide-react';
+import { ArrowRight, UserCircle2, XCircle, HelpCircle, RefreshCw, ChevronLeft, Check, Mail, AlertCircle, User } from 'lucide-react';
 import { authService } from '../../services/api';
 
 interface LoginScreenProps {
@@ -8,6 +8,7 @@ interface LoginScreenProps {
   onLogin: (username: string) => void;
   onSwitchAccount: () => void;
   onForgotPassword: () => void;
+  userAvatar?: string | null;
 }
 
 export const LoginScreen: React.FC<LoginScreenProps> = ({
@@ -15,7 +16,8 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
   savedUsername,
   onLogin,
   onSwitchAccount,
-  onForgotPassword
+  onForgotPassword,
+  userAvatar
 }) => {
   // View State
   const [view, setView] = useState<'login' | 'forgot' | 'success'>('login');
@@ -78,7 +80,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
 
   const renderAvatar = () => (
     <div className="mb-6 relative group transition-all duration-500">
-      <div className="w-24 h-24 rounded-full overflow-hidden shadow-2xl border border-white/20 relative">
+      <div className="w-24 h-24 rounded-full overflow-hidden shadow-2xl border border-white/20 relative flex items-center justify-center bg-white/5 backdrop-blur-md">
          {view === 'success' ? (
              <div className="w-full h-full bg-green-500/80 flex items-center justify-center backdrop-blur-md">
                  <Check size={40} className="text-white" />
@@ -87,19 +89,14 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
              <div className="w-full h-full bg-orange-500/80 flex items-center justify-center backdrop-blur-md">
                  <HelpCircle size={40} className="text-white" />
              </div>
+         ) : (mode === 'partial' && userAvatar) ? (
+            <img 
+                src={userAvatar} 
+                className="w-full h-full object-cover"
+                alt="User Avatar"
+            />
          ) : (
-            <>
-                <img 
-                    src="https://images.unsplash.com/photo-1542831371-29b0f74f9713?q=80&w=300&auto=format&fit=crop" 
-                    className="w-full h-full object-cover opacity-80"
-                    alt="User Avatar"
-                />
-                <div className="absolute inset-0 flex items-center justify-center bg-black/10">
-                    <span className="text-white font-bold text-2xl drop-shadow-md">
-                        {(username || 'User').charAt(0).toUpperCase()}
-                    </span>
-                </div>
-            </>
+            <UserCircle2 size={48} className="text-white/80" />
          )}
       </div>
     </div>

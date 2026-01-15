@@ -11,6 +11,7 @@ interface StartMenuProps {
   recentItems: RecentItem[];
   username: string;
   onOpenUserProfile: () => void;
+  userAvatar?: string | null;
 }
 
 export const StartMenu: React.FC<StartMenuProps> = ({ 
@@ -21,7 +22,8 @@ export const StartMenu: React.FC<StartMenuProps> = ({
     onLogout, 
     recentItems,
     username,
-    onOpenUserProfile
+    onOpenUserProfile,
+    userAvatar
 }) => {
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -125,8 +127,12 @@ export const StartMenu: React.FC<StartMenuProps> = ({
             onClick={onOpenUserProfile}
             className="flex items-center gap-3 hover:bg-white/50 dark:hover:bg-white/10 px-3 py-1.5 rounded-md transition-colors text-left"
         >
-            <div className="w-9 h-9 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center shrink-0">
-                <User size={18} className="text-gray-600 dark:text-gray-200"/>
+            <div className="w-9 h-9 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center shrink-0 overflow-hidden">
+                {userAvatar ? (
+                    <img src={userAvatar} className="w-full h-full object-cover" alt="User" />
+                ) : (
+                    <User size={18} className="text-gray-600 dark:text-gray-200"/>
+                )}
             </div>
             <div className="flex flex-col">
                 <span className="text-sm font-medium text-gray-700 dark:text-gray-200 leading-tight">{username || 'Guest User'}</span>

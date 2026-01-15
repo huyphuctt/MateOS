@@ -9,6 +9,7 @@ interface TopBarProps {
   recentItems: RecentItem[];
   username: string;
   onOpenUserProfile: () => void;
+  userAvatar?: string | null;
 }
 
 export const TopBar: React.FC<TopBarProps> = ({ 
@@ -17,7 +18,8 @@ export const TopBar: React.FC<TopBarProps> = ({
     onLogout, 
     recentItems, 
     username,
-    onOpenUserProfile
+    onOpenUserProfile,
+    userAvatar
 }) => {
   const [time, setTime] = useState(new Date());
   const [menuOpen, setMenuOpen] = useState(false);
@@ -88,8 +90,12 @@ export const TopBar: React.FC<TopBarProps> = ({
                         onClick={() => { onOpenUserProfile(); setMenuOpen(false); }}
                         className="text-left px-3 py-2 rounded hover:bg-blue-500 hover:text-white text-gray-800 dark:text-gray-100 transition-colors flex items-center gap-3 group"
                     >
-                        <div className="shrink-0">
-                            <UserCircle size={24} className="text-gray-500 group-hover:text-white" />
+                        <div className="shrink-0 w-8 h-8 rounded-full overflow-hidden flex items-center justify-center bg-gray-200 dark:bg-gray-700">
+                            {userAvatar ? (
+                                <img src={userAvatar} className="w-full h-full object-cover" alt="User" />
+                            ) : (
+                                <UserCircle size={24} className="text-gray-500 group-hover:text-white" />
+                            )}
                         </div>
                         <div className="flex flex-col min-w-0">
                             <span className="font-medium text-sm truncate">{username || 'User'}</span>

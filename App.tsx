@@ -54,6 +54,10 @@ const App: React.FC = () => {
     return saved || WALLPAPERS[0].src;
   });
 
+  const [userAvatar, setUserAvatar] = useState<string | null>(() => {
+    return localStorage.getItem('mateos_avatar');
+  });
+
   const [hideTaskbar, setHideTaskbar] = useState(false);
   const [windows, setWindows] = useState<WindowState[]>([]);
   const [activeWindowId, setActiveWindowId] = useState<AppId | null>(null);
@@ -71,6 +75,13 @@ const App: React.FC = () => {
   useEffect(() => {
     localStorage.setItem('mateos_wallpaper', wallpaper);
   }, [wallpaper]);
+
+  // Persist avatar
+  useEffect(() => {
+    if (userAvatar) {
+        localStorage.setItem('mateos_avatar', userAvatar);
+    }
+  }, [userAvatar]);
 
   // --- Auth Logic (Screen Routing) ---
   useEffect(() => {
@@ -298,6 +309,7 @@ const App: React.FC = () => {
             onLogin={handleLoginSuccess}
             onSwitchAccount={handleSwitchAccount}
             onForgotPassword={handleForgotPassword}
+            userAvatar={userAvatar}
         />
       )}
 
@@ -315,6 +327,7 @@ const App: React.FC = () => {
                     recentItems={RECENT_ITEMS}
                     username={username}
                     onOpenUserProfile={() => openApp(AppId.SETTINGS)}
+                    userAvatar={userAvatar}
                 />
             )}
 
@@ -372,6 +385,8 @@ const App: React.FC = () => {
                         onManageAccount={handleManageAccount}
                         wallpaper={wallpaper}
                         setWallpaper={setWallpaper}
+                        userAvatar={userAvatar}
+                        setUserAvatar={setUserAvatar}
                     />
                 ) : (
                     window.component
@@ -390,6 +405,7 @@ const App: React.FC = () => {
                     recentItems={RECENT_ITEMS}
                     username={username}
                     onOpenUserProfile={() => openApp(AppId.SETTINGS)}
+                    userAvatar={userAvatar}
                 />
             ) : (
                 <Launchpad
