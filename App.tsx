@@ -80,6 +80,8 @@ const App: React.FC = () => {
   useEffect(() => {
     if (userAvatar) {
         localStorage.setItem('mateos_avatar', userAvatar);
+    } else {
+        localStorage.removeItem('mateos_avatar');
     }
   }, [userAvatar]);
 
@@ -91,15 +93,22 @@ const App: React.FC = () => {
   const checkSession = () => {
     const localUser = localStorage.getItem('mateos_user');
     const lastLoginStr = localStorage.getItem('mateos_last_login');
+    const bootCompleted = localStorage.getItem('mateos_boot_completed');
     const now = Date.now();
 
-    // 1. No Local Data -> Boot Sequence -> Full Login
-    if (!localUser) {
+    // 1. Boot Sequence Check (Skip if already booted once on this device)
+    if (!bootCompleted) {
         setAuthMode('boot');
         return;
     }
 
-    // 2. No Session Token or Expired (> 7 days) -> Full Login
+    // 2. No Local Data -> Full Login
+    if (!localUser) {
+        setAuthMode('login_full');
+        return;
+    }
+
+    // 3. No Session Token or Expired (> 7 days) -> Full Login
     if (!lastLoginStr) {
         setAuthMode('login_full');
         setUsername(JSON.parse(localUser).username);
@@ -125,6 +134,7 @@ const App: React.FC = () => {
   };
 
   const handleBootComplete = () => {
+     localStorage.setItem('mateos_boot_completed', 'true');
      setAuthMode('login_full');
   };
 
@@ -135,7 +145,6 @@ const App: React.FC = () => {
     
     // Update avatar if provided by API (e.g. initial login with a user that has one)
     if (user.avatar) {
-        localStorage.setItem('mateos_avatar', user.avatar);
         setUserAvatar(user.avatar);
     }
 
@@ -147,14 +156,23 @@ const App: React.FC = () => {
     // Call the logout service
     await authService.logout();
 
-    // Clear last login to force full login, but keep user data for autofill if we wanted (here we just clear state)
-    setAuthMode('login_full');
+    // Clear User Specific Data
+    localStorage.removeItem('mateos_user');
+    localStorage.removeItem('mateos_last_login');
+    // Note: We do NOT clear mateos_boot_completed
+
+    // Reset OS visual state to defaults (clearing user preferences)
+    setWallpaper(WALLPAPERS[0].src);
+    setTheme('aqua');
+    setUserAvatar(null);
     setUsername('');
 
     // Clear OS state
     setWindows([]);
     setActiveWindowId(null);
     setStartMenuOpen(false);
+    
+    setAuthMode('login_full');
   };
   
   const handleLock = () => {

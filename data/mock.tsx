@@ -6,30 +6,24 @@ import { RecentItem } from '../types';
 export const MOCK_USERS = [
   { 
       id: '1', 
-      username: 'admin', 
+      username: 'Admin', 
       password: 'password', 
       email: 'admin@mateos.com',
-      avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=200&auto=format&fit=crop'
+      avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=200&auto=format&fit=crop',
+      wallpaper: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=3872&auto=format&fit=crop'
   },
   { 
       id: '2', 
-      username: 'guest', 
-      password: 'guest', 
-      email: 'guest@mateos.com' 
-      // No avatar for guest, will use default icon
-  },
-  { 
-      id: '3', 
-      username: 'mateo', 
+      username: 'Mateo', 
       password: '123', 
       email: 'mateo@mateos.com',
-      avatar: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?q=80&w=200&auto=format&fit=crop'
+      avatar: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?q=80&w=200&auto=format&fit=crop',
+      wallpaper: 'https://images.unsplash.com/photo-1477346611705-65d1883cee1e?q=80&w=3870&auto=format&fit=crop'
   }
 ];
 
 // Wallpaper Presets
 export const WALLPAPERS = [
-  { id: 'wp1', src: 'https://images.unsplash.com/photo-1542831371-29b0f74f9713?q=80&w=3870&auto=format&fit=crop', title: 'Default Aqua' },
   { id: 'wp2', src: 'https://images.unsplash.com/photo-1477346611705-65d1883cee1e?q=80&w=3870&auto=format&fit=crop', title: 'Mountain' },
   { id: 'wp3', src: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=3872&auto=format&fit=crop', title: 'Space' },
   { id: 'wp4', src: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=3870&auto=format&fit=crop', title: 'Valley' },
