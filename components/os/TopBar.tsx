@@ -72,10 +72,10 @@ export const TopBar: React.FC<TopBarProps> = ({
 
   return (
     <>
-        <div className="absolute top-0 left-0 right-0 h-7 bg-white/30 dark:bg-black/30 backdrop-blur-xl border-b border-white/10 flex items-center justify-between px-4 z-[9999] text-xs font-medium text-gray-800 dark:text-gray-100 select-none rounded-t-lg">
+        <div className="absolute top-0 left-0 right-0 h-7 bg-black/20 backdrop-blur-xl border-b border-white/10 flex items-center justify-between px-4 z-[9999] text-xs font-medium text-white select-none rounded-t-lg shadow-sm">
         <div className="flex items-center gap-4 h-full relative" ref={menuRef}>
             <div 
-                className={`px-2 py-1 rounded transition-colors cursor-pointer ${menuOpen ? 'bg-white/20' : 'hover:bg-white/20'}`}
+                className={`px-2 py-1 rounded transition-colors cursor-pointer ${menuOpen ? 'bg-white/20' : 'hover:bg-white/10'}`}
                 onClick={() => setMenuOpen(!menuOpen)}
             >
             <Command size={15} />
@@ -122,7 +122,7 @@ export const TopBar: React.FC<TopBarProps> = ({
             <div 
                 data-panel-trigger="true"
                 onClick={() => setPanelOpen(!panelOpen)}
-                className={`flex items-center gap-2 px-3 py-0.5 rounded transition-colors cursor-pointer select-none ${panelOpen ? 'bg-white/20' : 'hover:bg-white/20'}`}
+                className={`flex items-center gap-2 px-3 py-0.5 rounded transition-colors cursor-pointer select-none ${panelOpen ? 'bg-white/20' : 'hover:bg-white/10'}`}
             >
                 <span>{formatDate(time)}</span>
                 <span>{formatTime(time)}</span>

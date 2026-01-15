@@ -32,6 +32,8 @@ export const WindowFrame: React.FC<WindowFrameProps> = ({
   const [isMounted, setIsMounted] = useState(false);
   const dragOffset = useRef({ x: 0, y: 0 });
 
+  const taskbarHeight = hideTaskbar ? 6 : (theme === 'aero' ? 47 : 80);
+  const topBarHeight = theme === 'aqua' ? 25 : 0;
   // Trigger open animation on mount
   useEffect(() => {
     const timer = requestAnimationFrame(() => setIsMounted(true));
@@ -66,9 +68,6 @@ export const WindowFrame: React.FC<WindowFrameProps> = ({
         const rawY = e.clientY - dragOffset.current.y;
         
         // Viewport boundaries
-        const taskbarHeight = hideTaskbar ? 6 : (theme === 'aero' ? 48 : 80);
-        const topBarHeight = theme === 'aqua' ? 28 : 0;
-
         const maxX = window.innerWidth - windowState.size.width;
         const maxY = window.innerHeight - windowState.size.height - taskbarHeight;
         
@@ -142,12 +141,7 @@ export const WindowFrame: React.FC<WindowFrameProps> = ({
 
   const getBottomOffset = () => {
       if (!windowState.isMaximized) return undefined;
-      
-      if (theme === 'aqua') {
-          return hideTaskbar ? '6px' : '72px';
-      }
-      // Aero
-      return hideTaskbar ? '6px' : '42px';
+      return hideTaskbar ? '6px' : `${taskbarHeight + 1}px`;
   };
 
   return (
@@ -162,7 +156,7 @@ export const WindowFrame: React.FC<WindowFrameProps> = ({
       `}
       style={{
         left: windowState.isMaximized ? 0 : windowState.position.x,
-        top: windowState.isMaximized ? (theme === 'aqua' ? 25 : 0) : windowState.position.y,
+        top: windowState.isMaximized ? (theme === 'aqua' ? topBarHeight + 4 : 0) : windowState.position.y,
         right: windowState.isMaximized ? 0 : undefined,
         bottom: getBottomOffset(),
         width: windowState.isMaximized ? 'auto' : windowState.size.width,
