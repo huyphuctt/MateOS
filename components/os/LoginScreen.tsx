@@ -99,7 +99,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
                 alt="User Avatar"
             />
          ) : (
-            <UserCircle2 size={48} className="text-white/80" />
+            <User size={48} className="text-white/80" />
          )}
       </div>
     </div>
