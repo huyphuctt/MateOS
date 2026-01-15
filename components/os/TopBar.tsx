@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Wifi, Battery, Search, Command, X, UserCircle } from 'lucide-react';
+import { Wifi, Battery, Search, Command, X, User } from 'lucide-react';
 import { RecentItem } from '../../types';
 
 interface TopBarProps {
@@ -94,7 +94,7 @@ export const TopBar: React.FC<TopBarProps> = ({
                             {userAvatar ? (
                                 <img src={userAvatar} className="w-full h-full object-cover" alt="User" />
                             ) : (
-                                <UserCircle size={24} className="text-gray-500 group-hover:text-white" />
+                                <User size={24} className="text-gray-500 group-hover:text-white" />
                             )}
                         </div>
                         <div className="flex flex-col min-w-0">

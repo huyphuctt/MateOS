@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowRight, UserCircle2, XCircle, HelpCircle, RefreshCw, ChevronLeft, Check, Mail, AlertCircle, User } from 'lucide-react';
+import { ArrowRight,  XCircle, HelpCircle, RefreshCw, Check, Mail, AlertCircle, User } from 'lucide-react';
 import { authService } from '../../services/api';
 
 interface LoginScreenProps {
@@ -96,7 +96,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
                 alt="User Avatar"
             />
          ) : (
-            <UserCircle2 size={48} className="text-white/80" />
+            <User size={48} className="text-white/80" />
          )}
       </div>
     </div>

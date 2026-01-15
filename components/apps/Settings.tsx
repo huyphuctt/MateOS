@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Monitor, Palette, Check, Search, User, Shield, CreditCard, UserCircle, Image as ImageIcon, Upload, Camera } from 'lucide-react';
+import { Monitor, Palette, Check, Search, User, Shield, CreditCard, Image as ImageIcon, Upload, Camera } from 'lucide-react';
 import { Theme } from '../../types';
 import { WALLPAPERS } from '../../data/mock';
 
