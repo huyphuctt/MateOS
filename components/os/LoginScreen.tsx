@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { ArrowRight, UserCircle2, XCircle, HelpCircle, RefreshCw, ChevronLeft, Check, Mail } from 'lucide-react';
+import { ArrowRight, UserCircle2, XCircle, HelpCircle, RefreshCw, ChevronLeft, Check, Mail, AlertCircle } from 'lucide-react';
+import { authService } from '../../services/api';
 
 interface LoginScreenProps {
   mode: 'full' | 'partial';
@@ -22,7 +23,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
   // Login Form State
   const [username, setUsername] = useState(savedUsername || '');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Recovery Form State
@@ -30,24 +31,28 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
 
   // --- Handlers ---
 
-  const handleLoginSubmit = (e: React.FormEvent) => {
+  const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (mode === 'full' && !username.trim()) return;
     if (!password.trim()) return;
 
     setIsSubmitting(true);
-    
-    // Simulate network validation
-    setTimeout(() => {
-      if (password.length > 0) {
-        onLogin(username);
+    setError(null);
+
+    try {
+      const response = await authService.login(username, password);
+
+      if (response.success && response.user) {
+        onLogin(response.user.username);
       } else {
-        setError(true);
-        setIsSubmitting(false);
+        setError(response.message || 'Invalid credentials');
         setPassword('');
-        setTimeout(() => setError(false), 500); 
       }
-    }, 800);
+    } catch (err) {
+      setError('An unexpected error occurred.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleForgotSubmit = (e: React.FormEvent) => {
@@ -64,7 +69,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
 
   const resetView = () => {
       setView('login');
-      setError(false);
+      setError(null);
       setPassword('');
       setRecoveryEmail('');
   };
@@ -119,7 +124,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
                 type="text"
                 name="username"
                 value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                onChange={(e) => { setUsername(e.target.value); setError(null); }}
                 placeholder="Username"
                 className="w-48 bg-white/20 hover:bg-white/30 text-white placeholder-white/70 text-center rounded-full py-1.5 px-4 focus:outline-none focus:ring-2 focus:ring-white/40 transition-all border border-transparent focus:border-white/20 backdrop-blur-md"
                 autoFocus
@@ -134,9 +139,9 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
                 type="password"
                 name="password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => { setPassword(e.target.value); setError(null); }}
                 placeholder="Enter Password"
-                className="w-full bg-white/20 hover:bg-white/30 text-white placeholder-white/50 text-center rounded-full py-1.5 px-8 focus:outline-none focus:ring-2 focus:ring-white/40 transition-all border border-transparent focus:border-white/20 backdrop-blur-md"
+                className={`w-full bg-white/20 hover:bg-white/30 text-white placeholder-white/50 text-center rounded-full py-1.5 px-8 focus:outline-none focus:ring-2 transition-all border backdrop-blur-md ${error ? 'border-red-400/50 focus:ring-red-400/50' : 'border-transparent focus:ring-white/40 focus:border-white/20'}`}
                 autoFocus={mode === 'partial'}
                 autoComplete="current-password"
             />
@@ -153,6 +158,14 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
                 )}
             </button>
             </div>
+
+            {/* Error Message */}
+            {error && (
+                <div className="flex items-center gap-1.5 text-red-200 bg-red-900/40 px-3 py-1 rounded-md backdrop-blur-sm animate-in fade-in slide-in-from-top-1">
+                    <AlertCircle size={12} />
+                    <span className="text-xs font-medium">{error}</span>
+                </div>
+            )}
 
             {/* Actions */}
             <div className="mt-8 flex flex-col items-center gap-4">

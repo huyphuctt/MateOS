@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Monitor, Palette, Check, Search, User, Shield, CreditCard, UserCircle } from 'lucide-react';
+import { Monitor, Palette, Check, Search, User, Shield, CreditCard, UserCircle, Image as ImageIcon, Upload } from 'lucide-react';
 import { Theme } from '../../types';
+import { WALLPAPERS } from '../../data/mock';
 
 interface SettingsAppProps {
   theme: Theme;
@@ -9,9 +10,11 @@ interface SettingsAppProps {
   setHideTaskbar: (hide: boolean) => void;
   username?: string;
   onManageAccount?: () => void;
+  wallpaper: string;
+  setWallpaper: (url: string) => void;
 }
 
-type SettingsSection = 'user' | 'theme' | 'taskbar';
+type SettingsSection = 'user' | 'theme' | 'taskbar' | 'wallpaper';
 
 export const SettingsApp: React.FC<SettingsAppProps> = ({ 
     theme, 
@@ -19,9 +22,24 @@ export const SettingsApp: React.FC<SettingsAppProps> = ({
     hideTaskbar, 
     setHideTaskbar, 
     username,
-    onManageAccount 
+    onManageAccount,
+    wallpaper,
+    setWallpaper
 }) => {
   const [activeSection, setActiveSection] = useState<SettingsSection>('user');
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        if (e.target?.result && typeof e.target.result === 'string') {
+          setWallpaper(e.target.result);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   return (
     <div className="flex h-full bg-[#f5f5f7] dark:bg-[#1e1e1e] text-gray-900 dark:text-gray-100 overflow-hidden font-sans">
@@ -69,6 +87,18 @@ export const SettingsApp: React.FC<SettingsAppProps> = ({
             >
                 <Palette size={18} className={activeSection === 'theme' ? 'text-white' : 'text-blue-500'} />
                 <span className="flex-1 text-left">Theme</span>
+            </button>
+
+            <button 
+                onClick={() => setActiveSection('wallpaper')}
+                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    activeSection === 'wallpaper' 
+                    ? 'bg-blue-500 text-white shadow-sm' 
+                    : 'text-gray-700 dark:text-gray-200 hover:bg-gray-200/50 dark:hover:bg-white/10'
+                }`}
+            >
+                <ImageIcon size={18} className={activeSection === 'wallpaper' ? 'text-white' : 'text-blue-500'} />
+                <span className="flex-1 text-left">Wallpaper</span>
             </button>
             
             <button 
@@ -185,6 +215,56 @@ export const SettingsApp: React.FC<SettingsAppProps> = ({
                                 {theme === 'aqua' && <Check size={18} className="text-blue-500" />}
                             </div>
                         </button>
+                    </div>
+                </div>
+            )}
+            
+            {/* WALLPAPER SECTION */}
+            {activeSection === 'wallpaper' && (
+                <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 space-y-6">
+                    <div>
+                        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Wallpaper</h2>
+                        <p className="text-gray-500 dark:text-gray-400 text-sm">Choose a desktop background or upload your own.</p>
+                    </div>
+
+                    {/* Current Wallpaper Preview */}
+                    <div className="w-full aspect-[21/9] rounded-2xl overflow-hidden shadow-md border border-gray-200 dark:border-white/10 relative group">
+                        <img src={wallpaper} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt="Current Wallpaper" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent flex items-end p-6">
+                            <span className="text-white font-medium text-lg drop-shadow-md">Current Desktop</span>
+                        </div>
+                    </div>
+
+                    {/* Presets */}
+                    <div>
+                         <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">Choose Wallpaper</h3>
+                         <div className="grid grid-cols-3 gap-4">
+                             {WALLPAPERS.map((wp) => (
+                                 <button
+                                    key={wp.id}
+                                    onClick={() => setWallpaper(wp.src)}
+                                    className={`relative aspect-video rounded-lg overflow-hidden border-2 transition-all hover:opacity-90 ${wallpaper === wp.src ? 'border-blue-500 shadow-md ring-2 ring-blue-500/20' : 'border-transparent'}`}
+                                 >
+                                     <img src={wp.src} className="w-full h-full object-cover" alt={wp.title} />
+                                     {wallpaper === wp.src && (
+                                         <div className="absolute inset-0 bg-blue-500/20 flex items-center justify-center">
+                                             <div className="bg-blue-500 rounded-full p-1">
+                                                <Check size={12} className="text-white" />
+                                             </div>
+                                         </div>
+                                     )}
+                                 </button>
+                             ))}
+                             
+                             {/* Upload Button */}
+                             <label className="relative aspect-video rounded-lg overflow-hidden border-2 border-dashed border-gray-300 dark:border-gray-600 hover:border-blue-500 dark:hover:border-blue-400 bg-gray-50 dark:bg-white/5 flex flex-col items-center justify-center cursor-pointer transition-colors group">
+                                <input type="file" accept="image/*" className="hidden" onChange={handleFileUpload} />
+                                <div className="p-3 rounded-full bg-gray-200 dark:bg-white/10 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30 transition-colors mb-2">
+                                    <Upload size={20} className="text-gray-500 dark:text-gray-400 group-hover:text-blue-500" />
+                                </div>
+                                <span className="text-xs font-medium text-gray-500 dark:text-gray-400 group-hover:text-blue-500">Add Photo</span>
+                             </label>
+                         </div>
                     </div>
                 </div>
             )}

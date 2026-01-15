@@ -9,9 +9,7 @@ import {
   Calculator,
   Trash2,
   FolderClosed,
-  Compass,
-  Calendar,
-  Command
+  Compass
 } from 'lucide-react';
 
 import { Taskbar } from './components/os/Taskbar';
@@ -25,7 +23,9 @@ import { TopBar } from './components/os/TopBar';
 import { Launchpad } from './components/os/Launchpad';
 import { BootScreen } from './components/os/BootScreen';
 import { LoginScreen } from './components/os/LoginScreen';
-import { AppId, WindowState, Theme, AuthMode, RecentItem } from './types';
+import { AppId, WindowState, Theme, AuthMode } from './types';
+import { authService } from './services/api';
+import { RECENT_ITEMS, WALLPAPERS } from './data/mock';
 
 // Constants
 const SESSION_MAX_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
@@ -49,47 +49,16 @@ const App: React.FC = () => {
     return (saved === 'aero' || saved === 'aqua') ? saved : 'aqua';
   });
   
+  const [wallpaper, setWallpaper] = useState<string>(() => {
+    const saved = localStorage.getItem('mateos_wallpaper');
+    return saved || WALLPAPERS[0].src;
+  });
+
   const [hideTaskbar, setHideTaskbar] = useState(false);
   const [windows, setWindows] = useState<WindowState[]>([]);
   const [activeWindowId, setActiveWindowId] = useState<AppId | null>(null);
   const [startMenuOpen, setStartMenuOpen] = useState(false);
   const [nextZIndex, setNextZIndex] = useState(10);
-  
-  // --- Global Data ---
-  const recentItems: RecentItem[] = [
-    { 
-        id: 1, 
-        title: 'Team Meeting', 
-        description: '10:00 AM - 11:00 AM', 
-        type: 'calendar', 
-        timestamp: 'Now',
-        icon: <Calendar size={18} className="text-red-500" />
-    },
-    { 
-        id: 2, 
-        title: 'Project Alpha Specs.pdf', 
-        description: 'Edited 2h ago', 
-        type: 'file', 
-        timestamp: '2h ago',
-        icon: <FileText size={18} className="text-blue-500" />
-    },
-    { 
-        id: 3, 
-        title: 'Screenshot 2024-05-20', 
-        description: 'Desktop', 
-        type: 'image', 
-        timestamp: 'Yesterday',
-        icon: <ImageIcon size={18} className="text-purple-500" />
-    },
-    { 
-        id: 4, 
-        title: 'System Update', 
-        description: 'Successfully installed', 
-        type: 'system', 
-        timestamp: 'Yesterday',
-        icon: <Command size={18} className="text-gray-500" />
-    },
-  ];
 
   // --- Effects ---
 
@@ -97,6 +66,11 @@ const App: React.FC = () => {
   useEffect(() => {
     localStorage.setItem('mateos_theme', theme);
   }, [theme]);
+
+  // Persist wallpaper
+  useEffect(() => {
+    localStorage.setItem('mateos_wallpaper', wallpaper);
+  }, [wallpaper]);
 
   // --- Auth Logic (Screen Routing) ---
   useEffect(() => {
@@ -151,7 +125,10 @@ const App: React.FC = () => {
     setAuthMode('desktop');
   };
 
-  const handleSwitchAccount = () => {
+  const handleSwitchAccount = async () => {
+    // Call the logout service
+    await authService.logout();
+
     // Clear last login to force full login, but keep user data for autofill if we wanted (here we just clear state)
     setAuthMode('login_full');
     setUsername('');
@@ -295,21 +272,13 @@ const App: React.FC = () => {
     Object.entries(appRegistry).map(([id, app]) => [id, app.icon])
   ) as Record<AppId, React.ReactNode>;
 
-  const getBackground = () => {
-      // Use the Ventura abstract orange/blue background
-      if (theme === 'aqua') {
-          return 'url("https://images.unsplash.com/photo-1542831371-29b0f74f9713?q=80&w=3870&auto=format&fit=crop")'; 
-      }
-      return 'url("https://images.unsplash.com/photo-1542831371-29b0f74f9713?q=80&w=3870&auto=format&fit=crop")';
-  };
-
   const activeWindow = windows.find(w => w.id === activeWindowId);
   const activeAppTitle = activeWindow ? activeWindow.title : 'MateOS';
 
   return (
     <div 
         className="relative w-screen h-screen overflow-hidden bg-cover bg-center select-none transition-all duration-700"
-        style={{ backgroundImage: getBackground() }}
+        style={{ backgroundImage: `url("${wallpaper}")` }}
         onClick={handleDesktopClick}
         onContextMenu={(e) => e.preventDefault()}
     >
@@ -343,7 +312,7 @@ const App: React.FC = () => {
                     activeAppTitle={activeAppTitle} 
                     onOpenSettings={() => openApp(AppId.SETTINGS)}
                     onLogout={handleSwitchAccount}
-                    recentItems={recentItems}
+                    recentItems={RECENT_ITEMS}
                     username={username}
                     onOpenUserProfile={() => openApp(AppId.SETTINGS)}
                 />
@@ -401,6 +370,8 @@ const App: React.FC = () => {
                         setHideTaskbar={setHideTaskbar} 
                         username={username}
                         onManageAccount={handleManageAccount}
+                        wallpaper={wallpaper}
+                        setWallpaper={setWallpaper}
                     />
                 ) : (
                     window.component
@@ -416,7 +387,7 @@ const App: React.FC = () => {
                     appIcons={appIcons}
                     onClose={() => setStartMenuOpen(false)}
                     onLogout={handleSwitchAccount}
-                    recentItems={recentItems}
+                    recentItems={RECENT_ITEMS}
                     username={username}
                     onOpenUserProfile={() => openApp(AppId.SETTINGS)}
                 />
