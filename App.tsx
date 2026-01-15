@@ -31,6 +31,7 @@ import { RECENT_ITEMS, WALLPAPERS } from './data/mock';
 const SESSION_MAX_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 const SESSION_SHORT_MS = 2 * 24 * 60 * 60 * 1000; // 2 days
 const CHECK_INTERVAL_MS = 10 * 60 * 1000; // 10 minutes
+const INACTIVITY_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
 
 // Placeholder apps
 const Placeholder = ({ text }: { text: string }) => (
@@ -269,10 +270,44 @@ const App: React.FC = () => {
     setAuthMode('login_full');
   };
   
-  const handleLock = () => {
+  const handleLock = useCallback(() => {
       localStorage.setItem('mateos_is_locked', 'true');
       setAuthMode('login_partial');
-  };
+  }, []);
+
+  // --- Inactivity Auto-Lock ---
+  useEffect(() => {
+    if (authMode !== 'desktop') return;
+
+    let timeoutId: ReturnType<typeof setTimeout>;
+    let lastActivity = Date.now();
+
+    const resetTimer = () => {
+      if (timeoutId) clearTimeout(timeoutId);
+      timeoutId = setTimeout(handleLock, INACTIVITY_TIMEOUT_MS);
+    };
+
+    const handleActivity = () => {
+        const now = Date.now();
+        // Throttle resets to max once per second to avoid performance hit on mousemove
+        if (now - lastActivity > 1000) {
+            resetTimer();
+            lastActivity = now;
+        }
+    };
+
+    // Initialize
+    resetTimer();
+
+    // Listeners
+    const events = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart', 'click'];
+    events.forEach(event => window.addEventListener(event, handleActivity));
+
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+      events.forEach(event => window.removeEventListener(event, handleActivity));
+    };
+  }, [authMode, handleLock]);
 
   const handleForgotPassword = () => {
       alert("Recovery link sent to your email.");
