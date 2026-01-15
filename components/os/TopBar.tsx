@@ -83,25 +83,27 @@ export const TopBar: React.FC<TopBarProps> = ({
 
             {/* Dropdown Menu */}
             {menuOpen && (
-                <div className="absolute top-full left-0 mt-1 w-56 bg-white/95 dark:bg-[#1e1e1e]/95 backdrop-blur-2xl rounded-lg shadow-[0_10px_40px_rgba(0,0,0,0.2)] border border-white/20 dark:border-gray-700/50 p-1.5 flex flex-col z-[10000] animate-in fade-in zoom-in-95 duration-100">
+                <div className="absolute top-full left-0 mt-1 w-64 bg-white/95 dark:bg-[#1e1e1e]/95 backdrop-blur-2xl rounded-lg shadow-[0_10px_40px_rgba(0,0,0,0.2)] border border-white/20 dark:border-gray-700/50 p-1.5 flex flex-col z-[10000] animate-in fade-in zoom-in-95 duration-100">
                     <button 
                         onClick={() => { onOpenUserProfile(); setMenuOpen(false); }}
-                        className="text-left px-3 py-1.5 rounded hover:bg-blue-500 hover:text-white text-gray-800 dark:text-gray-100 transition-colors flex items-center gap-2 group"
+                        className="text-left px-3 py-2 rounded hover:bg-blue-500 hover:text-white text-gray-800 dark:text-gray-100 transition-colors flex items-center gap-3 group"
                     >
-                        <UserCircle size={14} className="text-gray-500 group-hover:text-white" />
-                        <span className="truncate max-w-[160px]">{username || 'User'}</span>
+                        <div className="shrink-0">
+                            <UserCircle size={24} className="text-gray-500 group-hover:text-white" />
+                        </div>
+                        <div className="flex flex-col min-w-0">
+                            <span className="font-medium text-sm truncate">{username || 'User'}</span>
+                            <span className="text-[11px] text-gray-500 dark:text-gray-400 group-hover:text-blue-100 truncate font-normal">
+                                {username ? `${username.toLowerCase().replace(/\s+/g, '.')}@mateos.com` : 'guest@mateos.com'}
+                            </span>
+                        </div>
                     </button>
+                    
                     <div className="h-[1px] bg-gray-400/20 my-1 mx-2"></div>
-                    <button 
-                        onClick={() => { onOpenSettings(); setMenuOpen(false); }}
-                        className="text-left px-3 py-1.5 rounded hover:bg-blue-500 hover:text-white text-gray-800 dark:text-gray-100 transition-colors"
-                    >
-                        System Settings...
-                    </button>
-                    <div className="h-[1px] bg-gray-400/20 my-1 mx-2"></div>
+                    
                     <button 
                         onClick={() => { onLogout(); setMenuOpen(false); }}
-                        className="text-left px-3 py-1.5 rounded hover:bg-blue-500 hover:text-white text-gray-800 dark:text-gray-100 transition-colors"
+                        className="text-left px-3 py-1.5 rounded hover:bg-blue-500 hover:text-white text-gray-800 dark:text-gray-100 transition-colors text-sm"
                     >
                         Log Out...
                     </button>

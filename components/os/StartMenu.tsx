@@ -123,13 +123,17 @@ export const StartMenu: React.FC<StartMenuProps> = ({
       <div className="h-16 bg-gray-100/40 dark:bg-[#1a1a1a]/40 border-t border-gray-200/30 dark:border-gray-700/30 flex items-center justify-between px-8 rounded-b-lg backdrop-blur-md">
         <button 
             onClick={onOpenUserProfile}
-            className="flex items-center gap-3 hover:bg-white/50 dark:hover:bg-white/10 px-3 py-2 rounded-md transition-colors"
+            className="flex items-center gap-3 hover:bg-white/50 dark:hover:bg-white/10 px-3 py-1.5 rounded-md transition-colors text-left"
         >
-            <div className="w-8 h-8 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center">
-                {/* Fallback avatar logic */}
-                <User size={16} className="text-gray-600 dark:text-gray-200"/>
+            <div className="w-9 h-9 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center shrink-0">
+                <User size={18} className="text-gray-600 dark:text-gray-200"/>
             </div>
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-200">{username || 'Guest User'}</span>
+            <div className="flex flex-col">
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-200 leading-tight">{username || 'Guest User'}</span>
+                <span className="text-[11px] text-gray-500 dark:text-gray-400 leading-tight mt-0.5">
+                    {username ? `${username.toLowerCase().replace(/\s+/g, '.')}@mateos.com` : 'guest@mateos.com'}
+                </span>
+            </div>
         </button>
         <button 
             onClick={onLogout}
