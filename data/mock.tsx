@@ -4,9 +4,27 @@ import { RecentItem } from '../types';
 
 // Mock Data for "Database"
 export const MOCK_USERS = [
-  { id: '1', username: 'admin', password: 'password', email: 'admin@mateos.com' },
-  { id: '2', username: 'guest', password: 'guest', email: 'guest@mateos.com' },
-  { id: '3', username: 'mateo', password: '123', email: 'mateo@mateos.com' }
+  { 
+      id: '1', 
+      username: 'admin', 
+      password: 'password', 
+      email: 'admin@mateos.com',
+      avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=200&auto=format&fit=crop'
+  },
+  { 
+      id: '2', 
+      username: 'guest', 
+      password: 'guest', 
+      email: 'guest@mateos.com' 
+      // No avatar for guest, will use default icon
+  },
+  { 
+      id: '3', 
+      username: 'mateo', 
+      password: '123', 
+      email: 'mateo@mateos.com',
+      avatar: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?q=80&w=200&auto=format&fit=crop'
+  }
 ];
 
 // Wallpaper Presets

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Wifi, Battery, Search, Command, X, User } from 'lucide-react';
+import { Wifi, Battery, Search, Command, X, User, Lock } from 'lucide-react';
 import { RecentItem } from '../../types';
 
 interface TopBarProps {
@@ -10,6 +10,7 @@ interface TopBarProps {
   username: string;
   onOpenUserProfile: () => void;
   userAvatar?: string | null;
+  onLock: () => void;
 }
 
 export const TopBar: React.FC<TopBarProps> = ({ 
@@ -19,7 +20,8 @@ export const TopBar: React.FC<TopBarProps> = ({
     recentItems, 
     username,
     onOpenUserProfile,
-    userAvatar
+    userAvatar,
+    onLock
 }) => {
   const [time, setTime] = useState(new Date());
   const [menuOpen, setMenuOpen] = useState(false);
@@ -106,6 +108,14 @@ export const TopBar: React.FC<TopBarProps> = ({
                     </button>
                     
                     <div className="h-[1px] bg-gray-400/20 my-1 mx-2"></div>
+
+                    <button 
+                        onClick={() => { onLock(); setMenuOpen(false); }}
+                        className="text-left px-3 py-1.5 rounded hover:bg-blue-500 hover:text-white text-gray-800 dark:text-gray-100 transition-colors text-sm flex items-center gap-2"
+                    >
+                         <Lock size={14} className="opacity-70" />
+                        Lock Screen
+                    </button>
                     
                     <button 
                         onClick={() => { onLogout(); setMenuOpen(false); }}

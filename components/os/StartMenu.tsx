@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react';
-import { Search, Power, User } from 'lucide-react';
+import { Search, Power, User, Lock } from 'lucide-react';
 import { AppId, RecentItem } from '../../types';
 
 interface StartMenuProps {
@@ -12,6 +12,7 @@ interface StartMenuProps {
   username: string;
   onOpenUserProfile: () => void;
   userAvatar?: string | null;
+  onLock: () => void;
 }
 
 export const StartMenu: React.FC<StartMenuProps> = ({ 
@@ -23,7 +24,8 @@ export const StartMenu: React.FC<StartMenuProps> = ({
     recentItems,
     username,
     onOpenUserProfile,
-    userAvatar
+    userAvatar,
+    onLock
 }) => {
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -141,12 +143,23 @@ export const StartMenu: React.FC<StartMenuProps> = ({
                 </span>
             </div>
         </button>
-        <button 
-            onClick={onLogout}
-            className="p-3 hover:bg-white/50 dark:hover:bg-white/10 rounded-md transition-colors"
-        >
-            <Power size={20} className="text-gray-700 dark:text-gray-200" />
-        </button>
+        
+        <div className="flex items-center gap-2">
+            <button 
+                onClick={onLock}
+                className="p-3 hover:bg-white/50 dark:hover:bg-white/10 rounded-md transition-colors"
+                title="Lock Screen"
+            >
+                <Lock size={20} className="text-gray-700 dark:text-gray-200" />
+            </button>
+            <button 
+                onClick={onLogout}
+                className="p-3 hover:bg-white/50 dark:hover:bg-white/10 rounded-md transition-colors"
+                title="Log Out"
+            >
+                <Power size={20} className="text-gray-700 dark:text-gray-200" />
+            </button>
+        </div>
       </div>
     </div>
   );

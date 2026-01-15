@@ -128,11 +128,18 @@ const App: React.FC = () => {
      setAuthMode('login_full');
   };
 
-  const handleLoginSuccess = (user: string) => {
+  const handleLoginSuccess = (user: { username: string, avatar?: string }) => {
     const now = Date.now();
-    localStorage.setItem('mateos_user', JSON.stringify({ username: user }));
+    localStorage.setItem('mateos_user', JSON.stringify({ username: user.username }));
     localStorage.setItem('mateos_last_login', now.toString());
-    setUsername(user);
+    
+    // Update avatar if provided by API (e.g. initial login with a user that has one)
+    if (user.avatar) {
+        localStorage.setItem('mateos_avatar', user.avatar);
+        setUserAvatar(user.avatar);
+    }
+
+    setUsername(user.username);
     setAuthMode('desktop');
   };
 
@@ -148,6 +155,10 @@ const App: React.FC = () => {
     setWindows([]);
     setActiveWindowId(null);
     setStartMenuOpen(false);
+  };
+  
+  const handleLock = () => {
+      setAuthMode('login_partial');
   };
 
   const handleForgotPassword = () => {
@@ -328,6 +339,7 @@ const App: React.FC = () => {
                     username={username}
                     onOpenUserProfile={() => openApp(AppId.SETTINGS)}
                     userAvatar={userAvatar}
+                    onLock={handleLock}
                 />
             )}
 
@@ -406,6 +418,7 @@ const App: React.FC = () => {
                     username={username}
                     onOpenUserProfile={() => openApp(AppId.SETTINGS)}
                     userAvatar={userAvatar}
+                    onLock={handleLock}
                 />
             ) : (
                 <Launchpad

@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { ArrowRight,  XCircle, HelpCircle, RefreshCw, Check, Mail, AlertCircle, User } from 'lucide-react';
+import { ArrowRight, UserCircle2, XCircle, HelpCircle, RefreshCw, Check, Mail, AlertCircle, User } from 'lucide-react';
 import { authService } from '../../services/api';
 
 interface LoginScreenProps {
   mode: 'full' | 'partial';
   savedUsername?: string;
-  onLogin: (username: string) => void;
+  onLogin: (user: { username: string; avatar?: string }) => void;
   onSwitchAccount: () => void;
   onForgotPassword: () => void;
   userAvatar?: string | null;
@@ -45,7 +45,10 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
       const response = await authService.login(username, password);
 
       if (response.success && response.user) {
-        onLogin(response.user.username);
+        onLogin({
+            username: response.user.username,
+            avatar: response.user.avatar
+        });
       } else {
         setError(response.message || 'Invalid credentials');
         setPassword('');
@@ -96,7 +99,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
                 alt="User Avatar"
             />
          ) : (
-            <User size={48} className="text-white/80" />
+            <UserCircle2 size={48} className="text-white/80" />
          )}
       </div>
     </div>
