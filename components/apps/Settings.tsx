@@ -80,7 +80,7 @@ export const SettingsApp: React.FC<SettingsAppProps> = ({
                 }`}
             >
                 <Monitor size={18} className={activeSection === 'taskbar' ? 'text-white' : 'text-blue-500'} />
-                <span className="flex-1 text-left">Taskbar & Dock</span>
+                <span className="flex-1 text-left">Taskbar & {theme === 'aqua' ? 'Dock' : 'Taskbar'}</span>
             </button>
         </div>
       </div>
@@ -193,7 +193,7 @@ export const SettingsApp: React.FC<SettingsAppProps> = ({
             {activeSection === 'taskbar' && (
                  <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 space-y-6">
                      <div>
-                        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Taskbar & Dock</h2>
+                        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Taskbar & {theme === 'aqua' ? 'Dock' : 'Taskbar'}</h2>
                         <p className="text-gray-500 dark:text-gray-400 text-sm">Manage how your applications are organized.</p>
                      </div>
 
