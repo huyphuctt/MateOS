@@ -24,11 +24,11 @@ export const MOCK_USERS = [
 
 // Wallpaper Presets
 export const WALLPAPERS = [
+  { id: 'wp1', src: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=3164&auto=format&fit=crop', title: 'Abstract' },
   { id: 'wp2', src: 'https://images.unsplash.com/photo-1477346611705-65d1883cee1e?q=80&w=3870&auto=format&fit=crop', title: 'Mountain' },
   { id: 'wp3', src: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=3872&auto=format&fit=crop', title: 'Space' },
   { id: 'wp4', src: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=3870&auto=format&fit=crop', title: 'Valley' },
   { id: 'wp5', src: 'https://images.unsplash.com/photo-1506202687253-52e1b29d3527?q=80&w=3870&auto=format&fit=crop', title: 'Nebula' },
-  { id: 'wp6', src: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=3164&auto=format&fit=crop', title: 'Abstract' },
 ];
 
 // Global Data

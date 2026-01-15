@@ -6,6 +6,7 @@ interface User {
   email: string;
   avatar?: string;
   token?: string;
+  wallpaper?: string;
 }
 
 interface AuthResponse {

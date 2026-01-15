@@ -5,7 +5,7 @@ import { authService } from '../../services/api';
 interface LoginScreenProps {
   mode: 'full' | 'partial';
   savedUsername?: string;
-  onLogin: (user: { username: string; avatar?: string }) => void;
+  onLogin: (user: { username: string; avatar?: string; wallpaper?: string }) => void;
   onSwitchAccount: () => void;
   onForgotPassword: () => void;
   userAvatar?: string | null;
@@ -47,7 +47,8 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
       if (response.success && response.user) {
         onLogin({
             username: response.user.username,
-            avatar: response.user.avatar
+            avatar: response.user.avatar,
+            wallpaper: response.user.wallpaper
         });
       } else {
         setError(response.message || 'Invalid credentials');

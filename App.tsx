@@ -138,7 +138,7 @@ const App: React.FC = () => {
      setAuthMode('login_full');
   };
 
-  const handleLoginSuccess = (user: { username: string, avatar?: string }) => {
+  const handleLoginSuccess = (user: { username: string, avatar?: string, wallpaper?: string }) => {
     const now = Date.now();
     localStorage.setItem('mateos_user', JSON.stringify({ username: user.username }));
     localStorage.setItem('mateos_last_login', now.toString());
@@ -146,6 +146,11 @@ const App: React.FC = () => {
     // Update avatar if provided by API (e.g. initial login with a user that has one)
     if (user.avatar) {
         setUserAvatar(user.avatar);
+    }
+
+    // Update wallpaper if provided by API
+    if (user.wallpaper) {
+        setWallpaper(user.wallpaper);
     }
 
     setUsername(user.username);

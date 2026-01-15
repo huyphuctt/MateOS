@@ -112,8 +112,7 @@ export const TopBar: React.FC<TopBarProps> = ({
                     <button 
                         onClick={() => { onLock(); setMenuOpen(false); }}
                         className="text-left px-3 py-1.5 rounded hover:bg-blue-500 hover:text-white text-gray-800 dark:text-gray-100 transition-colors text-sm flex items-center gap-2"
-                    >
-                         <Lock size={14} className="opacity-70" />
+                    >                         
                         Lock Screen
                     </button>
                     
