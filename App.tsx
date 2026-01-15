@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Monitor, 
   Globe, 
@@ -30,6 +30,7 @@ import { RECENT_ITEMS, WALLPAPERS } from './data/mock';
 // Constants
 const SESSION_MAX_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 const SESSION_SHORT_MS = 2 * 24 * 60 * 60 * 1000; // 2 days
+const CHECK_INTERVAL_MS = 10 * 60 * 1000; // 10 minutes
 
 // Placeholder apps
 const Placeholder = ({ text }: { text: string }) => (
@@ -85,19 +86,16 @@ const App: React.FC = () => {
     }
   }, [userAvatar]);
 
-  // --- Auth Logic (Screen Routing) ---
-  useEffect(() => {
-    checkSession();
-  }, []);
+  // --- Auth Logic (Session Management) ---
 
-  const checkSession = () => {
+  const checkSession = useCallback((isBackgroundCheck = false) => {
     const localUser = localStorage.getItem('mateos_user');
     const lastLoginStr = localStorage.getItem('mateos_last_login');
     const bootCompleted = localStorage.getItem('mateos_boot_completed');
     const now = Date.now();
 
     // 1. Boot Sequence Check (Skip if already booted once on this device)
-    if (!bootCompleted) {
+    if (!bootCompleted && !isBackgroundCheck) {
         setAuthMode('boot');
         return;
     }
@@ -108,7 +106,7 @@ const App: React.FC = () => {
         return;
     }
 
-    // 3. No Session Token or Expired (> 7 days) -> Full Login
+    // 3. No Session Token or Missing Time -> Full Login
     if (!lastLoginStr) {
         setAuthMode('login_full');
         setUsername(JSON.parse(localUser).username);
@@ -118,20 +116,52 @@ const App: React.FC = () => {
     const lastLogin = parseInt(lastLoginStr, 10);
     const diff = now - lastLogin;
 
+    // 4. Hard Expiry (> 7 days) -> Force Full Login
     if (diff > SESSION_MAX_MS) {
-        // Session Expired
         setAuthMode('login_full');
         setUsername(JSON.parse(localUser).username);
-    } else if (diff > SESSION_SHORT_MS && diff <= SESSION_MAX_MS) {
-        // Session Medium (2-7 days) -> Partial Login
+        return;
+    } 
+    
+    // 5. Short Expiry / Invalid Session (> 2 days) -> Lock Screen (Login Partial)
+    if (diff > SESSION_SHORT_MS) {
         setAuthMode('login_partial');
         setUsername(JSON.parse(localUser).username);
-    } else {
-        // Session Recent (< 2 days) -> Auto Login
+        return;
+    }
+
+    // 6. Valid Session
+    // If this is an initial load (!isBackgroundCheck), enter desktop.
+    // If this is a background check, we stay in the current state (unless expired above).
+    if (!isBackgroundCheck) {
         setAuthMode('desktop');
         setUsername(JSON.parse(localUser).username);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    // 1. Initial Session Check (Mount)
+    checkSession(false);
+
+    // 2. Periodic Check (Every 10 minutes)
+    const intervalId = setInterval(() => {
+        checkSession(true);
+    }, CHECK_INTERVAL_MS);
+
+    // 3. Re-access Check (Visibility Change)
+    const handleVisibilityChange = () => {
+        if (document.visibilityState === 'visible') {
+            checkSession(true);
+        }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+        clearInterval(intervalId);
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [checkSession]);
 
   const handleBootComplete = () => {
      localStorage.setItem('mateos_boot_completed', 'true');
