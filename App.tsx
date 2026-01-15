@@ -41,7 +41,10 @@ const Placeholder = ({ text }: { text: string }) => (
 
 const App: React.FC = () => {
   // --- Auth State ---
-  const [authMode, setAuthMode] = useState<AuthMode>('boot'); // Start with logic check
+  // Initialize state based on whether we've booted before to avoid flash
+  const [authMode, setAuthMode] = useState<AuthMode>(() => 
+    localStorage.getItem('mateos_boot_completed') ? 'login_full' : 'boot'
+  );
   const [username, setUsername] = useState<string>('');
   
   // --- OS State ---
@@ -88,10 +91,11 @@ const App: React.FC = () => {
 
   // --- Auth Logic (Session Management) ---
 
-  const checkSession = useCallback((isBackgroundCheck = false) => {
+  const checkSession = useCallback(async (isBackgroundCheck = false) => {
     const localUser = localStorage.getItem('mateos_user');
     const lastLoginStr = localStorage.getItem('mateos_last_login');
     const bootCompleted = localStorage.getItem('mateos_boot_completed');
+    const token = localStorage.getItem('mateos_token');
     const now = Date.now();
 
     // 1. Boot Sequence Check (Skip if already booted once on this device)
@@ -100,42 +104,59 @@ const App: React.FC = () => {
         return;
     }
 
-    // 2. No Local Data -> Full Login
-    if (!localUser) {
+    // 2. Local Data Check
+    if (!localUser || !lastLoginStr) {
         setAuthMode('login_full');
+        if (localUser) setUsername(JSON.parse(localUser).username);
         return;
     }
 
-    // 3. No Session Token or Missing Time -> Full Login
-    if (!lastLoginStr) {
-        setAuthMode('login_full');
-        setUsername(JSON.parse(localUser).username);
-        return;
-    }
+    const usernameStr = JSON.parse(localUser).username;
 
+    // 3. Time Expiry Check
     const lastLogin = parseInt(lastLoginStr, 10);
     const diff = now - lastLogin;
 
-    // 4. Hard Expiry (> 7 days) -> Force Full Login
     if (diff > SESSION_MAX_MS) {
         setAuthMode('login_full');
-        setUsername(JSON.parse(localUser).username);
+        setUsername(usernameStr);
         return;
     } 
     
-    // 5. Short Expiry / Invalid Session (> 2 days) -> Lock Screen (Login Partial)
     if (diff > SESSION_SHORT_MS) {
         setAuthMode('login_partial');
-        setUsername(JSON.parse(localUser).username);
+        setUsername(usernameStr);
         return;
     }
 
-    // 6. Valid Session
-    // If this is an initial load (!isBackgroundCheck), enter desktop.
-    // If this is a background check, we stay in the current state (unless expired above).
+    // 4. API Token Validation Check
+    // If token exists, verify with server. If invalid, lock screen.
+    if (token) {
+        try {
+            const isValid = await authService.checkSession(token);
+            if (!isValid) {
+                setAuthMode('login_partial');
+                setUsername(usernameStr);
+                return;
+            }
+        } catch (error) {
+            // On error, default to partial login to be safe, or ignore if we want to be lenient on network error.
+            // Requirement says "if invalid, set to login_partial".
+            setAuthMode('login_partial');
+            setUsername(usernameStr);
+            return;
+        }
+    } else {
+        // Missing token but have session data? Force re-auth (partial).
+        setAuthMode('login_partial');
+        setUsername(usernameStr);
+        return;
+    }
+
+    // 5. Valid Session
     if (!isBackgroundCheck) {
         setAuthMode('desktop');
-        setUsername(JSON.parse(localUser).username);
+        setUsername(usernameStr);
     }
   }, []);
 
@@ -168,11 +189,15 @@ const App: React.FC = () => {
      setAuthMode('login_full');
   };
 
-  const handleLoginSuccess = (user: { username: string, avatar?: string, wallpaper?: string }) => {
+  const handleLoginSuccess = (user: { username: string, avatar?: string, wallpaper?: string, token?: string }) => {
     const now = Date.now();
     localStorage.setItem('mateos_user', JSON.stringify({ username: user.username }));
     localStorage.setItem('mateos_last_login', now.toString());
     
+    if (user.token) {
+        localStorage.setItem('mateos_token', user.token);
+    }
+
     // Update avatar if provided by API (e.g. initial login with a user that has one)
     if (user.avatar) {
         setUserAvatar(user.avatar);
@@ -194,6 +219,7 @@ const App: React.FC = () => {
     // Clear User Specific Data
     localStorage.removeItem('mateos_user');
     localStorage.removeItem('mateos_last_login');
+    localStorage.removeItem('mateos_token');
     // Note: We do NOT clear mateos_boot_completed
 
     // Reset OS visual state to defaults (clearing user preferences)

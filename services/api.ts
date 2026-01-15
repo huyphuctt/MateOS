@@ -70,7 +70,7 @@ class AuthService {
 
     // Production
     try {
-      const response = await fetch(`${this.apiUrl}/login`, {
+    const response = await fetch(`${this.apiUrl}/auth/sign-in`, {
         method: 'POST',
         headers: this.getHeaders(),
         body: JSON.stringify({ username, password }),
@@ -92,13 +92,30 @@ class AuthService {
     }
 
     try {
-      await fetch(`${this.apiUrl}/logout`, {
+      await fetch(`${this.apiUrl}/auth/sign-out`, {
         method: 'POST',
         headers: this.getHeaders(token),
       });
       return true;
     } catch (error) {
       console.error('Logout error:', error);
+      return false;
+    }
+  }
+
+  public async checkSession(token?: string): Promise<boolean> {
+    if (this.isMock) {
+      return true; // Always succeed in mock
+    }
+
+    try {
+      await fetch(`${this.apiUrl}/check_session`, {
+        method: 'POST',
+        headers: this.getHeaders(token),
+      });
+      return true;
+    } catch (error) {
+      console.error('checkSession error:', error);
       return false;
     }
   }
@@ -120,7 +137,7 @@ class AuthService {
 
     // Production
     try {
-      const response = await fetch(`${this.apiUrl}/change-password`, {
+      const response = await fetch(`${this.apiUrl}/auth/change-password`, {
         method: 'POST',
         headers: this.getHeaders(token),
         body: JSON.stringify({ username, oldPassword, newPassword }),
