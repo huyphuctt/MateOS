@@ -13,6 +13,7 @@ interface StartMenuProps {
   onOpenUserProfile: () => void;
   userAvatar?: string | null;
   onLock: () => void;
+  isAdmin: boolean;
 }
 
 export const StartMenu: React.FC<StartMenuProps> = ({ 
@@ -25,7 +26,8 @@ export const StartMenu: React.FC<StartMenuProps> = ({
     username,
     onOpenUserProfile,
     userAvatar,
-    onLock
+    onLock,
+    isAdmin
 }) => {
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -49,6 +51,7 @@ export const StartMenu: React.FC<StartMenuProps> = ({
     { id: AppId.COPILOT, name: 'Copilot' },
     { id: AppId.NOTEPAD, name: 'Notepad' },
     { id: AppId.PHOTOS, name: 'Photos' },
+    ...(isAdmin ? [{ id: AppId.ADMIN, name: 'Admin' }] : []),
     { id: AppId.SETTINGS, name: 'Settings' },
     { id: AppId.CALCULATOR, name: 'Calculator' },
   ];

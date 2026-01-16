@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { LayoutGrid, Search, Rocket, ChevronUp, Wifi, Volume2, Battery } from 'lucide-react';
-import { AppId, Theme } from '../../types';
+import React, { useState, useEffect, useRef } from 'react';
+import { LayoutGrid, Search, Rocket, ChevronUp, Wifi, Volume2, Battery, Building, Layers, Check } from 'lucide-react';
+import { AppId, Theme, Organization, Workspace } from '../../types';
 
 interface TaskbarProps {
   openApps: AppId[];
@@ -11,6 +11,12 @@ interface TaskbarProps {
   appIcons: Record<AppId, React.ReactNode>;
   theme: Theme;
   hideTaskbar: boolean;
+  // Org Context Props
+  organizations: Organization[];
+  currentOrg?: Organization;
+  currentWorkspace?: Workspace;
+  onSwitchOrg: (orgId: number) => void;
+  onSwitchWorkspace: (wkId: number) => void;
 }
 
 export const Taskbar: React.FC<TaskbarProps> = ({
@@ -21,14 +27,32 @@ export const Taskbar: React.FC<TaskbarProps> = ({
   startMenuOpen,
   appIcons,
   theme,
-  hideTaskbar
+  hideTaskbar,
+  organizations,
+  currentOrg,
+  currentWorkspace,
+  onSwitchOrg,
+  onSwitchWorkspace
 }) => {
   const [time, setTime] = useState(new Date());
+  const [orgMenuOpen, setOrgMenuOpen] = useState(false);
+  const orgMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const timer = setInterval(() => setTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
+
+  // Handle click outside for Org Menu
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+        if (orgMenuOpen && orgMenuRef.current && !orgMenuRef.current.contains(event.target as Node)) {
+            setOrgMenuOpen(false);
+        }
+    };
+    if (orgMenuOpen) document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [orgMenuOpen]);
 
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
@@ -157,6 +181,71 @@ export const Taskbar: React.FC<TaskbarProps> = ({
 
       {/* System Tray */}
       <div className="flex items-center gap-1">
+        
+        {/* Org Switcher for Aero */}
+        {currentOrg && (
+          <div className="relative mr-2" ref={orgMenuRef}>
+              <button
+                  onClick={() => setOrgMenuOpen(!orgMenuOpen)}
+                  className={`
+                    flex items-center gap-2 px-3 py-1.5 rounded-md transition-all cursor-pointer border border-white/10 
+                    ${orgMenuOpen 
+                        ? 'bg-white/90 dark:bg-white/20 shadow-sm text-gray-900 dark:text-white' 
+                        : 'bg-white/50 dark:bg-white/10 hover:bg-white/70 dark:hover:bg-white/15 text-gray-800 dark:text-gray-200'}
+                  `}
+              >
+                   <Building size={14} className={orgMenuOpen ? "text-blue-600 dark:text-blue-400" : "text-gray-700 dark:text-gray-300"}/>
+                   <span className="text-xs font-semibold hidden md:block max-w-[100px] truncate">{currentOrg.name}</span>
+                   <ChevronUp size={12} className={`opacity-50 transition-transform ${orgMenuOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {orgMenuOpen && (
+                  <div className="absolute bottom-full right-0 mb-2 w-64 bg-white/90 dark:bg-[#1e1e1e]/90 backdrop-blur-xl rounded-lg shadow-2xl border border-white/20 dark:border-gray-700/50 p-2 flex flex-col z-[10000] animate-in slide-in-from-bottom-2 fade-in">
+                       {/* Org List */}
+                       <div className="px-2 py-1 text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Organization</div>
+                       {organizations.map(org => (
+                           <button
+                              key={org.id}
+                              onClick={() => { onSwitchOrg(org.id); setOrgMenuOpen(false); }}
+                              className={`text-left px-3 py-1.5 rounded text-sm flex items-center justify-between mb-1 transition-colors ${
+                                  currentOrg.id === org.id 
+                                  ? 'bg-blue-500 text-white' 
+                                  : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/10'
+                              }`}
+                           >
+                               <span className="truncate">{org.name}</span>
+                               {currentOrg.id === org.id && <Check size={14} />}
+                           </button>
+                       ))}
+
+                       <div className="h-[1px] bg-gray-400/20 my-2 mx-1"></div>
+
+                       {/* Workspace List */}
+                       <div className="px-2 py-1 text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Workspace</div>
+                       {currentOrg.workspaces.map(wk => (
+                           <button
+                              key={wk.id}
+                              onClick={() => { onSwitchWorkspace(wk.id); setOrgMenuOpen(false); }}
+                              className={`text-left px-3 py-1.5 rounded text-sm flex items-center justify-between mb-1 transition-colors ${
+                                  currentWorkspace?.id === wk.id 
+                                  ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400 font-medium' 
+                                  : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/10'
+                              }`}
+                           >
+                               <div className="flex items-center gap-2">
+                                   <Layers size={12} className={currentWorkspace?.id === wk.id ? 'text-blue-500' : 'text-gray-400'}/>
+                                   <span className="truncate">{wk.name}</span>
+                               </div>
+                               {currentWorkspace?.id === wk.id && <Check size={14} className="text-blue-500" />}
+                           </button>
+                       ))}
+                  </div>
+              )}
+          </div>
+        )}
+
+        <div className="hidden sm:block w-[1px] h-4 bg-gray-400/30 mx-1"></div>
+
         <div className="hidden sm:flex hover:bg-white/40 dark:hover:bg-white/10 p-1 rounded transition-colors cursor-pointer">
             <ChevronUp size={14} className="text-gray-600 dark:text-gray-300"/>
         </div>

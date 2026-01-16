@@ -10,7 +10,22 @@ export const MOCK_USERS = [
       password: 'password', 
       email: 'admin@mateos.com',
       avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=200&auto=format&fit=crop',
-      wallpaper: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=3872&auto=format&fit=crop'
+      wallpaper: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=3872&auto=format&fit=crop',
+      organizations:[
+        {
+            id: 1, 
+            name:'Solar System',
+            role: 'admin',
+            workspaces: [{id:1, name:'Earth'}, {id:2, name:'Mars'}, {id:3, name:'Venus'}]
+        },
+        {
+            id: 2, 
+            name:'Milky Way',
+            role: 'user',
+            workspaces: [{id:4, name:'Core'}, {id:5, name:'Spiral Arm'}]
+        }
+      ],
+      role:'admin'
   },
   { 
       id: '2', 
@@ -18,7 +33,16 @@ export const MOCK_USERS = [
       password: '123', 
       email: 'mateo@mateos.com',
       avatar: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?q=80&w=200&auto=format&fit=crop',
-      wallpaper: 'https://images.unsplash.com/photo-1477346611705-65d1883cee1e?q=80&w=3870&auto=format&fit=crop'
+      wallpaper: 'https://images.unsplash.com/photo-1477346611705-65d1883cee1e?q=80&w=3870&auto=format&fit=crop',
+      organizations:[
+        {
+            id: 1, 
+            name:'Solar System',
+            role: 'user',
+            workspaces: [{id:1, name:'Earth'}]
+        }
+      ],
+      role:'user'
   }
 ];
 

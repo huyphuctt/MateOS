@@ -6,12 +6,13 @@ export enum AppId {
   BROWSER = 'browser',
   PHOTOS = 'photos',
   SETTINGS = 'settings',
-  CALCULATOR = 'calculator'
+  CALCULATOR = 'calculator',
+  ADMIN = 'admin'
 }
 
 export type Theme = 'aero' | 'aqua';
 
-export type AuthMode = 'boot' | 'login_full' | 'login_partial' | 'desktop';
+export type AuthMode = 'boot' | 'login_full' | 'login_partial' | 'context_selection' | 'desktop';
 
 export interface WindowState {
   id: AppId;
@@ -42,4 +43,29 @@ export interface RecentItem {
   timestamp: string;
   type: 'calendar' | 'file' | 'image' | 'system';
   icon?: ReactNode;
+}
+
+export interface Workspace {
+  id: number;
+  name: string;
+}
+
+export interface Organization {
+  id: number;
+  name: string;
+  workspaces: Workspace[];
+  // The role of the current user in this organization
+  role?: 'admin' | 'user';
+}
+
+export interface User {
+  id: string;
+  username: string;
+  email: string;
+  avatar?: string;
+  token?: string;
+  wallpaper?: string;
+  organizations: Organization[];
+  // Global role or primary role fallback
+  role?: 'admin' | 'user'; 
 }

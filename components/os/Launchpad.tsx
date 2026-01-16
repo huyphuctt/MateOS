@@ -7,9 +7,10 @@ interface LaunchpadProps {
   onAppClick: (id: AppId) => void;
   appIcons: Record<AppId, React.ReactNode>;
   onClose: () => void;
+  isAdmin: boolean;
 }
 
-export const Launchpad: React.FC<LaunchpadProps> = ({ isOpen, onAppClick, appIcons, onClose }) => {
+export const Launchpad: React.FC<LaunchpadProps> = ({ isOpen, onAppClick, appIcons, onClose, isAdmin }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [show, setShow] = useState(false);
 
@@ -28,6 +29,7 @@ export const Launchpad: React.FC<LaunchpadProps> = ({ isOpen, onAppClick, appIco
     { id: AppId.BROWSER, name: 'Safari' }, // Renamed for effect, but ID is same
     { id: AppId.NOTEPAD, name: 'Notes' },
     { id: AppId.PHOTOS, name: 'Photos' },
+    ...(isAdmin ? [{ id: AppId.ADMIN, name: 'Admin Console' }] : []),
     { id: AppId.SETTINGS, name: 'Settings' },
     { id: AppId.CALCULATOR, name: 'Calculator' },
   ];

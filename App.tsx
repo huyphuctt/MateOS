@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { 
   Monitor, 
   Globe, 
@@ -9,7 +9,8 @@ import {
   Calculator,
   Trash2,
   FolderClosed,
-  Compass
+  Compass,
+  ShieldCheck
 } from 'lucide-react';
 
 import { Taskbar } from './components/os/Taskbar';
@@ -19,13 +20,15 @@ import { CopilotApp } from './components/apps/Copilot';
 import { NotepadApp } from './components/apps/Notepad';
 import { BrowserApp } from './components/apps/Browser';
 import { SettingsApp } from './components/apps/Settings';
+import { AdminPanel } from './components/apps/AdminPanel';
+import { ContextSelector } from './components/os/ContextSelector'; // New Component
 import { TopBar } from './components/os/TopBar';
 import { Launchpad } from './components/os/Launchpad';
 import { BootScreen } from './components/os/BootScreen';
 import { LoginScreen } from './components/os/LoginScreen';
-import { AppId, WindowState, Theme, AuthMode } from './types';
+import { AppId, WindowState, Theme, AuthMode, User, Organization, Workspace } from './types';
 import { authService } from './services/api';
-import { RECENT_ITEMS, WALLPAPERS } from './data/mock';
+import { RECENT_ITEMS, WALLPAPERS, MOCK_USERS } from './data/mock';
 
 // Constants
 const SESSION_MAX_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
@@ -71,6 +74,48 @@ const App: React.FC = () => {
     return 'login_full';
   });
   
+  // --- User & Org Context State ---
+  // Resolve full user object (in real app, this comes from API). For now, we mock lookup.
+  const currentUser = useMemo(() => {
+    return MOCK_USERS.find(u => u.username.toLowerCase() === username.toLowerCase()) as unknown as User | undefined;
+  }, [username]);
+
+  // Load saved context or default to first available
+  const [activeOrgId, setActiveOrgId] = useState<number | null>(() => {
+    const saved = localStorage.getItem('mateos_active_context');
+    if (saved) return JSON.parse(saved).orgId;
+    return null;
+  });
+
+  const [activeWorkspaceId, setActiveWorkspaceId] = useState<number | null>(() => {
+     const saved = localStorage.getItem('mateos_active_context');
+     if (saved) return JSON.parse(saved).wkId;
+     return null;
+  });
+
+  // Derived active objects
+  const currentOrg = useMemo(() => {
+    if (!currentUser) return undefined;
+    if (activeOrgId) return currentUser.organizations.find(o => o.id === activeOrgId);
+    return currentUser.organizations[0]; // Default to first
+  }, [currentUser, activeOrgId]);
+
+  const currentWorkspace = useMemo(() => {
+    if (!currentOrg) return undefined;
+    if (activeWorkspaceId) return currentOrg.workspaces.find(w => w.id === activeWorkspaceId);
+    return currentOrg.workspaces[0]; // Default to first
+  }, [currentOrg, activeWorkspaceId]);
+
+  // Persist Context Changes
+  useEffect(() => {
+    if (currentOrg) {
+        localStorage.setItem('mateos_active_context', JSON.stringify({
+            orgId: currentOrg.id,
+            wkId: currentWorkspace?.id
+        }));
+    }
+  }, [currentOrg, currentWorkspace]);
+
   // --- OS State ---
   const [theme, setTheme] = useState<Theme>(() => {
     const saved = localStorage.getItem('mateos_theme');
@@ -242,6 +287,28 @@ const App: React.FC = () => {
     }
 
     setUsername(user.username);
+
+    // Check for Org/Workspace complexity for Context Selection
+    // We need to fetch the full user object from MOCK (or API) since 'user' arg here is partial from login response
+    const fullUser = MOCK_USERS.find(u => u.username.toLowerCase() === user.username.toLowerCase());
+    
+    if (fullUser) {
+        const hasMultipleOrgs = fullUser.organizations.length > 1;
+        const hasMultipleWorkspaces = fullUser.organizations.some(o => o.workspaces.length > 1);
+        
+        if (hasMultipleOrgs || hasMultipleWorkspaces) {
+            setAuthMode('context_selection');
+            return;
+        }
+    }
+
+    // Single context, go straight to desktop
+    setAuthMode('desktop');
+  };
+
+  const handleContextSelected = (orgId: number, wkId: number) => {
+    setActiveOrgId(orgId);
+    setActiveWorkspaceId(wkId);
     setAuthMode('desktop');
   };
 
@@ -254,6 +321,7 @@ const App: React.FC = () => {
     localStorage.removeItem('mateos_last_login');
     localStorage.removeItem('mateos_token');
     localStorage.removeItem('mateos_is_locked');
+    localStorage.removeItem('mateos_active_context');
     // Note: We do NOT clear mateos_boot_completed
 
     // Reset OS visual state to defaults (clearing user preferences)
@@ -261,6 +329,8 @@ const App: React.FC = () => {
     setTheme('aqua');
     setUserAvatar(null);
     setUsername('');
+    setActiveOrgId(null);
+    setActiveWorkspaceId(null);
 
     // Clear OS state
     setWindows([]);
@@ -325,6 +395,7 @@ const App: React.FC = () => {
     component: React.ReactNode;
     defaultSize?: { width: number; height: number };
     preferredPosition?: { x: number; y: number };
+    requiresAdmin?: boolean; // New Flag
   };
 
   // App Definitions (Registry)
@@ -364,6 +435,13 @@ const App: React.FC = () => {
         component: null, // Rendered dynamically
         defaultSize: { width: 600, height: 450 }
     },
+    [AppId.ADMIN]: {
+        title: 'Admin Console',
+        icon: <ShieldCheck className="text-red-500" size={20} />,
+        component: null, // Dynamic
+        defaultSize: { width: 800, height: 600 },
+        requiresAdmin: true
+    },
     [AppId.CALCULATOR]: {
         title: 'Calculator',
         icon: <Calculator className="text-orange-500" size={20} />,
@@ -377,13 +455,19 @@ const App: React.FC = () => {
   const openApp = (id: AppId) => {
     setStartMenuOpen(false);
 
+    // Permission Check for Admin
+    const app = appRegistry[id];
+    if (app.requiresAdmin && currentOrg?.role !== 'admin') {
+        alert("Access Denied: You must be an administrator of the current organization.");
+        return;
+    }
+
     if (windows.find(w => w.id === id)) {
       focusWindow(id);
       setWindows(prev => prev.map(w => w.id === id ? { ...w, isMinimized: false } : w));
       return;
     }
 
-    const app = appRegistry[id];
     const newWindow: WindowState = {
       id,
       title: app.title,
@@ -445,6 +529,24 @@ const App: React.FC = () => {
   const activeWindow = windows.find(w => w.id === activeWindowId);
   const activeAppTitle = activeWindow ? activeWindow.title : 'MateOS';
 
+  // --- Context Switching Logic ---
+  const handleSwitchOrg = (orgId: number) => {
+      setActiveOrgId(orgId);
+      // Reset workspace to first one of new org
+      const newOrg = currentUser?.organizations.find(o => o.id === orgId);
+      if (newOrg && newOrg.workspaces.length > 0) {
+          setActiveWorkspaceId(newOrg.workspaces[0].id);
+      } else {
+          setActiveWorkspaceId(null);
+      }
+      // Close Admin window if open when switching, for safety/UX
+      closeWindow(AppId.ADMIN);
+  };
+
+  const handleSwitchWorkspace = (wkId: number) => {
+      setActiveWorkspaceId(wkId);
+  };
+
   return (
     <div 
         className="relative w-screen h-screen overflow-hidden bg-cover bg-center select-none transition-all duration-700"
@@ -472,6 +574,15 @@ const App: React.FC = () => {
         />
       )}
 
+      {authMode === 'context_selection' && currentUser && (
+        <ContextSelector 
+            user={currentUser}
+            onComplete={handleContextSelected}
+            savedOrgId={activeOrgId}
+            savedWorkspaceId={activeWorkspaceId}
+        />
+      )}
+
       {/* -------------------------------------------
           Desktop Environment Layer
          ------------------------------------------- */}
@@ -488,6 +599,12 @@ const App: React.FC = () => {
                     onOpenUserProfile={() => openApp(AppId.SETTINGS)}
                     userAvatar={userAvatar}
                     onLock={handleLock}
+                    // Org Context
+                    organizations={currentUser?.organizations || []}
+                    currentOrg={currentOrg}
+                    currentWorkspace={currentWorkspace}
+                    onSwitchOrg={handleSwitchOrg}
+                    onSwitchWorkspace={handleSwitchWorkspace}
                 />
             )}
 
@@ -500,6 +617,17 @@ const App: React.FC = () => {
                     <FolderClosed className="w-10 h-10 text-yellow-400 fill-yellow-400 desktop-icon-shadow" />
                     <span className="text-xs text-center line-clamp-2 desktop-text-shadow font-medium">Documents</span>
                 </button>
+
+                {/* Show Admin Tool Icon on Desktop if Admin */}
+                {currentOrg?.role === 'admin' && (
+                    <button 
+                        onDoubleClick={() => openApp(AppId.ADMIN)}
+                        className="w-20 flex flex-col items-center gap-1 group text-white hover:bg-white/10 rounded p-2 transition-colors"
+                    >
+                        <ShieldCheck className="w-10 h-10 text-red-500 fill-red-900/50 desktop-icon-shadow" />
+                        <span className="text-xs text-center desktop-text-shadow font-medium">Admin Console</span>
+                    </button>
+                )}
 
                 <button 
                     className="w-20 flex flex-col items-center gap-1 group text-white hover:bg-white/10 rounded p-2 transition-colors"
@@ -548,6 +676,11 @@ const App: React.FC = () => {
                         userAvatar={userAvatar}
                         setUserAvatar={setUserAvatar}
                     />
+                ) : window.id === AppId.ADMIN && currentOrg ? (
+                    <AdminPanel 
+                        currentOrg={currentOrg}
+                        currentWorkspace={currentWorkspace}
+                    />
                 ) : (
                     window.component
                 )}
@@ -567,6 +700,7 @@ const App: React.FC = () => {
                     onOpenUserProfile={() => openApp(AppId.SETTINGS)}
                     userAvatar={userAvatar}
                     onLock={handleLock}
+                    isAdmin={currentOrg?.role === 'admin'}
                 />
             ) : (
                 <Launchpad
@@ -574,6 +708,7 @@ const App: React.FC = () => {
                     onAppClick={openApp} 
                     appIcons={appIcons}
                     onClose={() => setStartMenuOpen(false)}
+                    isAdmin={currentOrg?.role === 'admin'}
                 />
             )}
 
@@ -597,6 +732,11 @@ const App: React.FC = () => {
                 appIcons={appIcons}
                 theme={theme}
                 hideTaskbar={hideTaskbar}
+                organizations={currentUser?.organizations || []}
+                currentOrg={currentOrg}
+                currentWorkspace={currentWorkspace}
+                onSwitchOrg={handleSwitchOrg}
+                onSwitchWorkspace={handleSwitchWorkspace}
             />
         </>
       )}

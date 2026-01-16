@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Wifi, Battery, Search, Command, X, User, Lock } from 'lucide-react';
-import { RecentItem } from '../../types';
+import { Wifi, Battery, Search, Command, X, User, Lock, ChevronDown, Building, Layers } from 'lucide-react';
+import { RecentItem, Organization, Workspace } from '../../types';
 
 interface TopBarProps {
   activeAppTitle?: string;
@@ -11,6 +11,12 @@ interface TopBarProps {
   onOpenUserProfile: () => void;
   userAvatar?: string | null;
   onLock: () => void;
+  // Org Context Props
+  organizations: Organization[];
+  currentOrg?: Organization;
+  currentWorkspace?: Workspace;
+  onSwitchOrg: (orgId: number) => void;
+  onSwitchWorkspace: (wkId: number) => void;
 }
 
 export const TopBar: React.FC<TopBarProps> = ({ 
@@ -21,13 +27,21 @@ export const TopBar: React.FC<TopBarProps> = ({
     username,
     onOpenUserProfile,
     userAvatar,
-    onLock
+    onLock,
+    organizations,
+    currentOrg,
+    currentWorkspace,
+    onSwitchOrg,
+    onSwitchWorkspace
 }) => {
   const [time, setTime] = useState(new Date());
   const [menuOpen, setMenuOpen] = useState(false);
   const [panelOpen, setPanelOpen] = useState(false);
+  const [contextOpen, setContextOpen] = useState(false);
+  
   const menuRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  const contextRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const timer = setInterval(() => setTime(new Date()), 1000);
@@ -41,28 +55,32 @@ export const TopBar: React.FC<TopBarProps> = ({
             setMenuOpen(false);
         }
     };
-
-    if (menuOpen) {
-        document.addEventListener('mousedown', handleClickOutside);
-    }
+    if (menuOpen) document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [menuOpen]);
+
+  // Handle click outside for Context Menu
+  useEffect(() => {
+    const handleClickOutsideContext = (event: MouseEvent) => {
+        if (contextRef.current && !contextRef.current.contains(event.target as Node)) {
+            setContextOpen(false);
+        }
+    };
+    if (contextOpen) document.addEventListener('mousedown', handleClickOutsideContext);
+    return () => document.removeEventListener('mousedown', handleClickOutsideContext);
+  }, [contextOpen]);
 
   // Handle click outside for Side Panel
   useEffect(() => {
     const handleClickOutsidePanel = (event: MouseEvent) => {
         if (panelOpen && panelRef.current && !panelRef.current.contains(event.target as Node)) {
             const target = event.target as HTMLElement;
-            // Prevent closing if clicking the trigger itself
             if (!target.closest('[data-panel-trigger]')) {
                 setPanelOpen(false);
             }
         }
     };
-    
-    if (panelOpen) {
-        document.addEventListener('mousedown', handleClickOutsidePanel);
-    }
+    if (panelOpen) document.addEventListener('mousedown', handleClickOutsidePanel);
     return () => document.removeEventListener('mousedown', handleClickOutsidePanel);
   }, [panelOpen]);
 
@@ -129,11 +147,77 @@ export const TopBar: React.FC<TopBarProps> = ({
         </div>
 
         <div className="flex items-center gap-3 h-full">
+            
+            {/* Org / Workspace Switcher */}
+            {currentOrg && (
+                <div className="relative mr-2" ref={contextRef}>
+                    <button 
+                        onClick={() => setContextOpen(!contextOpen)}
+                        className={`flex items-center gap-2 px-2 py-0.5 rounded transition-colors cursor-pointer border border-transparent ${contextOpen ? 'bg-white/20' : 'hover:bg-white/10 hover:border-white/10'}`}
+                    >
+                        <div className="flex items-center gap-1.5">
+                            <Building size={12} className="text-blue-300"/>
+                            <span className="truncate max-w-[100px]">{currentOrg.name}</span>
+                        </div>
+                        <span className="opacity-50 text-[10px]">/</span>
+                        <div className="flex items-center gap-1.5">
+                            <span className="truncate max-w-[80px]">{currentWorkspace?.name || 'All'}</span>
+                        </div>
+                        <ChevronDown size={10} className="opacity-70 ml-1" />
+                    </button>
+
+                    {contextOpen && (
+                        <div className="absolute top-full right-0 mt-1 w-64 bg-white/95 dark:bg-[#1e1e1e]/95 backdrop-blur-2xl rounded-lg shadow-[0_10px_40px_rgba(0,0,0,0.2)] border border-white/20 dark:border-gray-700/50 p-2 flex flex-col z-[10000] animate-in fade-in zoom-in-95 duration-100">
+                             
+                             {/* Organization Section */}
+                             <div className="px-2 py-1 text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Organization</div>
+                             {organizations.map(org => (
+                                 <button
+                                    key={org.id}
+                                    onClick={() => { onSwitchOrg(org.id); setContextOpen(false); }}
+                                    className={`text-left px-3 py-1.5 rounded text-sm flex items-center justify-between mb-1 transition-colors ${
+                                        currentOrg.id === org.id 
+                                        ? 'bg-blue-500 text-white' 
+                                        : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/10'
+                                    }`}
+                                 >
+                                     <span className="truncate">{org.name}</span>
+                                     {currentOrg.id === org.id && <CheckIcon />}
+                                 </button>
+                             ))}
+
+                             <div className="h-[1px] bg-gray-400/20 my-2 mx-1"></div>
+
+                             {/* Workspace Section */}
+                             <div className="px-2 py-1 text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Workspace</div>
+                             {currentOrg.workspaces.map(wk => (
+                                 <button
+                                    key={wk.id}
+                                    onClick={() => { onSwitchWorkspace(wk.id); setContextOpen(false); }}
+                                    className={`text-left px-3 py-1.5 rounded text-sm flex items-center justify-between mb-1 transition-colors ${
+                                        currentWorkspace?.id === wk.id 
+                                        ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400 font-medium' 
+                                        : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/10'
+                                    }`}
+                                 >
+                                     <div className="flex items-center gap-2">
+                                         <Layers size={12} className={currentWorkspace?.id === wk.id ? 'text-blue-500' : 'text-gray-400'}/>
+                                         <span className="truncate">{wk.name}</span>
+                                     </div>
+                                     {currentWorkspace?.id === wk.id && <CheckIcon color="currentColor" />}
+                                 </button>
+                             ))}
+                        </div>
+                    )}
+                </div>
+            )}
+
+            <div className="w-[1px] h-3 bg-white/20"></div>
+
             <div className="flex items-center gap-3 px-2">
                 <Battery size={16} className="rotate-90" />
                 <Wifi size={14} />
                 <Search size={14} />
-                <Command size={14} />
             </div>
             {/* Clock Trigger */}
             <div 
@@ -203,3 +287,9 @@ export const TopBar: React.FC<TopBarProps> = ({
     </>
   );
 };
+
+const CheckIcon = ({ color = "white" }: { color?: string }) => (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+        <polyline points="20 6 9 17 4 12"></polyline>
+    </svg>
+);
