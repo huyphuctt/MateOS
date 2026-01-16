@@ -10,7 +10,8 @@ import {
   Trash2,
   FolderClosed,
   Compass,
-  ShieldCheck
+  ShieldCheck,
+  Bell
 } from 'lucide-react';
 
 import { Taskbar } from './components/os/Taskbar';
@@ -21,9 +22,11 @@ import { NotepadApp } from './components/apps/Notepad';
 import { BrowserApp } from './components/apps/Browser';
 import { SettingsApp } from './components/apps/Settings';
 import { AdminPanel } from './components/apps/AdminPanel';
-import { ContextSelector } from './components/os/ContextSelector'; // New Component
+import { NotificationsApp } from './components/apps/NotificationsApp'; // New App
+import { ContextSelector } from './components/os/ContextSelector';
 import { TopBar } from './components/os/TopBar';
 import { Launchpad } from './components/os/Launchpad';
+import { NotificationCenter } from './components/os/NotificationCenter'; // New Component
 import { BootScreen } from './components/os/BootScreen';
 import { LoginScreen } from './components/os/LoginScreen';
 import { AppId, WindowState, Theme, AuthMode, User, Organization, Workspace } from './types';
@@ -136,6 +139,9 @@ const App: React.FC = () => {
   const [activeWindowId, setActiveWindowId] = useState<AppId | null>(null);
   const [startMenuOpen, setStartMenuOpen] = useState(false);
   const [nextZIndex, setNextZIndex] = useState(10);
+  
+  // Notification Center State
+  const [notificationPanelOpen, setNotificationPanelOpen] = useState(false);
 
   // --- Effects ---
 
@@ -442,6 +448,12 @@ const App: React.FC = () => {
         defaultSize: { width: 800, height: 600 },
         requiresAdmin: true
     },
+    [AppId.NOTIFICATIONS]: {
+        title: 'Notifications',
+        icon: <Bell className="text-blue-500" size={20} />,
+        component: <NotificationsApp />,
+        defaultSize: { width: 400, height: 600 }
+    },
     [AppId.CALCULATOR]: {
         title: 'Calculator',
         icon: <Calculator className="text-orange-500" size={20} />,
@@ -605,6 +617,9 @@ const App: React.FC = () => {
                     currentWorkspace={currentWorkspace}
                     onSwitchOrg={handleSwitchOrg}
                     onSwitchWorkspace={handleSwitchWorkspace}
+                    // Notification
+                    notificationPanelOpen={notificationPanelOpen}
+                    onToggleNotificationPanel={() => setNotificationPanelOpen(!notificationPanelOpen)}
                 />
             )}
 
@@ -711,6 +726,15 @@ const App: React.FC = () => {
                     isAdmin={currentOrg?.role === 'admin'}
                 />
             )}
+            
+            {/* Notification Center Slide Panel */}
+            <NotificationCenter 
+                isOpen={notificationPanelOpen}
+                onClose={() => setNotificationPanelOpen(false)}
+                recentItems={RECENT_ITEMS}
+                onOpenNotificationsApp={() => openApp(AppId.NOTIFICATIONS)}
+                theme={theme}
+            />
 
             {/* Taskbar / Dock */}
             <Taskbar 
@@ -737,6 +761,9 @@ const App: React.FC = () => {
                 currentWorkspace={currentWorkspace}
                 onSwitchOrg={handleSwitchOrg}
                 onSwitchWorkspace={handleSwitchWorkspace}
+                // Notification
+                notificationPanelOpen={notificationPanelOpen}
+                onToggleNotificationPanel={() => setNotificationPanelOpen(!notificationPanelOpen)}
             />
         </>
       )}

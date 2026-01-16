@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Wifi, Battery, Search, Command, X, User, Lock, ChevronDown, Building, Layers } from 'lucide-react';
+import { Wifi, Battery, Search, Command, User, ChevronDown, Building, Layers, Check, Bell } from 'lucide-react';
 import { RecentItem, Organization, Workspace } from '../../types';
 
 interface TopBarProps {
@@ -17,6 +17,9 @@ interface TopBarProps {
   currentWorkspace?: Workspace;
   onSwitchOrg: (orgId: number) => void;
   onSwitchWorkspace: (wkId: number) => void;
+  // Notification Props
+  notificationPanelOpen: boolean;
+  onToggleNotificationPanel: () => void;
 }
 
 export const TopBar: React.FC<TopBarProps> = ({ 
@@ -32,15 +35,15 @@ export const TopBar: React.FC<TopBarProps> = ({
     currentOrg,
     currentWorkspace,
     onSwitchOrg,
-    onSwitchWorkspace
+    onSwitchWorkspace,
+    notificationPanelOpen,
+    onToggleNotificationPanel
 }) => {
   const [time, setTime] = useState(new Date());
   const [menuOpen, setMenuOpen] = useState(false);
-  const [panelOpen, setPanelOpen] = useState(false);
   const [contextOpen, setContextOpen] = useState(false);
   
   const menuRef = useRef<HTMLDivElement>(null);
-  const panelRef = useRef<HTMLDivElement>(null);
   const contextRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -69,20 +72,6 @@ export const TopBar: React.FC<TopBarProps> = ({
     if (contextOpen) document.addEventListener('mousedown', handleClickOutsideContext);
     return () => document.removeEventListener('mousedown', handleClickOutsideContext);
   }, [contextOpen]);
-
-  // Handle click outside for Side Panel
-  useEffect(() => {
-    const handleClickOutsidePanel = (event: MouseEvent) => {
-        if (panelOpen && panelRef.current && !panelRef.current.contains(event.target as Node)) {
-            const target = event.target as HTMLElement;
-            if (!target.closest('[data-panel-trigger]')) {
-                setPanelOpen(false);
-            }
-        }
-    };
-    if (panelOpen) document.addEventListener('mousedown', handleClickOutsidePanel);
-    return () => document.removeEventListener('mousedown', handleClickOutsidePanel);
-  }, [panelOpen]);
 
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
@@ -182,7 +171,7 @@ export const TopBar: React.FC<TopBarProps> = ({
                                     }`}
                                  >
                                      <span className="truncate">{org.name}</span>
-                                     {currentOrg.id === org.id && <CheckIcon />}
+                                     {currentOrg.id === org.id && <Check size={12} />}
                                  </button>
                              ))}
 
@@ -204,7 +193,7 @@ export const TopBar: React.FC<TopBarProps> = ({
                                          <Layers size={12} className={currentWorkspace?.id === wk.id ? 'text-blue-500' : 'text-gray-400'}/>
                                          <span className="truncate">{wk.name}</span>
                                      </div>
-                                     {currentWorkspace?.id === wk.id && <CheckIcon color="currentColor" />}
+                                     {currentWorkspace?.id === wk.id && <Check size={12} className="text-blue-500" />}
                                  </button>
                              ))}
                         </div>
@@ -215,6 +204,19 @@ export const TopBar: React.FC<TopBarProps> = ({
             <div className="w-[1px] h-3 bg-white/20"></div>
 
             <div className="flex items-center gap-3 px-2">
+                {/* Notification Bell */}
+                <button 
+                    onClick={onToggleNotificationPanel}
+                    className={`relative p-1 rounded hover:bg-white/10 transition-colors ${notificationPanelOpen ? 'text-blue-300' : 'text-white'}`}
+                >
+                    <Bell size={16} fill={notificationPanelOpen ? "currentColor" : "none"} />
+                    {recentItems.length > 0 && (
+                        <span className="absolute -top-1 -right-1 flex h-3 w-3 items-center justify-center rounded-full bg-red-500 text-[8px] font-bold leading-none border border-black/20">
+                            {recentItems.length > 9 ? '9+' : recentItems.length}
+                        </span>
+                    )}
+                </button>
+
                 <Battery size={16} className="rotate-90" />
                 <Wifi size={14} />
                 <Search size={14} />
@@ -222,74 +224,14 @@ export const TopBar: React.FC<TopBarProps> = ({
             {/* Clock Trigger */}
             <div 
                 data-panel-trigger="true"
-                onClick={() => setPanelOpen(!panelOpen)}
-                className={`flex items-center gap-2 px-3 py-0.5 rounded transition-colors cursor-pointer select-none ${panelOpen ? 'bg-white/20' : 'hover:bg-white/10'}`}
+                onClick={onToggleNotificationPanel}
+                className={`flex items-center gap-2 px-3 py-0.5 rounded transition-colors cursor-pointer select-none ${notificationPanelOpen ? 'bg-white/20' : 'hover:bg-white/10'}`}
             >
                 <span>{formatDate(time)}</span>
                 <span>{formatTime(time)}</span>
             </div>
         </div>
         </div>
-
-        {/* Slide Panel (Notification Center) */}
-        <div 
-            ref={panelRef}
-            className={`fixed top-7 right-0 bottom-0 w-80 bg-white/80 dark:bg-[#1e1e1e]/80 backdrop-blur-3xl border-l border-white/20 dark:border-gray-700/30 shadow-2xl z-[10000] transition-transform duration-300 ease-[cubic-bezier(0.25,1,0.5,1)] transform ${panelOpen ? 'translate-x-0' : 'translate-x-full'}`}
-        >
-            <div className="p-4 flex flex-col h-full overflow-hidden">
-                <div className="flex items-center justify-between mb-6 shrink-0">
-                    <h3 className="font-semibold text-lg text-gray-800 dark:text-gray-100">Recent Items</h3>
-                    <button onClick={() => setPanelOpen(false)} className="p-1 hover:bg-black/5 dark:hover:bg-white/10 rounded-full transition-colors">
-                        <X size={16} className="text-gray-500" />
-                    </button>
-                </div>
-
-                <div className="flex-1 overflow-y-auto space-y-3 pr-1">
-                    {/* Recent Items List */}
-                    {recentItems.map(item => (
-                        <div key={item.id} className="bg-white/50 dark:bg-white/5 border border-white/40 dark:border-white/10 p-3 rounded-xl flex items-start gap-3 hover:bg-white/80 dark:hover:bg-white/10 transition-colors cursor-default shadow-sm group">
-                            <div className="w-10 h-10 rounded-full bg-white dark:bg-gray-700 flex items-center justify-center shrink-0 shadow-sm group-hover:scale-105 transition-transform">
-                                {item.icon}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <div className="flex justify-between items-start">
-                                    <h4 className="font-medium text-gray-800 dark:text-gray-200 text-sm truncate pr-2">{item.title}</h4>
-                                    <span className="text-[10px] text-gray-500 whitespace-nowrap">{item.timestamp}</span>
-                                </div>
-                                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{item.description}</p>
-                            </div>
-                        </div>
-                    ))}
-
-                    {/* Widgets Section Mock */}
-                    <div className="pt-4">
-                        <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">Widgets</h4>
-                        <div className="grid grid-cols-2 gap-3">
-                            <div className="aspect-square bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-3 text-white flex flex-col justify-between shadow-lg cursor-pointer hover:brightness-110 transition-all">
-                                <span className="text-xs font-medium">Weather</span>
-                                <div>
-                                    <span className="text-2xl font-bold">72°</span>
-                                    <p className="text-[10px] opacity-80">Sunny</p>
-                                </div>
-                            </div>
-                            <div className="aspect-square bg-white dark:bg-gray-800 rounded-xl p-3 flex flex-col justify-between shadow-lg border border-white/10 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-all">
-                                <span className="text-xs font-medium text-gray-500">Stocks</span>
-                                <div>
-                                    <span className="text-lg font-bold text-green-500">+1.2%</span>
-                                    <p className="text-[10px] text-gray-400">AAPL</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
     </>
   );
 };
-
-const CheckIcon = ({ color = "white" }: { color?: string }) => (
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-        <polyline points="20 6 9 17 4 12"></polyline>
-    </svg>
-);

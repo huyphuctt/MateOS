@@ -7,7 +7,8 @@ export enum AppId {
   PHOTOS = 'photos',
   SETTINGS = 'settings',
   CALCULATOR = 'calculator',
-  ADMIN = 'admin'
+  ADMIN = 'admin',
+  NOTIFICATIONS = 'notifications'
 }
 
 export type Theme = 'aero' | 'aqua';
