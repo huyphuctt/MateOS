@@ -299,6 +299,35 @@ const App: React.FC = () => {
     const fullUser = MOCK_USERS.find(u => u.username.toLowerCase() === user.username.toLowerCase());
     
     if (fullUser) {
+        // Attempt to restore previous context
+        const savedContextStr = localStorage.getItem('mateos_active_context');
+        if (savedContextStr) {
+             try {
+                const { orgId, wkId } = JSON.parse(savedContextStr);
+                // Validate if user still belongs to this Org
+                const org = fullUser.organizations.find(o => o.id === orgId);
+                if (org) {
+                    const wk = org.workspaces.find(w => w.id === wkId);
+                    // Use saved workspace if valid, or if org has no workspaces (unlikely but safe)
+                    if (wk || org.workspaces.length === 0) {
+                        setActiveOrgId(orgId);
+                        setActiveWorkspaceId(wkId);
+                        setAuthMode('desktop');
+                        return;
+                    }
+                    // If workspace invalid but org valid, default to first workspace of that org if available
+                    if (org.workspaces.length > 0) {
+                         setActiveOrgId(orgId);
+                         setActiveWorkspaceId(org.workspaces[0].id);
+                         setAuthMode('desktop');
+                         return;
+                    }
+                }
+             } catch (e) {
+                 console.error("Failed to restore context", e);
+             }
+        }
+
         const hasMultipleOrgs = fullUser.organizations.length > 1;
         const hasMultipleWorkspaces = fullUser.organizations.some(o => o.workspaces.length > 1);
         
@@ -327,8 +356,8 @@ const App: React.FC = () => {
     localStorage.removeItem('mateos_last_login');
     localStorage.removeItem('mateos_token');
     localStorage.removeItem('mateos_is_locked');
-    localStorage.removeItem('mateos_active_context');
-    // Note: We do NOT clear mateos_boot_completed
+    // Note: We DO NOT clear mateos_active_context to remember last selection for convenience,
+    // validation in handleLoginSuccess ensures it matches the next user.
 
     // Reset OS visual state to defaults (clearing user preferences)
     setWallpaper(WALLPAPERS[0].src);
@@ -551,12 +580,18 @@ const App: React.FC = () => {
       } else {
           setActiveWorkspaceId(null);
       }
-      // Close Admin window if open when switching, for safety/UX
-      closeWindow(AppId.ADMIN);
+      
+      // Close all apps when switching context
+      setWindows([]);
+      setActiveWindowId(null);
   };
 
   const handleSwitchWorkspace = (wkId: number) => {
       setActiveWorkspaceId(wkId);
+      
+      // Close all apps when switching context
+      setWindows([]);
+      setActiveWindowId(null);
   };
 
   return (
