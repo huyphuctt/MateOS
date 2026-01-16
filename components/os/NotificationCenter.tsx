@@ -45,7 +45,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
   return (
     <div 
         ref={panelRef}
-        className={`fixed ${topOffset} right-0 ${bottomOffset} w-80 bg-white/80 dark:bg-[#1e1e1e]/80 backdrop-blur-3xl border-l border-white/20 dark:border-gray-700/30 shadow-2xl z-[10000] transition-transform duration-300 ease-[cubic-bezier(0.25,1,0.5,1)] transform ${isOpen ? 'translate-x-0' : 'translate-x-full'} mr-2 mt-2 mb-2 rounded-xl`}
+        className={`fixed ${topOffset} right-0 ${bottomOffset} w-80 bg-white/80 dark:bg-[#1e1e1e]/80 backdrop-blur-3xl border-l border-white/20 dark:border-gray-700/30 shadow-2xl z-[10000] transition-transform duration-300 ease-[cubic-bezier(0.25,1,0.5,1)] transform ${isOpen ? 'translate-x-0 mr-2' : 'translate-x-full'} mt-2 mb-2 rounded-xl`}
     >
         <div className="p-4 flex flex-col h-full overflow-hidden">
             <div className="flex items-center justify-between mb-6 shrink-0">

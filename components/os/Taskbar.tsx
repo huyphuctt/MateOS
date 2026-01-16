@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { LayoutGrid, Search, Rocket, ChevronUp, Wifi, Volume2, Battery, Building, Layers, Check, Bell } from 'lucide-react';
-import { AppId, Theme, Organization, Workspace } from '../../types';
+import { AppId, Theme, Organization, Workspace, RecentItem } from '../../types';
 
 interface TaskbarProps {
   openApps: AppId[];
@@ -20,6 +20,7 @@ interface TaskbarProps {
   // Notification Props
   notificationPanelOpen: boolean;
   onToggleNotificationPanel: () => void;
+  recentItems: RecentItem[];
 }
 
 export const Taskbar: React.FC<TaskbarProps> = ({
@@ -37,7 +38,8 @@ export const Taskbar: React.FC<TaskbarProps> = ({
   onSwitchOrg,
   onSwitchWorkspace,
   notificationPanelOpen,
-  onToggleNotificationPanel
+  onToggleNotificationPanel,
+  recentItems
 }) => {
   const [time, setTime] = useState(new Date());
   const [orgMenuOpen, setOrgMenuOpen] = useState(false);
@@ -250,23 +252,21 @@ export const Taskbar: React.FC<TaskbarProps> = ({
         )}
 
         <div className="hidden sm:block w-[1px] h-4 bg-gray-400/30 mx-1"></div>
-
-        <div className="hidden sm:flex hover:bg-white/40 dark:hover:bg-white/10 p-1 rounded transition-colors cursor-pointer">
-            <ChevronUp size={14} className="text-gray-600 dark:text-gray-300"/>
-        </div>
-        
+                
         {/* System Group with Notification Toggle */}
         <div className="flex items-center gap-2 px-2 py-1 hover:bg-white/40 dark:hover:bg-white/10 rounded transition-colors cursor-pointer border border-transparent hover:border-gray-300/30">
             <button
                 onClick={(e) => { e.stopPropagation(); onToggleNotificationPanel(); }}
                 data-panel-trigger="true"
-                className={`transition-colors rounded-sm ${notificationPanelOpen ? 'text-blue-500' : 'text-gray-800 dark:text-gray-100'}`}
+                className={`relative transition-colors rounded-sm flex items-center justify-center ${notificationPanelOpen ? 'text-blue-500' : 'text-gray-800 dark:text-gray-100'}`}
             >
                 <Bell size={16} fill={notificationPanelOpen ? "currentColor" : "none"} />
+                {recentItems.length > 0 && (
+                    <span className="absolute -top-1.5 -right-1.5 h-3.5 min-w-[14px] flex items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white border border-white dark:border-gray-900 shadow-sm leading-none px-0.5">
+                        {recentItems.length > 9 ? '9+' : recentItems.length}
+                    </span>
+                )}
             </button>
-            <Wifi size={16} className="text-gray-800 dark:text-gray-100"/>
-            <Volume2 size={16} className="text-gray-800 dark:text-gray-100"/>
-            <Battery size={16} className="text-gray-800 dark:text-gray-100 rotate-90"/>
         </div>
         
         <div className="flex flex-col items-end justify-center px-2 py-0.5 hover:bg-white/40 dark:hover:bg-white/10 rounded transition-colors cursor-pointer ml-1 text-right">

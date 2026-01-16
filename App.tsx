@@ -764,6 +764,7 @@ const App: React.FC = () => {
                 // Notification
                 notificationPanelOpen={notificationPanelOpen}
                 onToggleNotificationPanel={() => setNotificationPanelOpen(!notificationPanelOpen)}
+                recentItems={RECENT_ITEMS}
             />
         </>
       )}

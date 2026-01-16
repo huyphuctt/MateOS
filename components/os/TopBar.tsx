@@ -207,11 +207,12 @@ export const TopBar: React.FC<TopBarProps> = ({
                 {/* Notification Bell */}
                 <button 
                     onClick={onToggleNotificationPanel}
-                    className={`relative p-1 rounded hover:bg-white/10 transition-colors ${notificationPanelOpen ? 'text-blue-300' : 'text-white'}`}
+                    data-panel-trigger="true"
+                    className={`flex items-center gap-1.5 p-1 rounded hover:bg-white/10 transition-colors ${notificationPanelOpen ? 'text-blue-300' : 'text-white'}`}
                 >
                     <Bell size={16} fill={notificationPanelOpen ? "currentColor" : "none"} />
                     {recentItems.length > 0 && (
-                        <span className="absolute -top-1 -right-1 flex h-3 w-3 items-center justify-center rounded-full bg-red-500 text-[8px] font-bold leading-none border border-black/20">
+                        <span className="flex h-3.5 min-w-[14px] items-center justify-center rounded-full bg-red-500 text-[9px] font-bold leading-none px-1 border border-black/20 text-white shadow-sm">
                             {recentItems.length > 9 ? '9+' : recentItems.length}
                         </span>
                     )}
