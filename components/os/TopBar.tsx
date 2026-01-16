@@ -81,6 +81,8 @@ export const TopBar: React.FC<TopBarProps> = ({
     return date.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
   };
 
+  const showContextSwitcher = currentOrg && (organizations.length > 1 || currentOrg.workspaces.length > 1);
+
   return (
     <>
         <div className="absolute top-0 left-0 right-0 h-7 bg-black/20 backdrop-blur-xl border-b border-white/10 flex items-center justify-between px-4 z-[9999] text-xs font-medium text-white select-none rounded-t-lg shadow-sm">
@@ -138,7 +140,7 @@ export const TopBar: React.FC<TopBarProps> = ({
         <div className="flex items-center gap-3 h-full">
             
             {/* Org / Workspace Switcher */}
-            {currentOrg && (
+            {showContextSwitcher && (
                 <div className="relative mr-2" ref={contextRef}>
                     <button 
                         onClick={() => setContextOpen(!contextOpen)}
@@ -146,7 +148,7 @@ export const TopBar: React.FC<TopBarProps> = ({
                     >
                         <div className="flex items-center gap-1.5">
                             <Building size={12} className="text-blue-300"/>
-                            <span className="truncate max-w-[100px]">{currentOrg.name}</span>
+                            <span className="truncate max-w-[100px]">{currentOrg?.name}</span>
                         </div>
                         <span className="opacity-50 text-[10px]">/</span>
                         <div className="flex items-center gap-1.5">
@@ -165,13 +167,13 @@ export const TopBar: React.FC<TopBarProps> = ({
                                     key={org.id}
                                     onClick={() => { onSwitchOrg(org.id); setContextOpen(false); }}
                                     className={`text-left px-3 py-1.5 rounded text-sm flex items-center justify-between mb-1 transition-colors ${
-                                        currentOrg.id === org.id 
+                                        currentOrg?.id === org.id 
                                         ? 'bg-blue-500 text-white' 
                                         : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/10'
                                     }`}
                                  >
                                      <span className="truncate">{org.name}</span>
-                                     {currentOrg.id === org.id && <Check size={12} />}
+                                     {currentOrg?.id === org.id && <Check size={12} />}
                                  </button>
                              ))}
 
@@ -179,7 +181,7 @@ export const TopBar: React.FC<TopBarProps> = ({
 
                              {/* Workspace Section */}
                              <div className="px-2 py-1 text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Workspace</div>
-                             {currentOrg.workspaces.map(wk => (
+                             {currentOrg?.workspaces.map(wk => (
                                  <button
                                     key={wk.id}
                                     onClick={() => { onSwitchWorkspace(wk.id); setContextOpen(false); }}

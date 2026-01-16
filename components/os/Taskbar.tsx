@@ -126,6 +126,8 @@ export const Taskbar: React.FC<TaskbarProps> = ({
       );
   }
 
+  const showContextSwitcher = currentOrg && (organizations.length > 1 || currentOrg.workspaces.length > 1);
+
   // Aero Taskbar Style
   return (
     <div 
@@ -190,7 +192,7 @@ export const Taskbar: React.FC<TaskbarProps> = ({
       <div className="flex items-center gap-1">
         
         {/* Org Switcher for Aero */}
-        {currentOrg && (
+        {showContextSwitcher && (
           <div className="relative mr-2" ref={orgMenuRef}>
               <button
                   onClick={() => setOrgMenuOpen(!orgMenuOpen)}
@@ -202,7 +204,7 @@ export const Taskbar: React.FC<TaskbarProps> = ({
                   `}
               >
                    <Building size={14} className={orgMenuOpen ? "text-blue-600 dark:text-blue-400" : "text-gray-700 dark:text-gray-300"}/>
-                   <span className="text-xs font-semibold hidden md:block max-w-[100px] truncate">{currentOrg.name}</span>
+                   <span className="text-xs font-semibold hidden md:block max-w-[100px] truncate">{currentOrg?.name}</span>
                    <ChevronUp size={12} className={`opacity-50 transition-transform ${orgMenuOpen ? 'rotate-180' : ''}`} />
               </button>
 
@@ -215,13 +217,13 @@ export const Taskbar: React.FC<TaskbarProps> = ({
                               key={org.id}
                               onClick={() => { onSwitchOrg(org.id); setOrgMenuOpen(false); }}
                               className={`text-left px-3 py-1.5 rounded text-sm flex items-center justify-between mb-1 transition-colors ${
-                                  currentOrg.id === org.id 
+                                  currentOrg?.id === org.id 
                                   ? 'bg-blue-500 text-white' 
                                   : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/10'
                               }`}
                            >
                                <span className="truncate">{org.name}</span>
-                               {currentOrg.id === org.id && <Check size={14} />}
+                               {currentOrg?.id === org.id && <Check size={14} />}
                            </button>
                        ))}
 
@@ -229,7 +231,7 @@ export const Taskbar: React.FC<TaskbarProps> = ({
 
                        {/* Workspace List */}
                        <div className="px-2 py-1 text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Workspace</div>
-                       {currentOrg.workspaces.map(wk => (
+                       {currentOrg?.workspaces.map(wk => (
                            <button
                               key={wk.id}
                               onClick={() => { onSwitchWorkspace(wk.id); setOrgMenuOpen(false); }}

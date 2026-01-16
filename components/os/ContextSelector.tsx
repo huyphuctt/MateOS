@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Building, Layers, ArrowRight, Check, ChevronDown } from 'lucide-react';
+import { Building, Layers, ArrowRight, Check } from 'lucide-react';
+import Select from 'react-select';
 import { User, Organization, Workspace } from '../../types';
 
 interface ContextSelectorProps {
@@ -45,6 +46,9 @@ export const ContextSelector: React.FC<ContextSelectorProps> = ({
     onComplete(selectedOrgId, selectedWorkspaceId);
   };
 
+  const workspaceOptions = selectedOrg ? selectedOrg.workspaces.map(wk => ({ value: wk.id, label: wk.name })) : [];
+  const currentWorkspaceOption = workspaceOptions.find(opt => opt.value === selectedWorkspaceId);
+
   return (
     <div className="absolute inset-0 z-[9999] flex flex-col items-center justify-center bg-black/40 backdrop-blur-xl animate-in fade-in duration-500">
       <div className="w-full max-w-md bg-white/10 border border-white/20 shadow-2xl rounded-2xl p-8 backdrop-blur-md">
@@ -86,24 +90,35 @@ export const ContextSelector: React.FC<ContextSelectorProps> = ({
             {selectedOrg && selectedOrg.workspaces.length > 0 && (
                 <div className="space-y-2 animate-in slide-in-from-bottom-2 fade-in duration-300">
                     <label className="text-xs font-semibold text-white/80 uppercase tracking-wider ml-1">Workspace</label>
-                    <div className="relative group">
-                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-white/50 pointer-events-none z-10">
-                            <Layers size={16} />
-                        </div>
-                        <select
-                            value={selectedWorkspaceId}
-                            onChange={(e) => setSelectedWorkspaceId(Number(e.target.value))}
-                            className="w-full pl-10 pr-10 py-3 rounded-xl border transition-all duration-200 text-sm appearance-none bg-white/5 border-white/10 text-white hover:bg-white/10 hover:border-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:bg-white/10 cursor-pointer"
-                        >
-                            {selectedOrg.workspaces.map(wk => (
-                                <option key={wk.id} value={wk.id} className="bg-[#1e1e1e] text-white">
-                                    {wk.name}
-                                </option>
-                            ))}
-                        </select>
-                        <div className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 pointer-events-none z-10">
-                            <ChevronDown size={16} />
-                        </div>
+                    <div className="w-full">
+                        <Select
+                            value={currentWorkspaceOption}
+                            onChange={(option: any) => setSelectedWorkspaceId(Number(option?.value))}
+                            options={workspaceOptions}
+                            unstyled
+                            classNames={{
+                                control: (state) => `w-full px-3 py-2 rounded-xl border transition-all duration-200 text-sm bg-white/5 border-white/10 text-white cursor-pointer flex items-center justify-between ${
+                                    state.isFocused 
+                                    ? 'bg-white/10 ring-2 ring-blue-500/50 border-white/20' 
+                                    : 'hover:bg-white/10 hover:border-white/20'
+                                }`,
+                                menu: () => "bg-[#1e1e1e] border border-white/10 rounded-xl shadow-2xl mt-2 overflow-hidden z-[10000]",
+                                option: (state) => `px-4 py-3 text-sm cursor-pointer border-b border-white/5 last:border-0 ${
+                                    state.isSelected 
+                                    ? 'bg-blue-600 text-white' 
+                                    : state.isFocused 
+                                        ? 'bg-white/10 text-white' 
+                                        : 'text-white/70'
+                                }`,
+                                singleValue: () => "text-white font-medium",
+                                input: () => "text-white",
+                                dropdownIndicator: () => "text-white/50 p-1"
+                            }}
+                            menuPortalTarget={document.body}
+                            styles={{
+                                menuPortal: (base) => ({ ...base, zIndex: 10000 })
+                            }}
+                        />
                     </div>
                 </div>
             )}

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Users, Shield, CheckCircle, XCircle, Search, Building, Plus, Filter, X, Check, Mail, User } from 'lucide-react';
+import Select from 'react-select';
 import { Organization, Workspace } from '../../types';
 import { MOCK_USERS } from '../../data/mock';
 
@@ -139,6 +140,14 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ currentOrg, currentWorks
       return true;
   });
 
+  // Prepare React Select options
+  const filterOptions = [
+      { value: 'all', label: 'All Workspaces' },
+      ...currentOrg.workspaces.map(wk => ({ value: wk.id, label: wk.name }))
+  ];
+  
+  const currentFilterOption = filterOptions.find(opt => opt.value === workspaceFilter);
+
   return (
     <div className="flex flex-col h-full bg-[#f8f9fa] dark:bg-[#1c1c1c] text-gray-900 dark:text-gray-100 relative">
       
@@ -181,24 +190,34 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ currentOrg, currentWorks
             <div className="flex items-center gap-3">
                 {/* Workspace Filter */}
                 {currentOrg.workspaces.length > 1 && (
-                    <div className="relative">
-                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
-                            <Filter size={14} />
-                        </div>
-                        <select
-                            value={workspaceFilter}
-                            onChange={(e) => setWorkspaceFilter(e.target.value === 'all' ? 'all' : Number(e.target.value))}
-                            className="pl-9 pr-8 py-2 bg-white dark:bg-black/20 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 appearance-none cursor-pointer min-w-[160px]"
-                        >
-                            <option value="all">All Workspaces</option>
-                            {currentOrg.workspaces.map(wk => (
-                                <option key={wk.id} value={wk.id}>{wk.name}</option>
-                            ))}
-                        </select>
-                         {/* Custom Arrow for select */}
-                         <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
-                             <svg width="10" height="6" viewBox="0 0 10 6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 1L5 5L9 1"/></svg>
-                         </div>
+                    <div className="w-[180px]">
+                        <Select
+                            value={currentFilterOption}
+                            onChange={(option: any) => setWorkspaceFilter(option?.value)}
+                            options={filterOptions}
+                            unstyled
+                            classNames={{
+                                control: (state) => `pl-2 py-1 bg-white dark:bg-black/20 border rounded-md text-sm transition-all cursor-pointer flex items-center justify-between ${
+                                    state.isFocused 
+                                    ? 'border-blue-500 ring-2 ring-blue-500/50' 
+                                    : 'border-gray-300 dark:border-gray-600 hover:border-gray-400'
+                                }`,
+                                menu: () => "bg-white dark:bg-[#2d2d2d] border border-gray-200 dark:border-gray-700 rounded-md shadow-lg mt-1 overflow-hidden z-50",
+                                option: (state) => `px-3 py-2 text-sm cursor-pointer ${
+                                    state.isSelected 
+                                    ? 'bg-blue-600 text-white' 
+                                    : state.isFocused 
+                                        ? 'bg-gray-100 dark:bg-white/10 text-gray-900 dark:text-gray-100' 
+                                        : 'text-gray-700 dark:text-gray-300'
+                                }`,
+                                singleValue: () => "text-gray-900 dark:text-gray-100",
+                                dropdownIndicator: () => "text-gray-400 p-1"
+                            }}
+                            menuPortalTarget={document.body}
+                            styles={{
+                                menuPortal: (base) => ({ ...base, zIndex: 9999 })
+                            }}
+                        />
                     </div>
                 )}
 
