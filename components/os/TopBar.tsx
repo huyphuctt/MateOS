@@ -217,16 +217,11 @@ export const TopBar: React.FC<TopBarProps> = ({
                         </span>
                     )}
                 </button>
-
-                <Battery size={16} className="rotate-90" />
-                <Wifi size={14} />
-                <Search size={14} />
             </div>
             {/* Clock Trigger */}
             <div 
                 data-panel-trigger="true"
-                onClick={onToggleNotificationPanel}
-                className={`flex items-center gap-2 px-3 py-0.5 rounded transition-colors cursor-pointer select-none ${notificationPanelOpen ? 'bg-white/20' : 'hover:bg-white/10'}`}
+                className={`flex items-center gap-2 px-3 py-0.5 rounded transition-colors cursor-pointer select-none hover:bg-white/10}`}
             >
                 <span>{formatDate(time)}</span>
                 <span>{formatTime(time)}</span>
