@@ -30,7 +30,7 @@ import { NotificationCenter } from './components/os/NotificationCenter'; // New 
 import { BootScreen } from './components/os/BootScreen';
 import { LoginScreen } from './components/os/LoginScreen';
 import { AppId, WindowState, Theme, AuthMode, User, Organization, Workspace } from './types';
-import { authService } from './services/api';
+import { apiService } from './services/api';
 import { RECENT_ITEMS, WALLPAPERS, MOCK_USERS } from './data/mock';
 
 // Constants
@@ -209,7 +209,7 @@ const App: React.FC = () => {
     // If token exists, verify with server. If invalid, lock screen.
     if (token) {
         try {
-            const isValid = await authService.checkSession(token);
+            const isValid = await apiService.checkSession(token);
             if (!isValid) {
                 setAuthMode('login_partial');
                 setUsername(usernameStr);
@@ -349,7 +349,7 @@ const App: React.FC = () => {
 
   const handleSwitchAccount = async () => {
     // Call the logout service
-    await authService.logout();
+    await apiService.logout();
 
     // Clear User Specific Data
     localStorage.removeItem('mateos_user');
