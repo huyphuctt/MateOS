@@ -1,7 +1,6 @@
-import React, { useMemo, useState, useEffect } from 'react';
-import DocViewer, { DocViewerRenderers } from "@cyntler/react-doc-viewer";
+import React, { useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { X, FileText, Image as ImageIcon, Video, FileCode, File } from 'lucide-react';
+import { X, FileText, Image as ImageIcon, Video, FileCode, File, FileSpreadsheet, Download } from 'lucide-react';
 import { FileItem } from '../../types';
 
 interface PreviewAppProps {
@@ -86,34 +85,38 @@ const FileViewerContent: React.FC<{ file: FileItem }> = ({ file }) => {
         );
     }
 
-    // Office Documents (Word, Excel) using DocViewer
-    // We recreate the config here to ensure it's isolated
-    const docs = useMemo(() => ([{ uri: file.url, fileName: file.name }]), [file.url, file.name]);
-    const theme = useMemo(() => ({
-        primary: "#5296d8",
-        secondary: "#ffffff",
-        tertiary: "#5296d899",
-        text_primary: "#000000",
-        text_secondary: "#ffffff",
-        text_tertiary: "#00000099",
-        disableThemeScrollbar: false,
-    }), []);
+    // Office Documents (Word, Excel) - Download Interface
+    if (file.type === 'doc' || file.type === 'sheet') {
+        return (
+            <div className="h-full w-full flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 p-4">
+                <div className="w-24 h-24 bg-white dark:bg-gray-800 rounded-3xl flex items-center justify-center mb-6 shadow-sm border border-gray-100 dark:border-gray-700">
+                    {file.type === 'doc' ? (
+                        <FileText size={48} className="text-blue-500"/>
+                    ) : (
+                        <FileSpreadsheet size={48} className="text-green-500"/>
+                    )} 
+                </div>
+                <h3 className="text-xl font-semibold mb-2">{file.name}</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-8 max-w-sm text-center">
+                    This file type cannot be previewed directly. Please download it to view on your device.
+                </p>
+                <a 
+                    href={file.url} 
+                    download={file.name}
+                    className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded-xl transition-all font-medium text-sm shadow-sm hover:shadow-md hover:-translate-y-0.5"
+                >
+                    <Download size={18} />
+                    Download File
+                </a>
+            </div>
+        );
+    }
 
+    // Fallback for any other unexpected types
     return (
-        <div className="h-full w-full bg-white relative">
-            <DocViewer 
-                documents={docs} 
-                pluginRenderers={DocViewerRenderers} 
-                style={{ height: '100%', width: '100%', overflowY: 'auto' }}
-                config={{
-                    header: {
-                        disableHeader: true,
-                        disableFileName: true,
-                        retainURLParams: false
-                    }
-                }}
-                theme={theme}
-            />
+        <div className="h-full w-full flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 text-gray-500">
+             <File size={48} className="mb-4 opacity-50" />
+             <p>No preview available</p>
         </div>
     );
 };
@@ -161,7 +164,9 @@ export const PreviewApp: React.FC<PreviewAppProps> = ({ tabs, activeTabId, onUpd
             case 'code': return <FileCode size={12} className="text-yellow-500" />;
             case 'pdf': return <FileText size={12} className="text-red-400" />;
             case 'markdown': return <FileText size={12} className="text-blue-400" />;
-            default: return <FileText size={12} className="text-blue-500" />;
+            case 'sheet': return <FileSpreadsheet size={12} className="text-green-500" />;
+            case 'doc': return <FileText size={12} className="text-blue-500" />;
+            default: return <FileText size={12} className="text-gray-500" />;
         }
     };
 
