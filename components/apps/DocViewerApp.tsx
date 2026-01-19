@@ -20,16 +20,10 @@ export const DocViewerApp: React.FC<DocViewerAppProps> = ({ file }) => {
     }
   }, [file]);
 
-  if (!file) return (
-      <div className="h-full w-full bg-[#f3f3f3] dark:bg-[#202020] flex items-center justify-center text-gray-500">
-          No file selected
-      </div>
-  );
-
-  // Memoize the documents array so it doesn't change reference on re-renders (like resizing)
-  const docs = useMemo(() => [
+  // Memoize the documents array so it doesn't change reference on re-renders
+  const docs = useMemo(() => (file ? [
     { uri: file.url, fileName: file.name }
-  ], [file.url, file.name]);
+  ] : []), [file?.url, file?.name]);
 
   // Memoize config to prevent internal re-initialization
   const config = useMemo(() => ({
@@ -51,6 +45,25 @@ export const DocViewerApp: React.FC<DocViewerAppProps> = ({ file }) => {
       disableThemeScrollbar: false,
   }), []);
 
+  if (!file) return (
+      <div className="h-full w-full bg-[#f3f3f3] dark:bg-[#202020] flex items-center justify-center text-gray-500">
+          No file selected
+      </div>
+  );
+
+  // PDF Viewer using native embed
+  if (file.type === 'pdf') {
+      return (
+        <div className="h-full w-full bg-gray-200 dark:bg-gray-800 flex flex-col">
+            <embed 
+                src={file.url} 
+                type="application/pdf" 
+                className="w-full h-full border-none"
+            />
+        </div>
+      );
+  }
+
   // Markdown Viewer
   if (file.type === 'markdown') {
       return (
@@ -64,7 +77,7 @@ export const DocViewerApp: React.FC<DocViewerAppProps> = ({ file }) => {
       );
   }
 
-  // Standard DocViewer for other formats
+  // Standard DocViewer for other formats (Word, Excel, etc.)
   return (
     <div className="h-full w-full bg-white relative">
       <DocViewer 
