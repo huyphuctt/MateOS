@@ -528,15 +528,11 @@ const App: React.FC = () => {
   };
 
   const handleOpenFile = (file: FileItem) => {
-      if (file.type === 'image') {
-          openApp(AppId.PHOTOS, { file });
-      } else if (file.type === 'video') {
-          openApp(AppId.BROWSER, { url: file.url });
-      } else if (file.type === 'code') {
-          openApp(AppId.NOTEPAD, { file });
-      } else if (file.type === 'pdf' || file.type === 'doc' || file.type === 'sheet' || file.type === 'markdown') {
+      // Route all viewable files to Preview
+      if (['image', 'video', 'code', 'markdown', 'pdf', 'doc', 'sheet', 'unknown'].includes(file.type)) {
           openApp(AppId.PREVIEW, { file });
       } else {
+          // Fallback
           openApp(AppId.NOTEPAD, { file });
       }
   };
@@ -612,13 +608,6 @@ const App: React.FC = () => {
   const renderWindowContent = (window: WindowState) => {
       // Specialized Apps handling data
       if (window.id === AppId.PHOTOS) {
-          if (window.data?.file?.url) {
-              return (
-                  <div className="flex items-center justify-center bg-black h-full">
-                      <img src={window.data.file.url} className="max-w-full max-h-full object-contain" alt={window.data.file.name} />
-                  </div>
-              );
-          }
            return (
               <div className="p-4 bg-black h-full overflow-y-auto grid grid-cols-3 gap-2">
                  {[...Array(12)].map((_, i) => (
