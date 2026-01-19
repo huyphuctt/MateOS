@@ -13,7 +13,8 @@ import {
   ShieldCheck,
   Bell,
   HardDrive,
-  File
+  File,
+  Eye
 } from 'lucide-react';
 
 import { Taskbar } from './components/os/Taskbar';
@@ -26,7 +27,7 @@ import { SettingsApp } from './components/apps/Settings';
 import { AdminPanel } from './components/apps/AdminPanel';
 import { NotificationsApp } from './components/apps/NotificationsApp';
 import { VaultApp } from './components/apps/VaultApp'; 
-import { DocViewerApp } from './components/apps/DocViewerApp'; // New App
+import { PreviewApp } from './components/apps/DocViewerApp'; // Renamed import
 import { ContextSelector } from './components/os/ContextSelector';
 import { TopBar } from './components/os/TopBar';
 import { Launchpad } from './components/os/Launchpad';
@@ -366,7 +367,7 @@ const App: React.FC = () => {
       alert("Manage Account interface pending implementation.");
   };
 
-  // --- App Registry (Defined here to close over theme/etc if needed, though we use dynamic rendering for some) ---
+  // --- App Registry ---
   type AppRegistryItem = {
     title: string;
     icon: React.ReactNode;
@@ -427,9 +428,9 @@ const App: React.FC = () => {
         component: null, // Dynamically rendered
         defaultSize: { width: 900, height: 600 }
     },
-    [AppId.DOC_VIEWER]: {
-        title: 'Document Viewer',
-        icon: <File className="text-gray-500" size={20} />,
+    [AppId.PREVIEW]: {
+        title: 'Preview',
+        icon: <Eye className="text-gray-500" size={20} />,
         component: null, // Dynamically rendered
         defaultSize: { width: 800, height: 800 }
     },
@@ -441,10 +442,9 @@ const App: React.FC = () => {
     }
   };
 
-  // --- File Opening Logic ---
-  
-  // NOTE: openApp is updated to use functional state updates for `windows` to prevent stale closure bugs.
-  const openApp = (id: AppId, data?: any) => {
+  // --- Window Management ---
+
+  const openApp = (id: AppId, payload?: any) => {
     setStartMenuOpen(false);
 
     // Permission Check
@@ -455,39 +455,76 @@ const App: React.FC = () => {
     }
 
     setWindows(prevWindows => {
-        // If window exists, bring to front and update data if provided
         const existingWindow = prevWindows.find(w => w.id === id);
+        
+        // If window exists, bring to front and potentially merge data (tabs)
         if (existingWindow) {
+             let newData = payload || existingWindow.data;
+
+             // Special logic for Preview Tabs
+             if (id === AppId.PREVIEW && payload?.file) {
+                 const currentTabs: FileItem[] = existingWindow.data?.tabs || [];
+                 const newFile: FileItem = payload.file;
+                 
+                 // Check if file already open
+                 const exists = currentTabs.find(t => t.id === newFile.id);
+                 let newTabs = currentTabs;
+                 
+                 if (!exists && currentTabs.length < 20) {
+                     newTabs = [...currentTabs, newFile];
+                 }
+                 
+                 // If it exists, we just switch to it. If new, we added it.
+                 newData = {
+                     tabs: newTabs,
+                     activeTabId: newFile.id
+                 };
+             }
+
              return prevWindows.map(w => 
                 w.id === id 
-                ? { ...w, isMinimized: false, data: data || w.data, zIndex: nextZIndex } 
+                ? { ...w, isMinimized: false, data: newData, zIndex: nextZIndex } 
                 : w
              );
         }
 
         // Else create new
+        let initialData = payload;
+        
+        // Initialize Preview with Tab structure if opening with a file
+        if (id === AppId.PREVIEW && payload?.file) {
+            initialData = {
+                tabs: [payload.file],
+                activeTabId: payload.file.id
+            };
+        }
+
         const newWindow: WindowState = {
             id,
             title: app.title,
             icon: app.icon,
-            component: app.component, // This might be null for dynamic apps
+            component: app.component, 
             isOpen: true,
             isMinimized: false,
             isMaximized: false,
-            dockSide: null, // Initial dock state
+            dockSide: null,
             zIndex: nextZIndex,
             size: app.defaultSize || { width: 600, height: 400 },
             position: app.preferredPosition || { 
                 x: 50 + (prevWindows.length * 30), 
                 y: (theme === 'aqua' ? 80 : 50) + (prevWindows.length * 30) 
             },
-            data: data
+            data: initialData
         };
         return [...prevWindows, newWindow];
     });
 
     setActiveWindowId(id);
     setNextZIndex(prev => prev + 1);
+  };
+
+  const updateWindowData = (id: AppId, newData: any) => {
+      setWindows(prev => prev.map(w => w.id === id ? { ...w, data: newData } : w));
   };
 
   const handleOpenFile = (file: FileItem) => {
@@ -498,11 +535,8 @@ const App: React.FC = () => {
       } else if (file.type === 'code') {
           openApp(AppId.NOTEPAD, { file });
       } else if (file.type === 'pdf' || file.type === 'doc' || file.type === 'sheet' || file.type === 'markdown') {
-          // Use the new DocViewer for PDFs, Office docs, and Markdown
-          openApp(AppId.DOC_VIEWER, { file });
+          openApp(AppId.PREVIEW, { file });
       } else {
-          // Fallback to notepad or alert
-          // If it is 'unknown', maybe DocViewer can handle it if it is a text file
           openApp(AppId.NOTEPAD, { file });
       }
   };
@@ -641,8 +675,14 @@ const App: React.FC = () => {
           return <VaultApp onOpenFile={handleOpenFile} />;
       }
 
-      if (window.id === AppId.DOC_VIEWER) {
-          return <DocViewerApp file={window.data?.file} />;
+      if (window.id === AppId.PREVIEW) {
+          return (
+            <PreviewApp 
+                tabs={window.data?.tabs || []} 
+                activeTabId={window.data?.activeTabId} 
+                onUpdate={(newData) => updateWindowData(AppId.PREVIEW, newData)}
+            />
+          );
       }
       
       return window.component;

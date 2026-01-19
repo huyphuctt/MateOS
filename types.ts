@@ -10,7 +10,7 @@ export enum AppId {
   ADMIN = 'admin',
   NOTIFICATIONS = 'notifications',
   VAULT = 'vault',
-  DOC_VIEWER = 'doc_viewer'
+  PREVIEW = 'preview'
 }
 
 export type Theme = 'aero' | 'aqua';
