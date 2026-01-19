@@ -33,6 +33,7 @@ export interface WindowState {
   isOpen: boolean;
   isMinimized: boolean;
   isMaximized: boolean;
+  dockSide?: 'left' | 'right' | null; // New property for docking
   zIndex: number;
   position: { x: number; y: number };
   size: { width: number; height: number };

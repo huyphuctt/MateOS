@@ -474,6 +474,7 @@ const App: React.FC = () => {
             isOpen: true,
             isMinimized: false,
             isMaximized: false,
+            dockSide: null, // Initial dock state
             zIndex: nextZIndex,
             size: app.defaultSize || { width: 600, height: 400 },
             position: app.preferredPosition || { 
@@ -519,7 +520,16 @@ const App: React.FC = () => {
   };
 
   const maximizeWindow = (id: AppId) => {
-    setWindows(prev => prev.map(w => w.id === id ? { ...w, isMaximized: !w.isMaximized } : w));
+    setWindows(prev => prev.map(w => w.id === id ? { ...w, isMaximized: !w.isMaximized, dockSide: null } : w));
+    focusWindow(id);
+  };
+
+  const dockWindow = (id: AppId, side: 'left' | 'right' | null) => {
+    setWindows(prev => prev.map(w => w.id === id ? { 
+        ...w, 
+        dockSide: side, 
+        isMaximized: false 
+    } : w));
     focusWindow(id);
   };
 
@@ -734,6 +744,7 @@ const App: React.FC = () => {
                 onMaximize={maximizeWindow}
                 onFocus={focusWindow}
                 onMove={moveWindow}
+                onDock={dockWindow}
                 theme={theme}
                 hideTaskbar={hideTaskbar}
                 >
