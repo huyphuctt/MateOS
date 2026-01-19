@@ -73,7 +73,21 @@ const App: React.FC = () => {
         return 'login_partial';
     }
 
-    // Default to full login, session check will upgrade to desktop if valid
+    // Optimistic Session Check to prevent flash
+    const lastLoginStr = localStorage.getItem('mateos_last_login');
+    
+    if (localUser && lastLoginStr) {
+         const now = Date.now();
+         const lastLogin = parseInt(lastLoginStr, 10);
+         // Check if session is roughly valid (we can't check token validity synchronously)
+         if (now - lastLogin < SESSION_MAX_MS) {
+             // If we have a user and session isn't obviously expired, start at desktop
+             // The async checkSession will validate token and kick to login if needed.
+             return 'desktop';
+         }
+    }
+
+    // Default to full login if no valid session data found
     return 'login_full';
   });
   

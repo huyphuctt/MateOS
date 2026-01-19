@@ -140,7 +140,7 @@ export const TopBar: React.FC<TopBarProps> = ({
         <div className="flex items-center gap-3 h-full">
             
             {/* Org / Workspace Switcher */}
-            {showContextSwitcher && (
+            {showContextSwitcher && (<>
                 <div className="relative mr-2" ref={contextRef}>
                     <button 
                         onClick={() => setContextOpen(!contextOpen)}
@@ -201,9 +201,9 @@ export const TopBar: React.FC<TopBarProps> = ({
                         </div>
                     )}
                 </div>
-            )}
-
             <div className="w-[1px] h-3 bg-white/20"></div>
+            </>
+            )}
 
             <div className="flex items-center gap-3 px-2">
                 {/* Notification Bell */}
