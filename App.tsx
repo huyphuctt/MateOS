@@ -11,7 +11,9 @@ import {
   FolderClosed,
   Compass,
   ShieldCheck,
-  Bell
+  Bell,
+  HardDrive,
+  File
 } from 'lucide-react';
 
 import { Taskbar } from './components/os/Taskbar';
@@ -22,14 +24,16 @@ import { NotepadApp } from './components/apps/Notepad';
 import { BrowserApp } from './components/apps/Browser';
 import { SettingsApp } from './components/apps/Settings';
 import { AdminPanel } from './components/apps/AdminPanel';
-import { NotificationsApp } from './components/apps/NotificationsApp'; // New App
+import { NotificationsApp } from './components/apps/NotificationsApp';
+import { VaultApp } from './components/apps/VaultApp'; 
+import { DocViewerApp } from './components/apps/DocViewerApp'; // New App
 import { ContextSelector } from './components/os/ContextSelector';
 import { TopBar } from './components/os/TopBar';
 import { Launchpad } from './components/os/Launchpad';
-import { NotificationCenter } from './components/os/NotificationCenter'; // New Component
+import { NotificationCenter } from './components/os/NotificationCenter';
 import { BootScreen } from './components/os/BootScreen';
 import { LoginScreen } from './components/os/LoginScreen';
-import { AppId, WindowState, Theme, AuthMode, User, Organization, Workspace } from './types';
+import { AppId, WindowState, Theme, AuthMode, User, Organization, Workspace, FileItem } from './types';
 import { apiService } from './services/api';
 import { RECENT_ITEMS, WALLPAPERS, MOCK_USERS } from './data/mock';
 
@@ -48,7 +52,6 @@ const Placeholder = ({ text }: { text: string }) => (
 
 const App: React.FC = () => {
   // --- Auth State ---
-  // Initialize state based on localStorage to prevent UI flash and handle lock screen correctly
   const [username, setUsername] = useState<string>(() => {
     const localUser = localStorage.getItem('mateos_user');
     if (localUser) {
@@ -68,36 +71,27 @@ const App: React.FC = () => {
     const isLocked = localStorage.getItem('mateos_is_locked') === 'true';
     const localUser = localStorage.getItem('mateos_user');
     
-    // If specifically locked and we have user data, go straight to partial login
     if (isLocked && localUser) {
         return 'login_partial';
     }
 
-    // Optimistic Session Check to prevent flash
     const lastLoginStr = localStorage.getItem('mateos_last_login');
     
     if (localUser && lastLoginStr) {
          const now = Date.now();
          const lastLogin = parseInt(lastLoginStr, 10);
-         // Check if session is roughly valid (we can't check token validity synchronously)
          if (now - lastLogin < SESSION_MAX_MS) {
-             // If we have a user and session isn't obviously expired, start at desktop
-             // The async checkSession will validate token and kick to login if needed.
              return 'desktop';
          }
     }
-
-    // Default to full login if no valid session data found
     return 'login_full';
   });
   
   // --- User & Org Context State ---
-  // Resolve full user object (in real app, this comes from API). For now, we mock lookup.
   const currentUser = useMemo(() => {
     return MOCK_USERS.find(u => u.username.toLowerCase() === username.toLowerCase()) as unknown as User | undefined;
   }, [username]);
 
-  // Load saved context or default to first available
   const [activeOrgId, setActiveOrgId] = useState<number | null>(() => {
     const saved = localStorage.getItem('mateos_active_context');
     if (saved) return JSON.parse(saved).orgId;
@@ -110,20 +104,18 @@ const App: React.FC = () => {
      return null;
   });
 
-  // Derived active objects
   const currentOrg = useMemo(() => {
     if (!currentUser) return undefined;
     if (activeOrgId) return currentUser.organizations.find(o => o.id === activeOrgId);
-    return currentUser.organizations[0]; // Default to first
+    return currentUser.organizations[0]; 
   }, [currentUser, activeOrgId]);
 
   const currentWorkspace = useMemo(() => {
     if (!currentOrg) return undefined;
     if (activeWorkspaceId) return currentOrg.workspaces.find(w => w.id === activeWorkspaceId);
-    return currentOrg.workspaces[0]; // Default to first
+    return currentOrg.workspaces[0]; 
   }, [currentOrg, activeWorkspaceId]);
 
-  // Persist Context Changes
   useEffect(() => {
     if (currentOrg) {
         localStorage.setItem('mateos_active_context', JSON.stringify({
@@ -153,23 +145,17 @@ const App: React.FC = () => {
   const [activeWindowId, setActiveWindowId] = useState<AppId | null>(null);
   const [startMenuOpen, setStartMenuOpen] = useState(false);
   const [nextZIndex, setNextZIndex] = useState(10);
-  
-  // Notification Center State
   const [notificationPanelOpen, setNotificationPanelOpen] = useState(false);
 
-  // --- Effects ---
-
-  // Persist theme
+  // --- Effects & Auth Logic ---
   useEffect(() => {
     localStorage.setItem('mateos_theme', theme);
   }, [theme]);
 
-  // Persist wallpaper
   useEffect(() => {
     localStorage.setItem('mateos_wallpaper', wallpaper);
   }, [wallpaper]);
 
-  // Persist avatar
   useEffect(() => {
     if (userAvatar) {
         localStorage.setItem('mateos_avatar', userAvatar);
@@ -177,8 +163,6 @@ const App: React.FC = () => {
         localStorage.removeItem('mateos_avatar');
     }
   }, [userAvatar]);
-
-  // --- Auth Logic (Session Management) ---
 
   const checkSession = useCallback(async (isBackgroundCheck = false) => {
     const localUser = localStorage.getItem('mateos_user');
@@ -188,13 +172,11 @@ const App: React.FC = () => {
     const isLocked = localStorage.getItem('mateos_is_locked') === 'true';
     const now = Date.now();
 
-    // 1. Boot Sequence Check (Skip if already booted once on this device)
     if (!bootCompleted && !isBackgroundCheck) {
         setAuthMode('boot');
         return;
     }
 
-    // 2. Local Data Check
     if (!localUser || !lastLoginStr) {
         setAuthMode('login_full');
         if (localUser) setUsername(JSON.parse(localUser).username);
@@ -202,8 +184,6 @@ const App: React.FC = () => {
     }
 
     const usernameStr = JSON.parse(localUser).username;
-
-    // 3. Time Expiry Check
     const lastLogin = parseInt(lastLoginStr, 10);
     const diff = now - lastLogin;
 
@@ -219,8 +199,6 @@ const App: React.FC = () => {
         return;
     }
 
-    // 4. API Token Validation Check
-    // If token exists, verify with server. If invalid, lock screen.
     if (token) {
         try {
             const isValid = await apiService.checkSession(token);
@@ -230,27 +208,22 @@ const App: React.FC = () => {
                 return;
             }
         } catch (error) {
-            // On error, default to partial login to be safe.
             setAuthMode('login_partial');
             setUsername(usernameStr);
             return;
         }
     } else {
-        // Missing token but have session data? Force re-auth (partial).
         setAuthMode('login_partial');
         setUsername(usernameStr);
         return;
     }
 
-    // 5. Manual Lock Check
-    // If the user manually locked the screen, ensure it stays locked even if token is valid.
     if (isLocked) {
         setAuthMode('login_partial');
         setUsername(usernameStr);
         return;
     }
 
-    // 6. Valid Session
     if (!isBackgroundCheck) {
         setAuthMode('desktop');
         setUsername(usernameStr);
@@ -258,23 +231,16 @@ const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    // 1. Initial Session Check (Mount)
     checkSession(false);
-
-    // 2. Periodic Check (Every 10 minutes)
     const intervalId = setInterval(() => {
         checkSession(true);
     }, CHECK_INTERVAL_MS);
-
-    // 3. Re-access Check (Visibility Change)
     const handleVisibilityChange = () => {
         if (document.visibilityState === 'visible') {
             checkSession(true);
         }
     };
-
     document.addEventListener('visibilitychange', handleVisibilityChange);
-
     return () => {
         clearInterval(intervalId);
         document.removeEventListener('visibilitychange', handleVisibilityChange);
@@ -290,46 +256,34 @@ const App: React.FC = () => {
     const now = Date.now();
     localStorage.setItem('mateos_user', JSON.stringify({ username: user.username }));
     localStorage.setItem('mateos_last_login', now.toString());
-    localStorage.removeItem('mateos_is_locked'); // Clear lock state
+    localStorage.removeItem('mateos_is_locked'); 
     
     if (user.token) {
         localStorage.setItem('mateos_token', user.token);
     }
-
-    // Update avatar if provided by API (e.g. initial login with a user that has one)
     if (user.avatar) {
         setUserAvatar(user.avatar);
     }
-
-    // Update wallpaper if provided by API
     if (user.wallpaper) {
         setWallpaper(user.wallpaper);
     }
-
     setUsername(user.username);
 
-    // Check for Org/Workspace complexity for Context Selection
-    // We need to fetch the full user object from MOCK (or API) since 'user' arg here is partial from login response
     const fullUser = MOCK_USERS.find(u => u.username.toLowerCase() === user.username.toLowerCase());
-    
     if (fullUser) {
-        // Attempt to restore previous context
         const savedContextStr = localStorage.getItem('mateos_active_context');
         if (savedContextStr) {
              try {
                 const { orgId, wkId } = JSON.parse(savedContextStr);
-                // Validate if user still belongs to this Org
                 const org = fullUser.organizations.find(o => o.id === orgId);
                 if (org) {
                     const wk = org.workspaces.find(w => w.id === wkId);
-                    // Use saved workspace if valid, or if org has no workspaces (unlikely but safe)
                     if (wk || org.workspaces.length === 0) {
                         setActiveOrgId(orgId);
                         setActiveWorkspaceId(wkId);
                         setAuthMode('desktop');
                         return;
                     }
-                    // If workspace invalid but org valid, default to first workspace of that org if available
                     if (org.workspaces.length > 0) {
                          setActiveOrgId(orgId);
                          setActiveWorkspaceId(org.workspaces[0].id);
@@ -341,17 +295,13 @@ const App: React.FC = () => {
                  console.error("Failed to restore context", e);
              }
         }
-
         const hasMultipleOrgs = fullUser.organizations.length > 1;
         const hasMultipleWorkspaces = fullUser.organizations.some(o => o.workspaces.length > 1);
-        
         if (hasMultipleOrgs || hasMultipleWorkspaces) {
             setAuthMode('context_selection');
             return;
         }
     }
-
-    // Single context, go straight to desktop
     setAuthMode('desktop');
   };
 
@@ -362,30 +312,20 @@ const App: React.FC = () => {
   };
 
   const handleSwitchAccount = async () => {
-    // Call the logout service
     await apiService.logout();
-
-    // Clear User Specific Data
     localStorage.removeItem('mateos_user');
     localStorage.removeItem('mateos_last_login');
     localStorage.removeItem('mateos_token');
     localStorage.removeItem('mateos_is_locked');
-    // Note: We DO NOT clear mateos_active_context to remember last selection for convenience,
-    // validation in handleLoginSuccess ensures it matches the next user.
-
-    // Reset OS visual state to defaults (clearing user preferences)
     setWallpaper(WALLPAPERS[0].src);
     setTheme('aqua');
     setUserAvatar(null);
     setUsername('');
     setActiveOrgId(null);
     setActiveWorkspaceId(null);
-
-    // Clear OS state
     setWindows([]);
     setActiveWindowId(null);
     setStartMenuOpen(false);
-    
     setAuthMode('login_full');
   };
   
@@ -394,34 +334,24 @@ const App: React.FC = () => {
       setAuthMode('login_partial');
   }, []);
 
-  // --- Inactivity Auto-Lock ---
   useEffect(() => {
     if (authMode !== 'desktop') return;
-
     let timeoutId: ReturnType<typeof setTimeout>;
     let lastActivity = Date.now();
-
     const resetTimer = () => {
       if (timeoutId) clearTimeout(timeoutId);
       timeoutId = setTimeout(handleLock, INACTIVITY_TIMEOUT_MS);
     };
-
     const handleActivity = () => {
         const now = Date.now();
-        // Throttle resets to max once per second to avoid performance hit on mousemove
         if (now - lastActivity > 1000) {
             resetTimer();
             lastActivity = now;
         }
     };
-
-    // Initialize
     resetTimer();
-
-    // Listeners
     const events = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart', 'click'];
     events.forEach(event => window.addEventListener(event, handleActivity));
-
     return () => {
       if (timeoutId) clearTimeout(timeoutId);
       events.forEach(event => window.removeEventListener(event, handleActivity));
@@ -436,18 +366,16 @@ const App: React.FC = () => {
       alert("Manage Account interface pending implementation.");
   };
 
-  // --- OS Logic ---
-
+  // --- App Registry (Defined here to close over theme/etc if needed, though we use dynamic rendering for some) ---
   type AppRegistryItem = {
     title: string;
     icon: React.ReactNode;
     component: React.ReactNode;
     defaultSize?: { width: number; height: number };
     preferredPosition?: { x: number; y: number };
-    requiresAdmin?: boolean; // New Flag
+    requiresAdmin?: boolean; 
   };
 
-  // App Definitions (Registry)
   const appRegistry: Record<AppId, AppRegistryItem> = {
     [AppId.COPILOT]: {
       title: 'Copilot',
@@ -459,35 +387,31 @@ const App: React.FC = () => {
     [AppId.NOTEPAD]: {
       title: 'Notepad',
       icon: <FileText className="text-blue-400" size={20} />,
-      component: <NotepadApp />,
+      component: null, 
       defaultSize: { width: 600, height: 400 }
     },
     [AppId.BROWSER]: {
       title: theme === 'aqua' ? 'Safari' : 'Edge Browser',
       icon: theme === 'aqua' ? <Compass className="text-blue-500" size={20} /> : <Globe className="text-green-500" size={20} />,
-      component: <BrowserApp />,
+      component: null, 
       defaultSize: { width: 800, height: 600 }
     },
     [AppId.PHOTOS]: {
       title: 'Photos',
       icon: <ImageIcon className="text-purple-500" size={20} />,
-      component: <div className="p-4 bg-black h-full overflow-y-auto grid grid-cols-3 gap-2">
-         {[...Array(12)].map((_, i) => (
-             <img key={i} src={`https://picsum.photos/300/200?random=${i}`} className="w-full h-auto rounded-sm hover:opacity-80 transition-opacity cursor-pointer" alt="Gallery" />
-         ))}
-      </div>,
+      component: null, 
       defaultSize: { width: 700, height: 500 }
     },
     [AppId.SETTINGS]: {
         title: 'Settings',
         icon: <Settings className="text-gray-500" size={20} />,
-        component: null, // Rendered dynamically
+        component: null, 
         defaultSize: { width: 600, height: 450 }
     },
     [AppId.ADMIN]: {
         title: 'Admin Console',
         icon: <ShieldCheck className="text-red-500" size={20} />,
-        component: null, // Dynamic
+        component: null, 
         defaultSize: { width: 800, height: 600 },
         requiresAdmin: true
     },
@@ -497,6 +421,18 @@ const App: React.FC = () => {
         component: <NotificationsApp />,
         defaultSize: { width: 400, height: 600 }
     },
+    [AppId.VAULT]: {
+        title: 'Vault',
+        icon: <HardDrive className="text-yellow-500" size={20} />,
+        component: null, // Dynamically rendered
+        defaultSize: { width: 900, height: 600 }
+    },
+    [AppId.DOC_VIEWER]: {
+        title: 'Document Viewer',
+        icon: <File className="text-gray-500" size={20} />,
+        component: null, // Dynamically rendered
+        defaultSize: { width: 800, height: 800 }
+    },
     [AppId.CALCULATOR]: {
         title: 'Calculator',
         icon: <Calculator className="text-orange-500" size={20} />,
@@ -505,44 +441,72 @@ const App: React.FC = () => {
     }
   };
 
-  // --- Actions ---
-
-  const openApp = (id: AppId) => {
+  // --- File Opening Logic ---
+  
+  // NOTE: openApp is updated to use functional state updates for `windows` to prevent stale closure bugs.
+  const openApp = (id: AppId, data?: any) => {
     setStartMenuOpen(false);
 
-    // Permission Check for Admin
+    // Permission Check
     const app = appRegistry[id];
     if (app.requiresAdmin && currentOrg?.role !== 'admin') {
         alert("Access Denied: You must be an administrator of the current organization.");
         return;
     }
 
-    if (windows.find(w => w.id === id)) {
-      focusWindow(id);
-      setWindows(prev => prev.map(w => w.id === id ? { ...w, isMinimized: false } : w));
-      return;
-    }
+    setWindows(prevWindows => {
+        // If window exists, bring to front and update data if provided
+        const existingWindow = prevWindows.find(w => w.id === id);
+        if (existingWindow) {
+             return prevWindows.map(w => 
+                w.id === id 
+                ? { ...w, isMinimized: false, data: data || w.data, zIndex: nextZIndex } 
+                : w
+             );
+        }
 
-    const newWindow: WindowState = {
-      id,
-      title: app.title,
-      icon: app.icon,
-      component: app.component,
-      isOpen: true,
-      isMinimized: false,
-      isMaximized: false,
-      zIndex: nextZIndex,
-      size: app.defaultSize || { width: 600, height: 400 },
-      position: app.preferredPosition || { 
-        x: 50 + (windows.length * 30), 
-        y: (theme === 'aqua' ? 80 : 50) + (windows.length * 30) 
-      }
-    };
+        // Else create new
+        const newWindow: WindowState = {
+            id,
+            title: app.title,
+            icon: app.icon,
+            component: app.component, // This might be null for dynamic apps
+            isOpen: true,
+            isMinimized: false,
+            isMaximized: false,
+            zIndex: nextZIndex,
+            size: app.defaultSize || { width: 600, height: 400 },
+            position: app.preferredPosition || { 
+                x: 50 + (prevWindows.length * 30), 
+                y: (theme === 'aqua' ? 80 : 50) + (prevWindows.length * 30) 
+            },
+            data: data
+        };
+        return [...prevWindows, newWindow];
+    });
 
-    setWindows([...windows, newWindow]);
     setActiveWindowId(id);
     setNextZIndex(prev => prev + 1);
   };
+
+  const handleOpenFile = (file: FileItem) => {
+      if (file.type === 'image') {
+          openApp(AppId.PHOTOS, { file });
+      } else if (file.type === 'video') {
+          openApp(AppId.BROWSER, { url: file.url });
+      } else if (file.type === 'code') {
+          openApp(AppId.NOTEPAD, { file });
+      } else if (file.type === 'pdf' || file.type === 'doc' || file.type === 'sheet') {
+          // Use the new DocViewer for PDFs and Office docs
+          openApp(AppId.DOC_VIEWER, { file });
+      } else {
+          // Fallback to notepad or alert
+          // If it is 'unknown', maybe DocViewer can handle it if it is a text file
+          openApp(AppId.NOTEPAD, { file });
+      }
+  };
+
+  // --- Window Actions ---
 
   const closeWindow = (id: AppId) => {
     setWindows(prev => prev.filter(w => w.id !== id));
@@ -573,9 +537,7 @@ const App: React.FC = () => {
     setStartMenuOpen(!startMenuOpen);
   };
 
-  const handleDesktopClick = () => {
-     // Optional: clicking desktop interactions
-  };
+  const handleDesktopClick = () => {};
 
   const appIcons = Object.fromEntries(
     Object.entries(appRegistry).map(([id, app]) => [id, app.icon])
@@ -584,28 +546,96 @@ const App: React.FC = () => {
   const activeWindow = windows.find(w => w.id === activeWindowId);
   const activeAppTitle = activeWindow ? activeWindow.title : 'MateOS';
 
-  // --- Context Switching Logic ---
   const handleSwitchOrg = (orgId: number) => {
       setActiveOrgId(orgId);
-      // Reset workspace to first one of new org
       const newOrg = currentUser?.organizations.find(o => o.id === orgId);
       if (newOrg && newOrg.workspaces.length > 0) {
           setActiveWorkspaceId(newOrg.workspaces[0].id);
       } else {
           setActiveWorkspaceId(null);
       }
-      
-      // Close all apps when switching context
       setWindows([]);
       setActiveWindowId(null);
   };
 
   const handleSwitchWorkspace = (wkId: number) => {
       setActiveWorkspaceId(wkId);
-      
-      // Close all apps when switching context
       setWindows([]);
       setActiveWindowId(null);
+  };
+
+  // Helper to render dynamic window content with props/data
+  const renderWindowContent = (window: WindowState) => {
+      // Specialized Apps handling data
+      if (window.id === AppId.PHOTOS) {
+          if (window.data?.file?.url) {
+              return (
+                  <div className="flex items-center justify-center bg-black h-full">
+                      <img src={window.data.file.url} className="max-w-full max-h-full object-contain" alt={window.data.file.name} />
+                  </div>
+              );
+          }
+           return (
+              <div className="p-4 bg-black h-full overflow-y-auto grid grid-cols-3 gap-2">
+                 {[...Array(12)].map((_, i) => (
+                     <img key={i} src={`https://picsum.photos/300/200?random=${i}`} className="w-full h-auto rounded-sm hover:opacity-80 transition-opacity cursor-pointer" alt="Gallery" />
+                 ))}
+              </div>
+           );
+      }
+
+      if (window.id === AppId.BROWSER) {
+           // If we have a URL passed via Vault
+           if (window.data?.url) {
+                return (
+                    <div className="flex flex-col h-full">
+                        <div className="bg-gray-100 p-2 text-sm truncate border-b">{window.data.url}</div>
+                        <iframe src={window.data.url} className="flex-1 w-full border-0" title="Browser" />
+                    </div>
+                );
+           }
+           return <BrowserApp />;
+      }
+      
+      if (window.id === AppId.NOTEPAD) {
+          return <NotepadApp />;
+      }
+
+      if (window.id === AppId.SETTINGS) {
+          return (
+            <SettingsApp 
+                theme={theme} 
+                setTheme={setTheme} 
+                hideTaskbar={hideTaskbar} 
+                setHideTaskbar={setHideTaskbar} 
+                username={username}
+                onManageAccount={handleManageAccount}
+                wallpaper={wallpaper}
+                setWallpaper={setWallpaper}
+                userAvatar={userAvatar}
+                setUserAvatar={setUserAvatar}
+            />
+          );
+      }
+
+      if (window.id === AppId.ADMIN && currentOrg) {
+          return (
+            <AdminPanel 
+                currentOrg={currentOrg}
+                currentWorkspace={currentWorkspace}
+            />
+          );
+      }
+
+      if (window.id === AppId.VAULT) {
+          return <VaultApp onOpenFile={handleOpenFile} />;
+      }
+
+      if (window.id === AppId.DOC_VIEWER) {
+          return <DocViewerApp file={window.data?.file} />;
+      }
+      
+      return window.component;
   };
 
   return (
@@ -615,15 +645,7 @@ const App: React.FC = () => {
         onClick={handleDesktopClick}
         onContextMenu={(e) => e.preventDefault()}
     >
-      
-      {/* -------------------------------------------
-          Screen Routing Layer
-         ------------------------------------------- */}
-      
-      {authMode === 'boot' && (
-        <BootScreen onComplete={handleBootComplete} />
-      )}
-
+      {authMode === 'boot' && <BootScreen onComplete={handleBootComplete} />}
       {(authMode === 'login_full' || authMode === 'login_partial') && (
         <LoginScreen 
             mode={authMode === 'login_full' ? 'full' : 'partial'}
@@ -634,7 +656,6 @@ const App: React.FC = () => {
             userAvatar={userAvatar}
         />
       )}
-
       {authMode === 'context_selection' && currentUser && (
         <ContextSelector 
             user={currentUser}
@@ -644,12 +665,8 @@ const App: React.FC = () => {
         />
       )}
 
-      {/* -------------------------------------------
-          Desktop Environment Layer
-         ------------------------------------------- */}
       {authMode === 'desktop' && (
         <>
-            {/* Aqua Top Bar */}
             {theme === 'aqua' && (
                 <TopBar 
                     activeAppTitle={activeAppTitle} 
@@ -660,29 +677,25 @@ const App: React.FC = () => {
                     onOpenUserProfile={() => openApp(AppId.SETTINGS)}
                     userAvatar={userAvatar}
                     onLock={handleLock}
-                    // Org Context
                     organizations={currentUser?.organizations || []}
                     currentOrg={currentOrg}
                     currentWorkspace={currentWorkspace}
                     onSwitchOrg={handleSwitchOrg}
                     onSwitchWorkspace={handleSwitchWorkspace}
-                    // Notification
                     notificationPanelOpen={notificationPanelOpen}
                     onToggleNotificationPanel={() => setNotificationPanelOpen(!notificationPanelOpen)}
                 />
             )}
 
-            {/* Desktop Icons */}
             <div className={`absolute left-4 flex flex-col gap-6 z-0 ${theme === 'aqua' ? 'top-12 right-4 items-end left-auto' : 'top-4 items-center'}`}>
                 <button 
-                    onDoubleClick={() => openApp(AppId.NOTEPAD)}
+                    onDoubleClick={() => openApp(AppId.VAULT)}
                     className="w-20 flex flex-col items-center gap-1 group text-white hover:bg-white/10 rounded p-2 transition-colors"
                 >
                     <FolderClosed className="w-10 h-10 text-yellow-400 fill-yellow-400 desktop-icon-shadow" />
-                    <span className="text-xs text-center line-clamp-2 desktop-text-shadow font-medium">Documents</span>
+                    <span className="text-xs text-center line-clamp-2 desktop-text-shadow font-medium">Vault</span>
                 </button>
 
-                {/* Show Admin Tool Icon on Desktop if Admin */}
                 {currentOrg?.role === 'admin' && (
                     <button 
                         onDoubleClick={() => openApp(AppId.ADMIN)}
@@ -692,14 +705,12 @@ const App: React.FC = () => {
                         <span className="text-xs text-center desktop-text-shadow font-medium">Admin Console</span>
                     </button>
                 )}
-
                 <button 
                     className="w-20 flex flex-col items-center gap-1 group text-white hover:bg-white/10 rounded p-2 transition-colors"
                 >
                     <Trash2 className="w-10 h-10 text-gray-300 desktop-icon-shadow" />
                     <span className="text-xs text-center desktop-text-shadow font-medium">Recycle Bin</span>
                 </button>
-
                 <button 
                     onDoubleClick={() => openApp(AppId.BROWSER)}
                     className="w-20 flex flex-col items-center gap-1 group text-white hover:bg-white/10 rounded p-2 transition-colors"
@@ -713,7 +724,6 @@ const App: React.FC = () => {
                 </button>
             </div>
 
-            {/* Windows Layer */}
             {windows.map(window => (
                 <WindowFrame
                 key={window.id}
@@ -727,31 +737,10 @@ const App: React.FC = () => {
                 theme={theme}
                 hideTaskbar={hideTaskbar}
                 >
-                {window.id === AppId.SETTINGS ? (
-                    <SettingsApp 
-                        theme={theme} 
-                        setTheme={setTheme} 
-                        hideTaskbar={hideTaskbar} 
-                        setHideTaskbar={setHideTaskbar} 
-                        username={username}
-                        onManageAccount={handleManageAccount}
-                        wallpaper={wallpaper}
-                        setWallpaper={setWallpaper}
-                        userAvatar={userAvatar}
-                        setUserAvatar={setUserAvatar}
-                    />
-                ) : window.id === AppId.ADMIN && currentOrg ? (
-                    <AdminPanel 
-                        currentOrg={currentOrg}
-                        currentWorkspace={currentWorkspace}
-                    />
-                ) : (
-                    window.component
-                )}
+                   {renderWindowContent(window)}
                 </WindowFrame>
             ))}
 
-            {/* Start Menu or Launchpad */}
             {theme === 'aero' ? (
                 <StartMenu 
                     isOpen={startMenuOpen} 
@@ -776,7 +765,6 @@ const App: React.FC = () => {
                 />
             )}
             
-            {/* Notification Center Slide Panel */}
             <NotificationCenter 
                 isOpen={notificationPanelOpen}
                 onClose={() => setNotificationPanelOpen(false)}
@@ -785,7 +773,6 @@ const App: React.FC = () => {
                 theme={theme}
             />
 
-            {/* Taskbar / Dock */}
             <Taskbar 
                 openApps={windows.map(w => w.id)} 
                 activeApp={activeWindowId} 
@@ -810,7 +797,6 @@ const App: React.FC = () => {
                 currentWorkspace={currentWorkspace}
                 onSwitchOrg={handleSwitchOrg}
                 onSwitchWorkspace={handleSwitchWorkspace}
-                // Notification
                 notificationPanelOpen={notificationPanelOpen}
                 onToggleNotificationPanel={() => setNotificationPanelOpen(!notificationPanelOpen)}
                 recentItems={RECENT_ITEMS}

@@ -1,4 +1,5 @@
 import { MOCK_USERS } from '../data/mock';
+import { FileItem } from '../types';
 
 interface User {
     id: string;
@@ -20,6 +21,16 @@ interface ApiResponse {
     message?: string;
     data?: any;
 }
+
+// Mock Files for Vault
+const MOCK_FILES: FileItem[] = [
+    { id: '1', name: 'Project_Alpha_Specs.pdf', type: 'pdf', size: '2.4 MB', date: '2024-05-20', url: 'https://pdfobject.com/pdf/sample.pdf' },
+    { id: '2', name: 'Q3_Financials.xlsx', type: 'sheet', size: '45 KB', date: '2024-05-18', url: '#' },
+    { id: '3', name: 'Team_Outing.jpg', type: 'image', size: '3.1 MB', date: '2024-05-15', url: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?q=80&w=3432&auto=format&fit=crop' },
+    { id: '4', name: 'Launch_Video.mp4', type: 'video', size: '45.2 MB', date: '2024-05-10', url: '#' },
+    { id: '5', name: 'main.tsx', type: 'code', size: '2 KB', date: '2024-05-05', url: '#' },
+    { id: '6', name: 'Meeting_Notes.txt', type: 'doc', size: '1 KB', date: '2024-05-01', url: '#' },
+];
 
 class ApiService {
     private apiUrl: string | undefined;
@@ -188,6 +199,76 @@ class ApiService {
             return { success: true, message: 'Password updated' };
         } catch (error: any) {
             return { success: false, message: error.message || 'Network error' };
+        }
+    }
+
+    // --- Vault Functions ---
+
+    public async getVaultContent(token?: string): Promise<FileItem[]> {
+        console.log('ApiService: getVaultContent');
+        if (this.isMock) {
+            await this.mockDelay(500);
+            return [...MOCK_FILES];
+        }
+
+        try {
+             const response = await fetch(`${this.apiUrl}/vault/content`, {
+                headers: this.getHeaders(token),
+            });
+            const data = await response.json();
+            return data.files || [];
+        } catch (error) {
+            console.error('Vault content error:', error);
+            return [];
+        }
+    }
+
+    public async uploadVaultFile(file: File, token?: string): Promise<FileItem | null> {
+        console.log('ApiService: uploadVaultFile', file.name);
+        if (this.isMock) {
+            await this.mockDelay(1500);
+            
+            // Determine type
+            let type: FileItem['type'] = 'unknown';
+            if (file.type.startsWith('image/')) type = 'image';
+            else if (file.type.startsWith('video/')) type = 'video';
+            else if (file.type === 'application/pdf') type = 'pdf';
+            else if (file.type.includes('sheet') || file.type.includes('excel')) type = 'sheet';
+            else if (file.type.includes('text') || file.type.includes('code')) type = 'code';
+            else if (file.type.includes('document') || file.type.includes('word')) type = 'doc';
+
+            const newFile: FileItem = {
+                id: Date.now().toString(),
+                name: file.name,
+                type,
+                size: `${(file.size / 1024).toFixed(1)} KB`,
+                date: new Date().toISOString().split('T')[0],
+                url: URL.createObjectURL(file) // Create temporary local URL
+            };
+            
+            // In a real app with mock state persistence, we'd push to MOCK_FILES here
+            // MOCK_FILES.push(newFile); 
+            return newFile;
+        }
+
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const response = await fetch(`${this.apiUrl}/vault/upload`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                    // Do NOT set Content-Type header for FormData, browser sets boundary
+                },
+                body: formData
+            });
+
+            const data = await response.json();
+            return data.file;
+        } catch (error) {
+            console.error('Vault upload error:', error);
+            return null;
         }
     }
 }

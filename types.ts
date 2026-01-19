@@ -8,12 +8,24 @@ export enum AppId {
   SETTINGS = 'settings',
   CALCULATOR = 'calculator',
   ADMIN = 'admin',
-  NOTIFICATIONS = 'notifications'
+  NOTIFICATIONS = 'notifications',
+  VAULT = 'vault',
+  DOC_VIEWER = 'doc_viewer'
 }
 
 export type Theme = 'aero' | 'aqua';
 
 export type AuthMode = 'boot' | 'login_full' | 'login_partial' | 'context_selection' | 'desktop';
+
+export interface FileItem {
+  id: string;
+  name: string;
+  type: 'image' | 'video' | 'doc' | 'sheet' | 'pdf' | 'code' | 'unknown';
+  size: string;
+  url: string; // Real or Object URL
+  date: string;
+  category?: string;
+}
 
 export interface WindowState {
   id: AppId;
@@ -26,6 +38,7 @@ export interface WindowState {
   size: { width: number; height: number };
   icon: ReactNode;
   component: ReactNode;
+  data?: any; // To pass file data or initial state
 }
 
 export interface AppConfig {
