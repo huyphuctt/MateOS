@@ -496,8 +496,8 @@ const App: React.FC = () => {
           openApp(AppId.BROWSER, { url: file.url });
       } else if (file.type === 'code') {
           openApp(AppId.NOTEPAD, { file });
-      } else if (file.type === 'pdf' || file.type === 'doc' || file.type === 'sheet') {
-          // Use the new DocViewer for PDFs and Office docs
+      } else if (file.type === 'pdf' || file.type === 'doc' || file.type === 'sheet' || file.type === 'markdown') {
+          // Use the new DocViewer for PDFs, Office docs, and Markdown
           openApp(AppId.DOC_VIEWER, { file });
       } else {
           // Fallback to notepad or alert

@@ -22,6 +22,35 @@ interface ApiResponse {
     data?: any;
 }
 
+// Sample Markdown Content
+const readmeContent = `# MateOS Documentation
+
+Welcome to **MateOS**! This is a simulated operating system built with React and Tailwind CSS.
+
+## Features
+- **Window Management**: Drag, drop, minimize, maximize windows just like a real OS.
+- **App Ecosystem**: Integrated apps like Browser, Settings, Photos, and Copilot.
+- **File System**: Simulated Vault for file management with support for various file types.
+- **AI Integration**: Copilot powered by Google Gemini.
+
+## Getting Started
+1. Click on the *Start Menu* (Rocket icon) to launch apps.
+2. Use *Copilot* for AI assistance.
+3. Customize your experience in *Settings* (Themes, Wallpapers).
+
+## Supported File Types
+| Type | Extension | Viewer |
+|------|-----------|--------|
+| PDF | .pdf | DocViewer |
+| Word | .docx | DocViewer |
+| Markdown | .md | ReactMarkdown |
+| Images | .jpg, .png | Photos |
+
+> "The future is web-based."
+`;
+
+const readmeDataUrl = `data:text/markdown;base64,${btoa(readmeContent)}`;
+
 // Mock Files for Vault
 const MOCK_FILES: FileItem[] = [
     { id: '1', name: 'Project_Alpha_Specs.pdf', type: 'pdf', size: '2.4 MB', date: '2024-05-20', url: 'https://pdfobject.com/pdf/sample.pdf' },
@@ -30,6 +59,7 @@ const MOCK_FILES: FileItem[] = [
     { id: '4', name: 'Launch_Video.mp4', type: 'video', size: '45.2 MB', date: '2024-05-10', url: '#' },
     { id: '5', name: 'main.tsx', type: 'code', size: '2 KB', date: '2024-05-05', url: '#' },
     { id: '6', name: 'Meeting_Notes.txt', type: 'doc', size: '1 KB', date: '2024-05-01', url: '#' },
+    { id: '7', name: 'README.md', type: 'markdown', size: '1 KB', date: '2024-05-22', url: readmeDataUrl },
 ];
 
 class ApiService {
@@ -233,6 +263,7 @@ class ApiService {
             if (file.type.startsWith('image/')) type = 'image';
             else if (file.type.startsWith('video/')) type = 'video';
             else if (file.type === 'application/pdf') type = 'pdf';
+            else if (file.type === 'text/markdown' || file.name.endsWith('.md')) type = 'markdown';
             else if (file.type.includes('sheet') || file.type.includes('excel')) type = 'sheet';
             else if (file.type.includes('text') || file.type.includes('code')) type = 'code';
             else if (file.type.includes('document') || file.type.includes('word')) type = 'doc';

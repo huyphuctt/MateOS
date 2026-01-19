@@ -1,5 +1,6 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import DocViewer, { DocViewerRenderers } from "@cyntler/react-doc-viewer";
+import ReactMarkdown from 'react-markdown';
 import { FileItem } from '../../types';
 
 interface DocViewerAppProps {
@@ -7,6 +8,18 @@ interface DocViewerAppProps {
 }
 
 export const DocViewerApp: React.FC<DocViewerAppProps> = ({ file }) => {
+  const [markdownContent, setMarkdownContent] = useState<string>('');
+
+  useEffect(() => {
+    if (file?.type === 'markdown' && file.url) {
+        // Fetch content. Supports Data URIs and real URLs
+        fetch(file.url)
+            .then(res => res.text())
+            .then(text => setMarkdownContent(text))
+            .catch(err => console.error("Failed to load markdown:", err));
+    }
+  }, [file]);
+
   if (!file) return (
       <div className="h-full w-full bg-[#f3f3f3] dark:bg-[#202020] flex items-center justify-center text-gray-500">
           No file selected
@@ -38,13 +51,22 @@ export const DocViewerApp: React.FC<DocViewerAppProps> = ({ file }) => {
       disableThemeScrollbar: false,
   }), []);
 
+  // Markdown Viewer
+  if (file.type === 'markdown') {
+      return (
+        <div className="h-full w-full bg-white relative overflow-y-auto">
+             <div className="max-w-4xl mx-auto p-8 lg:p-12">
+                <article className="prose prose-slate dark:prose-invert max-w-none">
+                    <ReactMarkdown>{markdownContent}</ReactMarkdown>
+                </article>
+             </div>
+        </div>
+      );
+  }
+
+  // Standard DocViewer for other formats
   return (
     <div className="h-full w-full bg-white relative">
-      {/* 
-        Note: DocViewer often expects a height to be set on container.
-        We pass 'style' to the component and also ensure parent is full height.
-        Added overflowY: 'auto' to ensure scrolling is enabled.
-      */}
       <DocViewer 
         documents={docs} 
         pluginRenderers={DocViewerRenderers} 

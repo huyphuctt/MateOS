@@ -32,8 +32,12 @@ export const WindowFrame: React.FC<WindowFrameProps> = ({
   const [isMounted, setIsMounted] = useState(false);
   const dragOffset = useRef({ x: 0, y: 0 });
 
-  const taskbarHeight = hideTaskbar ? 6 : (theme === 'aero' ? 47 : 80);
-  const topBarHeight = theme === 'aqua' ? 25 : 0;
+  // Dimensions
+  // TopBar is h-7 (28px) in Tailwind
+  const topBarHeight = theme === 'aqua' ? 28 : 0;
+  // Aero Taskbar h-12 (48px), Aqua Dock h-20 (80px)
+  const taskbarHeight = hideTaskbar ? 6 : (theme === 'aero' ? 48 : 80);
+
   // Trigger open animation on mount
   useEffect(() => {
     const timer = requestAnimationFrame(() => setIsMounted(true));
@@ -69,7 +73,9 @@ export const WindowFrame: React.FC<WindowFrameProps> = ({
         
         // Viewport boundaries
         const maxX = window.innerWidth - windowState.size.width;
-        const maxY = window.innerHeight - windowState.size.height - taskbarHeight;
+        // Limit Y so titlebar is always visible (at least topBarHeight)
+        // And ensure it doesn't go too far down
+        const maxY = window.innerHeight - 40; // Keep at least 40px visible
         
         const clampedX = Math.max(0, Math.min(maxX, rawX));
         const clampedY = Math.max(topBarHeight, Math.min(maxY, rawY)); // Respect TopBar
@@ -91,7 +97,7 @@ export const WindowFrame: React.FC<WindowFrameProps> = ({
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isDragging, onMove, windowState.id, windowState.size.width, windowState.size.height, theme, hideTaskbar]);
+  }, [isDragging, onMove, windowState.id, windowState.size.width, topBarHeight]);
 
   // Animation State Calculation
   const isVisible = isMounted && !windowState.isMinimized && !isClosing;
@@ -141,8 +147,15 @@ export const WindowFrame: React.FC<WindowFrameProps> = ({
 
   const getBottomOffset = () => {
       if (!windowState.isMaximized) return undefined;
-      return hideTaskbar ? '6px' : `${taskbarHeight + 1}px`;
+      return hideTaskbar ? '6px' : `${taskbarHeight}px`;
   };
+
+  // Max Height Calculation
+  // If maximized, we rely on top/bottom positioning.
+  // If not maximized, we constrain max-height to viewport - taskbar - topbar - buffer.
+  const maxHeight = windowState.isMaximized 
+    ? 'none' 
+    : `calc(100vh - ${taskbarHeight + topBarHeight + 20}px)`;
 
   return (
     <div
@@ -161,6 +174,7 @@ export const WindowFrame: React.FC<WindowFrameProps> = ({
         bottom: getBottomOffset(),
         width: windowState.isMaximized ? 'auto' : windowState.size.width,
         height: windowState.isMaximized ? 'auto' : windowState.size.height,
+        maxHeight: maxHeight,
         zIndex: windowState.zIndex,
         transition: isDragging ? 'none' : undefined 
       }}
@@ -168,7 +182,7 @@ export const WindowFrame: React.FC<WindowFrameProps> = ({
     >
       {/* Title Bar */}
       <div
-        className={`h-9 flex items-center px-2 bg-white/30 dark:bg-white/5 select-none border-b border-white/20 dark:border-white/5 ${theme === 'aqua' ? 'justify-start' : 'justify-between'}`}
+        className={`h-9 flex items-center px-2 bg-white/30 dark:bg-white/5 select-none border-b border-white/20 dark:border-white/5 ${theme === 'aqua' ? 'justify-start' : 'justify-between'} shrink-0`}
         onMouseDown={handleMouseDown}
         onDoubleClick={() => onMaximize(windowState.id)}
       >

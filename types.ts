@@ -20,7 +20,7 @@ export type AuthMode = 'boot' | 'login_full' | 'login_partial' | 'context_select
 export interface FileItem {
   id: string;
   name: string;
-  type: 'image' | 'video' | 'doc' | 'sheet' | 'pdf' | 'code' | 'unknown';
+  type: 'image' | 'video' | 'doc' | 'sheet' | 'pdf' | 'code' | 'markdown' | 'unknown';
   size: string;
   url: string; // Real or Object URL
   date: string;
