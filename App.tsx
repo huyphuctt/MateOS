@@ -543,7 +543,7 @@ const App: React.FC = () => {
     },
     [AppId.VAULT]: {
         title: 'Vault',
-        icon: <Vault className="text-yellow-500" size={20} />,
+        icon: <Vault className="text-green-500" size={20} />,
         component: null, // Dynamically rendered
         defaultSize: { width: 900, height: 600 }
     },
@@ -852,7 +852,7 @@ const App: React.FC = () => {
                     onDoubleClick={() => openApp(AppId.VAULT)}
                     className="w-20 flex flex-col items-center gap-1 group text-white hover:bg-white/10 rounded p-2 transition-colors"
                 >
-                    <Vault className="w-10 h-10 text-yellow-400 desktop-icon-shadow" />
+                    <Vault className="w-10 h-10 text-green-400 desktop-icon-shadow" />
                     <span className="text-xs text-center line-clamp-2 desktop-text-shadow font-medium">Vault</span>
                 </button>
 

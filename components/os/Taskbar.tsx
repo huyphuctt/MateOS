@@ -26,6 +26,11 @@ interface TaskbarProps {
   onToggleFullscreen?: () => void;
 }
 
+const PINNED_APPS = [
+    AppId.VAULT,
+    AppId.SETTINGS
+];
+
 export const Taskbar: React.FC<TaskbarProps> = ({
   openApps,
   activeApp,
@@ -74,53 +79,61 @@ export const Taskbar: React.FC<TaskbarProps> = ({
     return date.toLocaleDateString([], { month: 'numeric', day: 'numeric', year: 'numeric' });
   };
 
+  // Merge pinned apps with currently open apps to ensure all running tasks are visible
+  const displayedApps = Array.from(new Set([...PINNED_APPS, ...openApps]));
+
   // Aqua Dock Style
   if (theme === 'aqua') {
       return (
-        <div className={`absolute bottom-0 left-0 right-0 h-20 flex justify-center z-[9999] pointer-events-none group/dock`}>
+        <div className={`absolute bottom-0 left-0 right-0 h-24 flex justify-center z-[9999] pointer-events-none group/dock`}>
              {/* Invisible Trigger Strip for easier revealing */}
-             <div className="absolute bottom-0 w-full h-2 bg-transparent pointer-events-auto" />
+             <div className="absolute bottom-0 w-full h-4 bg-transparent pointer-events-auto" />
              
              <div 
                 className={`
-                    pointer-events-auto flex items-end gap-2 px-4 py-2 bg-white/40 dark:bg-black/40 backdrop-blur-2xl rounded-2xl border border-white/20 shadow-2xl transition-transform duration-300 ease-in-out origin-bottom mb-2
+                    pointer-events-auto flex items-end gap-3 px-4 py-3 
+                    bg-sky-200/40 dark:bg-sky-900/40 backdrop-blur-2xl 
+                    rounded-2xl border border-white/20 shadow-2xl transition-transform duration-300 ease-in-out origin-bottom mb-2
                     ${hideTaskbar ? 'translate-y-[calc(100%-4px)] group-hover/dock:translate-y-0' : 'translate-y-0'}
                 `}
              >
                  {/* Launchpad Button */}
                 <button 
                     onClick={onStartClick}
-                    className="group/icon relative p-2 rounded-xl hover:bg-white/40 dark:hover:bg-white/20 transition-all duration-300 active:scale-95"
+                    className="group/icon relative p-2 rounded-2xl hover:bg-white/30 transition-all duration-300 active:scale-95 mb-1"
                 >
-                     <div className="w-10 h-10 bg-gradient-to-b from-gray-300 to-gray-400 rounded-xl flex items-center justify-center shadow-lg">
-                        <Rocket className="w-6 h-6 text-white fill-white" />
+                     <div className="w-12 h-12 bg-gradient-to-b from-gray-300 to-gray-400 rounded-xl flex items-center justify-center shadow-lg">
+                        <Rocket className="w-7 h-7 text-white fill-white" />
                      </div>
                 </button>
 
-                <div className="w-[1px] h-10 bg-white/20 mx-1"></div>
+                <div className="w-[1px] h-12 bg-white/20 mx-1 mb-1"></div>
 
                  {/* Dock Icons */}
-                 {[AppId.VAULT, AppId.SETTINGS].map(appId => {
+                 {displayedApps.map(appId => {
                     const isOpen = openApps.includes(appId);
-                    const isActive = activeApp === appId;
                     
                     return (
                         <button
                             key={appId}
                             onClick={() => onAppClick(appId)}
-                            className="group/icon relative p-1 transition-all duration-300 hover:-translate-y-2 active:scale-95 active:-translate-y-1"
+                            className="group/icon relative p-1 transition-all duration-300 hover:-translate-y-3 active:scale-95 active:-translate-y-1"
                         >
-                            <div className="w-12 h-12 flex items-center justify-center transition-transform">
-                                {/* We assume icons are passed as elements, we scale them up slightly */}
-                                <div className="bg-white/10 p-1.5 rounded-xl backdrop-blur-sm shadow-sm">
-                                    {React.cloneElement(appIcons[appId] as React.ReactElement<any>, { size: 28 })}
+                            <div className="w-14 h-14 flex items-center justify-center transition-transform">
+                                {/* Removed the dark bounding box (bg-white/10). Now transparent by default, light on hover */}
+                                <div className="bg-transparent group-hover/icon:bg-white/20 p-2 rounded-2xl transition-colors duration-200">
+                                    {appIcons[appId] ? (
+                                        React.cloneElement(appIcons[appId] as React.ReactElement<any>, { size: 32 })
+                                    ) : (
+                                        <div className="w-8 h-8 bg-gray-400 rounded-md" />
+                                    )}
                                 </div>
                             </div>
                             {isOpen && (
-                                <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-black/60 dark:bg-white/60 rounded-full" />
+                                <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-black/60 dark:bg-white/80 rounded-full" />
                             )}
                             {/* Tooltip */}
-                            <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover/icon:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
+                            <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-gray-800/90 text-white text-xs px-3 py-1.5 rounded-lg opacity-0 group-hover/icon:opacity-100 transition-opacity pointer-events-none whitespace-nowrap shadow-lg backdrop-blur-sm border border-white/10">
                                 {appId.charAt(0).toUpperCase() + appId.slice(1)}
                             </div>
                         </button>
@@ -137,7 +150,9 @@ export const Taskbar: React.FC<TaskbarProps> = ({
   return (
     <div 
         className={`
-            absolute bottom-0 left-0 right-0 h-12 bg-white/70 dark:bg-black/70 backdrop-blur-xl border-t border-white/30 dark:border-white/10 flex items-center justify-between px-3 z-[9999] shadow-lg
+            absolute bottom-0 left-0 right-0 h-12 
+            bg-sky-100/60 dark:bg-sky-950/60 backdrop-blur-xl border-t border-sky-200/30 dark:border-sky-500/20 
+            flex items-center justify-between px-3 z-[9999] shadow-lg
             transition-transform duration-300 ease-in-out
             ${hideTaskbar ? 'translate-y-[calc(100%-6px)] hover:translate-y-0' : 'translate-y-0'}
         `}
@@ -150,7 +165,7 @@ export const Taskbar: React.FC<TaskbarProps> = ({
          </div>
          <div className="flex flex-col leading-none">
             <span className="text-xs text-gray-800 dark:text-gray-100 font-medium">72°F</span>
-            <span className="text-[10px] text-gray-500 dark:text-gray-400 group-hover:underline">Sunny</span>
+            <span className="text-[10px] text-gray-500 dark:text-gray-300 group-hover:underline">Sunny</span>
          </div>
       </div>
 
@@ -161,11 +176,15 @@ export const Taskbar: React.FC<TaskbarProps> = ({
             data-start-trigger="true"
             className={`p-2 rounded hover:bg-white/50 dark:hover:bg-white/10 transition-all active:scale-95 duration-200 ${startMenuOpen ? 'bg-white/50 dark:bg-white/10' : ''}`}
         >
-           <LayoutGrid className="w-6 h-6 text-blue-600 dark:text-blue-400 fill-blue-600 dark:fill-blue-400" />
+           <LayoutGrid className="w-6 h-6 text-blue-600 dark:text-sky-400 fill-blue-600 dark:fill-sky-400" />
         </button>
 
+        <button className="p-2 rounded hover:bg-white/50 dark:hover:bg-white/10 transition-all active:scale-95 duration-200 hidden sm:block">
+           <Search className="w-5 h-5 text-gray-700 dark:text-gray-200" />
+        </button>
+        
         {/* Pinned/Open Apps */}
-        {[AppId.VAULT, AppId.SETTINGS].map(appId => {
+        {displayedApps.map(appId => {
             const isOpen = openApps.includes(appId);
             const isActive = activeApp === appId;
             
@@ -182,7 +201,7 @@ export const Taskbar: React.FC<TaskbarProps> = ({
                         {appIcons[appId]}
                     </div>
                     {isOpen && (
-                        <div className={`absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1.5 h-1 rounded-full transition-all duration-300 ${isActive ? 'w-4 bg-blue-500' : 'bg-gray-400'}`} />
+                        <div className={`absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1.5 h-1 rounded-full transition-all duration-300 ${isActive ? 'w-4 bg-sky-500' : 'bg-gray-400'}`} />
                     )}
                 </button>
             );
@@ -204,7 +223,7 @@ export const Taskbar: React.FC<TaskbarProps> = ({
                         : 'bg-white/50 dark:bg-white/10 hover:bg-white/70 dark:hover:bg-white/15 text-gray-800 dark:text-gray-200'}
                   `}
               >
-                   <Building size={14} className={orgMenuOpen ? "text-blue-600 dark:text-blue-400" : "text-gray-700 dark:text-gray-300"}/>
+                   <Building size={14} className={orgMenuOpen ? "text-blue-600 dark:text-sky-400" : "text-gray-700 dark:text-gray-300"}/>
                    <span className="text-xs font-semibold hidden md:block max-w-[100px] truncate">{currentOrg?.name}</span>
                    <ChevronUp size={12} className={`opacity-50 transition-transform ${orgMenuOpen ? 'rotate-180' : ''}`} />
               </button>
@@ -219,7 +238,7 @@ export const Taskbar: React.FC<TaskbarProps> = ({
                               onClick={() => { onSwitchOrg(org.id); setOrgMenuOpen(false); }}
                               className={`text-left px-3 py-1.5 rounded text-sm flex items-center justify-between mb-1 transition-colors ${
                                   currentOrg?.id === org.id 
-                                  ? 'bg-blue-500 text-white' 
+                                  ? 'bg-sky-500 text-white' 
                                   : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/10'
                               }`}
                            >
@@ -238,15 +257,15 @@ export const Taskbar: React.FC<TaskbarProps> = ({
                               onClick={() => { onSwitchWorkspace(wk.id); setOrgMenuOpen(false); }}
                               className={`text-left px-3 py-1.5 rounded text-sm flex items-center justify-between mb-1 transition-colors ${
                                   currentWorkspace?.id === wk.id 
-                                  ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400 font-medium' 
+                                  ? 'bg-sky-500/10 text-sky-600 dark:text-sky-400 font-medium' 
                                   : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/10'
                               }`}
                            >
                                <div className="flex items-center gap-2">
-                                   <Layers size={12} className={currentWorkspace?.id === wk.id ? 'text-blue-500' : 'text-gray-400'}/>
+                                   <Layers size={12} className={currentWorkspace?.id === wk.id ? 'text-sky-500' : 'text-gray-400'}/>
                                    <span className="truncate">{wk.name}</span>
                                </div>
-                               {currentWorkspace?.id === wk.id && <Check size={14} className="text-blue-500" />}
+                               {currentWorkspace?.id === wk.id && <Check size={14} className="text-sky-500" />}
                            </button>
                        ))}
                   </div>
@@ -272,7 +291,7 @@ export const Taskbar: React.FC<TaskbarProps> = ({
             <button
                 onClick={(e) => { e.stopPropagation(); onToggleNotificationPanel(); }}
                 data-panel-trigger="true"
-                className={`relative transition-colors rounded-sm flex items-center justify-center ${notificationPanelOpen ? 'text-blue-500' : 'text-gray-800 dark:text-gray-100'}`}
+                className={`relative transition-colors rounded-sm flex items-center justify-center ${notificationPanelOpen ? 'text-sky-500' : 'text-gray-800 dark:text-gray-100'}`}
             >
                 <Bell size={16} fill={notificationPanelOpen ? "currentColor" : "none"} />
                 {recentItems.length > 0 && (
