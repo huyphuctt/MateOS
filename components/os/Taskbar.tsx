@@ -92,7 +92,7 @@ export const Taskbar: React.FC<TaskbarProps> = ({
              <div 
                 className={`
                     pointer-events-auto flex items-end gap-3 px-4 py-3 
-                    bg-sky-200/40 dark:bg-sky-900/40 backdrop-blur-2xl 
+                    bg-sky-200/80 dark:bg-sky-900/80 backdrop-blur-2xl 
                     rounded-2xl border border-white/20 shadow-2xl transition-transform duration-300 ease-in-out origin-bottom mb-2
                     ${hideTaskbar ? 'translate-y-[calc(100%-4px)] group-hover/dock:translate-y-0' : 'translate-y-0'}
                 `}
@@ -151,23 +151,12 @@ export const Taskbar: React.FC<TaskbarProps> = ({
     <div 
         className={`
             absolute bottom-0 left-0 right-0 h-12 
-            bg-sky-100/60 dark:bg-sky-950/60 backdrop-blur-xl border-t border-sky-200/30 dark:border-sky-500/20 
+            bg-sky-200/80 dark:bg-sky-900/80 backdrop-blur-xl border-t border-sky-200/30 dark:border-sky-500/20 
             flex items-center justify-between px-3 z-[9999] shadow-lg
             transition-transform duration-300 ease-in-out
             ${hideTaskbar ? 'translate-y-[calc(100%-6px)] hover:translate-y-0' : 'translate-y-0'}
         `}
     >
-      {/* Weather Widget Placeholder */}
-      <div className="w-48 hidden md:flex items-center gap-2 pl-2 hover:bg-white/40 dark:hover:bg-white/10 p-1 rounded-md transition-colors cursor-pointer group">
-         <div className="relative w-6 h-6">
-            <div className="absolute top-0 right-0 w-3 h-3 bg-yellow-400 rounded-full shadow-[0_0_8px_rgba(250,204,21,0.6)]"></div>
-            <div className="absolute bottom-0 left-0 w-4 h-3 bg-gray-200 rounded-full opacity-80"></div>
-         </div>
-         <div className="flex flex-col leading-none">
-            <span className="text-xs text-gray-800 dark:text-gray-100 font-medium">72°F</span>
-            <span className="text-[10px] text-gray-500 dark:text-gray-300 group-hover:underline">Sunny</span>
-         </div>
-      </div>
 
       {/* Center Icons */}
       <div className="flex-1 flex items-center justify-center gap-1.5 h-full">
@@ -176,7 +165,7 @@ export const Taskbar: React.FC<TaskbarProps> = ({
             data-start-trigger="true"
             className={`p-2 rounded hover:bg-white/50 dark:hover:bg-white/10 transition-all active:scale-95 duration-200 ${startMenuOpen ? 'bg-white/50 dark:bg-white/10' : ''}`}
         >
-           <LayoutGrid className="w-6 h-6 text-blue-600 dark:text-sky-400 fill-blue-600 dark:fill-sky-400" />
+           <LayoutGrid className="w-6 h-6 text-blue-400 dark:text-sky-400 fill-blue-400 dark:fill-sky-400" />
         </button>
 
         <button className="p-2 rounded hover:bg-white/50 dark:hover:bg-white/10 transition-all active:scale-95 duration-200 hidden sm:block">
@@ -193,8 +182,8 @@ export const Taskbar: React.FC<TaskbarProps> = ({
                     key={appId}
                     onClick={() => onAppClick(appId)}
                     className={`
-                        relative p-2 rounded hover:bg-white/50 dark:hover:bg-white/10 transition-all active:scale-95 duration-200 group
-                        ${isActive ? 'bg-white/60 dark:bg-white/20' : ''}
+                        relative p-2 rounded hover:bg-stone-500/50 dark:hover:bg-stone-500/10 transition-all active:scale-95 duration-200 group
+                        ${isActive ? 'bg-stone-600 dark:bg-stone-900' : ''}
                     `}
                 >
                     <div className="w-6 h-6 text-gray-700 dark:text-gray-200 flex items-center justify-center transition-transform group-hover:-translate-y-0.5">

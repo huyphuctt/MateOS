@@ -44,25 +44,14 @@ export const Launchpad: React.FC<LaunchpadProps> = ({ isOpen, onAppClick, appIco
         onClick={onClose}
     >
         {/* Background Backdrop - Fades In/Out */}
-        <div className={`absolute inset-0 bg-black/40 backdrop-blur-3xl transition-opacity duration-300 ease-in-out
-            ${isOpen ? 'opacity-100' : 'opacity-0'}
+        <div className={`absolute inset-0 bg-sky-400/40 backdrop-blur-3xl transition-opacity duration-300 ease-in-out
+            ${isOpen ? 'opacity-95' : 'opacity-0'}
         `} />
 
         {/* Content Container - Zooms In/Out */}
         <div className={`relative w-full h-full flex flex-col items-center justify-start pt-24 transition-all duration-300 ease-[cubic-bezier(0.25,1,0.5,1)]
             ${isOpen ? 'scale-100 opacity-100' : 'scale-90 opacity-0'}
         `}>
-             {/* Search */}
-             <div className="relative w-72 mb-12" onClick={e => e.stopPropagation()}>
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-200" size={16} />
-                <input 
-                    type="text" 
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    placeholder="Search" 
-                    className="w-full bg-white/10 border border-white/20 text-white placeholder-gray-300 rounded-lg py-1.5 pl-9 pr-4 text-center focus:text-left focus:bg-white/20 focus:outline-none transition-all backdrop-blur-md"
-                />
-             </div>
 
             {/* Grid */}
             <div className="container mx-auto px-10">
