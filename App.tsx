@@ -153,7 +153,6 @@ const App: React.FC = () => {
   // --- App Switcher State ---
   const [isSwitcherOpen, setIsSwitcherOpen] = useState(false);
   const [switcherSelectedIndex, setSwitcherSelectedIndex] = useState(0);
-  const metaKeyRef = useRef(false);
 
   // --- Effects & Auth Logic ---
   useEffect(() => {
@@ -201,34 +200,37 @@ const App: React.FC = () => {
   // Keyboard Shortcuts (App Switcher & Close)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-        if (e.key === 'Meta' || e.key === 'OS') {
-            metaKeyRef.current = true;
-        }
-
-        // Navigation within Switcher
+        // Navigation within Switcher (Arrow Keys & Enter)
         if (isSwitcherOpen) {
             if (e.key === 'ArrowRight') {
                 e.preventDefault();
+                e.stopPropagation();
                 setSwitcherSelectedIndex(prev => (prev + 1) % sortedWindows.length);
+                return;
             }
             if (e.key === 'ArrowLeft') {
                 e.preventDefault();
+                e.stopPropagation();
                 setSwitcherSelectedIndex(prev => (prev - 1 + sortedWindows.length) % sortedWindows.length);
+                return;
             }
             if (e.key === 'Enter') {
                  e.preventDefault();
+                 e.stopPropagation();
                  setIsSwitcherOpen(false);
                  if (sortedWindows[switcherSelectedIndex]) {
                      focusWindow(sortedWindows[switcherSelectedIndex].id);
                  }
                  setSwitcherSelectedIndex(0);
+                 return;
             }
         }
 
-        // Only activate shortcuts if Meta is held
-        if (metaKeyRef.current) {
-            
-            // Super + Tab: Switcher
+        // Detect Modifier Keys (Meta/Super or Alt)
+        const isModifierHeld = e.metaKey || e.altKey;
+
+        if (isModifierHeld) {
+            // Modifier + Tab: Open/Cycle Switcher
             if (e.key === 'Tab') {
                 e.preventDefault();
                 e.stopPropagation();
@@ -245,7 +247,7 @@ const App: React.FC = () => {
                 }
             }
             
-            // Super + W: Close Active
+            // Modifier + W: Close Active Window
             if (e.key.toLowerCase() === 'w') {
                 e.preventDefault();
                 e.stopPropagation();
@@ -257,20 +259,21 @@ const App: React.FC = () => {
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
-        if (e.key === 'Meta' || e.key === 'OS') {
-            metaKeyRef.current = false;
-            if (isSwitcherOpen) {
-                // Confirm switch
-                setIsSwitcherOpen(false);
-                if (sortedWindows[switcherSelectedIndex]) {
-                    focusWindow(sortedWindows[switcherSelectedIndex].id);
-                }
-                setSwitcherSelectedIndex(0);
+        // If the modifier key is released while switcher is open, confirm selection and close
+        const isModifierKey = e.key === 'Meta' || e.key === 'Alt' || e.key === 'Control' || e.key === 'OS';
+        
+        if (isSwitcherOpen && isModifierKey) {
+            e.preventDefault();
+            e.stopPropagation();
+            setIsSwitcherOpen(false);
+            if (sortedWindows[switcherSelectedIndex]) {
+                focusWindow(sortedWindows[switcherSelectedIndex].id);
             }
+            setSwitcherSelectedIndex(0);
         }
     };
 
-    // We attach to window to catch everything
+    // Attach to window to catch global shortcuts
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
     
