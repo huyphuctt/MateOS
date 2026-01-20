@@ -25,13 +25,9 @@ export const Launchpad: React.FC<LaunchpadProps> = ({ isOpen, onAppClick, appIco
 
   // Apps to display
   const apps = [
-    { id: AppId.COPILOT, name: 'Copilot' },
-    { id: AppId.BROWSER, name: 'Safari' }, // Renamed for effect, but ID is same
-    { id: AppId.NOTEPAD, name: 'Notes' },
-    { id: AppId.PHOTOS, name: 'Photos' },
+    { id: AppId.VAULT, name: 'Vault' }, // Renamed for effect, but ID is same
     ...(isAdmin ? [{ id: AppId.ADMIN, name: 'Admin Console' }] : []),
-    { id: AppId.SETTINGS, name: 'Settings' },
-    { id: AppId.CALCULATOR, name: 'Calculator' },
+    { id: AppId.SETTINGS, name: 'Settings' },    
   ];
 
   const filteredApps = apps.filter(app => app.name.toLowerCase().includes(searchTerm.toLowerCase()));

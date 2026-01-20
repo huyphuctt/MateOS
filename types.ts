@@ -1,7 +1,6 @@
 import { ReactNode } from 'react';
 
 export enum AppId {
-  COPILOT = 'copilot',
   NOTEPAD = 'notepad',
   BROWSER = 'browser',
   PHOTOS = 'photos',

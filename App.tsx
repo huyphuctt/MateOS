@@ -20,8 +20,6 @@ import {
 import { Taskbar } from './components/os/Taskbar';
 import { StartMenu } from './components/os/StartMenu';
 import { WindowFrame } from './components/os/WindowFrame';
-import { CopilotApp } from './components/apps/Copilot';
-import { NotepadApp } from './components/apps/Notepad';
 import { BrowserApp } from './components/apps/Browser';
 import { SettingsApp } from './components/apps/Settings';
 import { AdminPanel } from './components/apps/AdminPanel';
@@ -496,20 +494,7 @@ const App: React.FC = () => {
     requiresAdmin?: boolean; 
   };
 
-  const appRegistry: Record<AppId, AppRegistryItem> = {
-    [AppId.COPILOT]: {
-      title: 'Copilot',
-      icon: <Sparkles className="text-blue-500 fill-blue-500" size={20} />,
-      component: <CopilotApp />,
-      defaultSize: { width: 400, height: 600 },
-      preferredPosition: { x: window.innerWidth - 450, y: 50 }
-    },
-    [AppId.NOTEPAD]: {
-      title: 'Notepad',
-      icon: <FileText className="text-blue-400" size={20} />,
-      component: null, 
-      defaultSize: { width: 600, height: 400 }
-    },
+  const appRegistry: Record<AppId, AppRegistryItem> = {    
     [AppId.BROWSER]: {
       title: theme === 'aqua' ? 'Safari' : 'Edge Browser',
       icon: theme === 'aqua' ? <Compass className="text-blue-500" size={20} /> : <Globe className="text-green-500" size={20} />,
@@ -651,8 +636,7 @@ const App: React.FC = () => {
       if (['image', 'video', 'code', 'markdown', 'pdf', 'doc', 'sheet', 'unknown'].includes(file.type)) {
           openApp(AppId.PREVIEW, { file });
       } else {
-          // Fallback
-          openApp(AppId.NOTEPAD, { file });
+          // Fallback          
       }
   };
 
@@ -749,10 +733,6 @@ const App: React.FC = () => {
            return <BrowserApp />;
       }
       
-      if (window.id === AppId.NOTEPAD) {
-          return <NotepadApp />;
-      }
-
       if (window.id === AppId.SETTINGS) {
           return (
             <SettingsApp 
@@ -865,12 +845,6 @@ const App: React.FC = () => {
                         <span className="text-xs text-center desktop-text-shadow font-medium">Admin Console</span>
                     </button>
                 )}
-                <button 
-                    className="w-20 flex flex-col items-center gap-1 group text-white hover:bg-white/10 rounded p-2 transition-colors"
-                >
-                    <Trash2 className="w-10 h-10 text-gray-300 desktop-icon-shadow" />
-                    <span className="text-xs text-center desktop-text-shadow font-medium">Recycle Bin</span>
-                </button>
             </div>
 
             {windows.map(window => (
