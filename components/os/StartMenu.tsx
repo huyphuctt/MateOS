@@ -62,18 +62,6 @@ export const StartMenu: React.FC<StartMenuProps> = ({
         }`}
     >
       
-      {/* Search Bar */}
-      <div className="p-6 pb-2">
-        <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400" size={18} />
-            <input 
-                type="text" 
-                placeholder="Search for apps, settings, and documents" 
-                className="w-full bg-[#f3f3f3]/50 dark:bg-[#2d2d2d]/50 rounded-full py-2.5 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-gray-800 dark:text-gray-100 border border-white/10 dark:border-gray-600/50 shadow-inner"
-            />
-        </div>
-      </div>
-
       <div className="flex-1 overflow-y-auto px-6 py-2">
         {/* Pinned Section */}
         <div className="flex items-center justify-between mb-4">
@@ -88,7 +76,7 @@ export const StartMenu: React.FC<StartMenuProps> = ({
                     onClick={() => onAppClick(app.id)}
                     className="flex flex-col items-center gap-2 p-3 hover:bg-white/50 dark:hover:bg-white/5 rounded-md transition-colors group"
                 >
-                    <div className="w-10 h-10 bg-white dark:bg-gray-700 rounded-md shadow-sm flex items-center justify-center text-gray-700 dark:text-gray-200 group-hover:scale-105 transition-transform">
+                    <div className="w-10 h-10 bg-stone-400 dark:bg-gray-700 rounded-md shadow-sm flex items-center justify-center text-gray-700 dark:text-gray-200 group-hover:scale-105 transition-transform">
                         {appIcons[app.id]}
                     </div>
                     <span className="text-xs text-gray-700 dark:text-gray-200 font-medium truncate w-full text-center">{app.name}</span>

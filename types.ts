@@ -24,6 +24,8 @@ export interface FileItem {
   url: string; // Real or Object URL
   date: string;
   category?: string;
+  tags?: string[];
+  status?: 'Indexing' | 'Ready' | 'Error';
 }
 
 export interface WindowState {

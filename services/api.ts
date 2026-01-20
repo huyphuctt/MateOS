@@ -53,13 +53,13 @@ const readmeDataUrl = `data:text/markdown;base64,${btoa(readmeContent)}`;
 
 // Mock Files for Vault
 const MOCK_FILES: FileItem[] = [
-    { id: '1', name: 'Project_Alpha_Specs.pdf', type: 'pdf', size: '2.4 MB', date: '2024-05-20', url: 'https://pdfobject.com/pdf/sample.pdf' },
-    { id: '2', name: 'Q3_Financials.xlsx', type: 'sheet', size: '45 KB', date: '2024-05-18', url: '#' },
-    { id: '3', name: 'Team_Outing.jpg', type: 'image', size: '3.1 MB', date: '2024-05-15', url: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?q=80&w=3432&auto=format&fit=crop' },
-    { id: '4', name: 'Launch_Video.mp4', type: 'video', size: '45.2 MB', date: '2024-05-10', url: 'https://storage.googleapis.com/kagglesdsdata/datasets/5086844/8519760/Original_recording5.mp4?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Credential=databundle-worker-v2%40kaggle-161607.iam.gserviceaccount.com%2F20260116%2Fauto%2Fstorage%2Fgoog4_request&X-Goog-Date=20260116T215706Z&X-Goog-Expires=345600&X-Goog-SignedHeaders=host&X-Goog-Signature=4d46d9b6b4e0518746efbe6384228ce53f864cecb7edaf8e5f3cb086d0589fb30d4099fb51b6aa3b985d02635dc0ac1ec595f92e3dfd6207cb2aaec2a89f07cde7f899ba4c54163f2d1a1da0ca8a16bf1f45c1ae23c430363c1fe2471bf2e01418cd4147ea8eb2b18c875b33b262e41eb041673132cfea6f0465c8b7a9bc1367fcf48ee5d5f605ff3fb5cf8f013d8c66185b41abe8dc3c9e9ed3df306dd49d48fe6151f4d3144402f25f5e760cdb9bd18535cb4fd2d1136c586dd2dccb7c0c8931da98d56ef55e4ccae1c29954fe6c776a77e1672a0492f1d4d40a28e3d1525700fe47eea50557f3cccf1e3030f0f3724ee010020538e68f687b2caf56bb3708' },
-    { id: '5', name: 'main.tsx', type: 'code', size: '2 KB', date: '2024-05-05', url: '#' },
-    { id: '6', name: 'Meeting_Notes.txt', type: 'doc', size: '1 KB', date: '2024-05-01', url: '#' },
-    { id: '7', name: 'README.md', type: 'markdown', size: '1 KB', date: '2024-05-22', url: readmeDataUrl },
+    { id: '1', name: 'Project_Alpha_Specs.pdf', type: 'pdf', size: '2.4 MB', date: '2024-05-20', url: 'https://pdfobject.com/pdf/sample.pdf', tags: ['Strategy', 'Work'], status: 'Ready' },
+    { id: '2', name: 'Q3_Financials.xlsx', type: 'sheet', size: '45 KB', date: '2024-05-18', url: '#', tags: ['Financial', 'Work'], status: 'Ready' },
+    { id: '3', name: 'Team_Outing.jpg', type: 'image', size: '3.1 MB', date: '2024-05-15', url: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?q=80&w=3432&auto=format&fit=crop', tags: ['Personal'], status: 'Ready' },
+    { id: '4', name: 'Launch_Video.mp4', type: 'video', size: '45.2 MB', date: '2024-05-10', url: 'https://storage.googleapis.com/kagglesdsdata/datasets/5086844/8519760/Original_recording5.mp4?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Credential=databundle-worker-v2%40kaggle-161607.iam.gserviceaccount.com%2F20260116%2Fauto%2Fstorage%2Fgoog4_request&X-Goog-Date=20260116T215706Z&X-Goog-Expires=345600&X-Goog-SignedHeaders=host&X-Goog-Signature=4d46d9b6b4e0518746efbe6384228ce53f864cecb7edaf8e5f3cb086d0589fb30d4099fb51b6aa3b985d02635dc0ac1ec595f92e3dfd6207cb2aaec2a89f07cde7f899ba4c54163f2d1a1da0ca8a16bf1f45c1ae23c430363c1fe2471bf2e01418cd4147ea8eb2b18c875b33b262e41eb041673132cfea6f0465c8b7a9bc1367fcf48ee5d5f605ff3fb5cf8f013d8c66185b41abe8dc3c9e9ed3df306dd49d48fe6151f4d3144402f25f5e760cdb9bd18535cb4fd2d1136c586dd2dccb7c0c8931da98d56ef55e4ccae1c29954fe6c776a77e1672a0492f1d4d40a28e3d1525700fe47eea50557f3cccf1e3030f0f3724ee010020538e68f687b2caf56bb3708', tags: ['Marketing'], status: 'Indexing' },
+    { id: '5', name: 'main.tsx', type: 'code', size: '2 KB', date: '2024-05-05', url: '#', tags: ['Work', 'Dev'], status: 'Ready' },
+    { id: '6', name: 'Meeting_Notes.txt', type: 'doc', size: '1 KB', date: '2024-05-01', url: '#', tags: ['Work'], status: 'Ready' },
+    { id: '7', name: 'README.md', type: 'markdown', size: '1 KB', date: '2024-05-22', url: readmeDataUrl, tags: ['Doc', 'Dev'], status: 'Ready' },
 ];
 
 class ApiService {
@@ -268,13 +268,19 @@ class ApiService {
             else if (file.type.includes('text') || file.type.includes('code')) type = 'code';
             else if (file.type.includes('document') || file.type.includes('word')) type = 'doc';
 
+            // Randomly assign a tag for demo purposes
+            const possibleTags = ['Financial', 'Strategy', 'Personal', 'Work', 'Marketing', 'Legal'];
+            const randomTag = possibleTags[Math.floor(Math.random() * possibleTags.length)];
+
             const newFile: FileItem = {
                 id: Date.now().toString(),
                 name: file.name,
                 type,
                 size: `${(file.size / 1024).toFixed(1)} KB`,
                 date: new Date().toISOString().split('T')[0],
-                url: URL.createObjectURL(file) // Create temporary local URL
+                url: URL.createObjectURL(file), // Create temporary local URL
+                tags: [randomTag],
+                status: 'Indexing'
             };
             
             // In a real app with mock state persistence, we'd push to MOCK_FILES here

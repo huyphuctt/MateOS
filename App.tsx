@@ -501,6 +501,12 @@ const App: React.FC = () => {
       component: null, 
       defaultSize: { width: 800, height: 600 }
     },
+    [AppId.NOTEPAD]: {
+      title: 'Notepad',
+      icon: <FileText className="text-blue-500" size={20} />,
+      component: <Placeholder text="Notepad" />,
+      defaultSize: { width: 600, height: 400 }
+    },
     [AppId.PHOTOS]: {
       title: 'Photos',
       icon: <ImageIcon className="text-purple-500" size={20} />,
@@ -916,7 +922,9 @@ const App: React.FC = () => {
                 activeApp={activeWindowId} 
                 onAppClick={(id) => {
                     const win = windows.find(w => w.id === id);
-                    if (win?.isMinimized) {
+                    if (!win) {
+                        openApp(id);
+                    } else if (win.isMinimized) {
                         focusWindow(id);
                         setWindows(prev => prev.map(w => w.id === id ? { ...w, isMinimized: false } : w));
                     } else if (activeWindowId === id) {

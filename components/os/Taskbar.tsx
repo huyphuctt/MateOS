@@ -163,15 +163,11 @@ export const Taskbar: React.FC<TaskbarProps> = ({
         <button 
             onClick={onStartClick}
             data-start-trigger="true"
-            className={`p-2 rounded hover:bg-white/50 dark:hover:bg-white/10 transition-all active:scale-95 duration-200 ${startMenuOpen ? 'bg-white/50 dark:bg-white/10' : ''}`}
+            className={`p-2 rounded hover:bg-stone-500/50 dark:hover:bg-stone-500/10 transition-all active:scale-95 duration-200 ${startMenuOpen ? 'bg-stone-600 dark:bg-stone-500/10' : ''}`}
         >
            <LayoutGrid className="w-6 h-6 text-blue-400 dark:text-sky-400 fill-blue-400 dark:fill-sky-400" />
         </button>
 
-        <button className="p-2 rounded hover:bg-white/50 dark:hover:bg-white/10 transition-all active:scale-95 duration-200 hidden sm:block">
-           <Search className="w-5 h-5 text-gray-700 dark:text-gray-200" />
-        </button>
-        
         {/* Pinned/Open Apps */}
         {displayedApps.map(appId => {
             const isOpen = openApps.includes(appId);

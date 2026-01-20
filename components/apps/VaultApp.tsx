@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
-    LayoutGrid, List, Search, Upload, File, Image, FileVideo, 
-    FileText, FileSpreadsheet, FileCode, FolderClosed, MoreVertical,
-    Clock, Vault, Download, ChevronRight, Home, Cloud, Plus
+    LayoutGrid, List, Search, Plus, File, Image, FileVideo, 
+    FileText, FileSpreadsheet, FileCode, FolderClosed, 
+    Home, Tag, CheckCircle2, Loader2, AlertCircle, ChevronRight
 } from 'lucide-react';
 import { apiService } from '../../services/api';
 import { FileItem } from '../../types';
@@ -16,6 +16,7 @@ type Category = 'All' | 'Images' | 'Videos' | 'Docs' | 'Sheets' | 'PDF';
 export const VaultApp: React.FC<VaultAppProps> = ({ onOpenFile }) => {
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
     const [selectedCategory, setSelectedCategory] = useState<Category>('All');
+    const [selectedTag, setSelectedTag] = useState<string | null>(null);
     const [files, setFiles] = useState<FileItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [uploading, setUploading] = useState(false);
@@ -26,6 +27,23 @@ export const VaultApp: React.FC<VaultAppProps> = ({ onOpenFile }) => {
     // Initial Load
     useEffect(() => {
         loadFiles();
+    }, []);
+
+    // Simulate file status update (Indexing -> Ready)
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setFiles(prev => prev.map(f => {
+                if (f.status === 'Indexing') {
+                    // Randomly decide to finish indexing to stagger them slightly
+                    if (Math.random() > 0.7) {
+                        return { ...f, status: 'Ready' };
+                    }
+                }
+                return f;
+            }));
+        }, 2000);
+
+        return () => clearInterval(interval);
     }, []);
 
     const loadFiles = async () => {
@@ -61,6 +79,19 @@ export const VaultApp: React.FC<VaultAppProps> = ({ onOpenFile }) => {
         }
     };
 
+    const handleCategoryClick = (cat: Category) => {
+        setSelectedCategory(cat);
+        setSelectedTag(null);
+    };
+
+    const handleTagClick = (tag: string | null) => {
+        setSelectedTag(tag);
+        setSelectedCategory('All');
+    };
+
+    // Get Unique Tags
+    const allTags = Array.from(new Set(files.flatMap(f => f.tags || []))).sort();
+
     // Filters
     const getFilteredFiles = () => {
         let filtered = files;
@@ -75,6 +106,11 @@ export const VaultApp: React.FC<VaultAppProps> = ({ onOpenFile }) => {
                 if (selectedCategory === 'PDF') return f.type === 'pdf';
                 return true;
             });
+        }
+
+        // Tag Filter
+        if (selectedTag) {
+            filtered = filtered.filter(f => f.tags?.includes(selectedTag));
         }
 
         // Search Filter
@@ -94,10 +130,40 @@ export const VaultApp: React.FC<VaultAppProps> = ({ onOpenFile }) => {
             case 'video': return <FileVideo className="text-red-500" size={32} />;
             case 'doc': return <FileText className="text-blue-500" size={32} />;
             case 'sheet': return <FileSpreadsheet className="text-green-500" size={32} />;
-            case 'pdf': return <FileText className="text-red-400" size={32} />; // Using FileText for PDF generally
+            case 'pdf': return <FileText className="text-red-400" size={32} />;
             case 'code': return <FileCode className="text-yellow-500" size={32} />;
             default: return <File className="text-gray-400" size={32} />;
         }
+    };
+
+    const getStatusBadge = (status?: string, mode: 'icon' | 'full' = 'icon') => {
+        if (!status) return null;
+        if (status === 'Indexing') {
+            return (
+                <div className={`flex items-center gap-1.5 ${mode === 'full' ? 'px-2 py-0.5 bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400 rounded-full text-xs' : ''}`} title="Indexing">
+                    <Loader2 size={mode === 'full' ? 12 : 14} className="animate-spin text-yellow-500" />
+                    {mode === 'full' && <span>Indexing</span>}
+                </div>
+            );
+        }
+        if (status === 'Ready') {
+             if (mode === 'icon') return null; // Don't show icon for ready in grid to reduce clutter
+             return (
+                <div className="flex items-center gap-1.5 px-2 py-0.5 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 rounded-full text-xs">
+                    <CheckCircle2 size={12} />
+                    <span>Ready</span>
+                </div>
+            );
+        }
+        if (status === 'Error') {
+             return (
+                <div className={`flex items-center gap-1.5 ${mode === 'full' ? 'px-2 py-0.5 bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 rounded-full text-xs' : ''}`} title="Error">
+                    <AlertCircle size={mode === 'full' ? 12 : 14} className="text-red-500" />
+                    {mode === 'full' && <span>Error</span>}
+                </div>
+            );
+        }
+        return null;
     };
 
     return (
@@ -126,9 +192,9 @@ export const VaultApp: React.FC<VaultAppProps> = ({ onOpenFile }) => {
                     {(['All', 'Images', 'Videos', 'Docs', 'Sheets', 'PDF'] as Category[]).map(cat => (
                         <button
                             key={cat}
-                            onClick={() => setSelectedCategory(cat)}
+                            onClick={() => handleCategoryClick(cat)}
                             className={`w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
-                                selectedCategory === cat 
+                                selectedCategory === cat && !selectedTag
                                 ? 'bg-white dark:bg-white/10 shadow-sm font-medium' 
                                 : 'hover:bg-black/5 dark:hover:bg-white/5 text-gray-600 dark:text-gray-400'
                             }`}
@@ -145,19 +211,41 @@ export const VaultApp: React.FC<VaultAppProps> = ({ onOpenFile }) => {
 
                     <div className="my-4 border-t border-gray-200 dark:border-gray-700"></div>
 
-                    <h3 className="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Locations</h3>
-                    <button className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm hover:bg-black/5 dark:hover:bg-white/5 text-gray-600 dark:text-gray-400">
-                        <Vault size={16} />
-                        <span>This PC</span>
+                    <h3 className="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Tags</h3>
+                    
+                    <button
+                        onClick={() => handleTagClick(null)}
+                        className={`w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
+                            selectedTag === null && selectedCategory === 'All'
+                            ? 'bg-transparent text-gray-600 dark:text-gray-400 opacity-50 cursor-default' // Disabled look for clear when already clear, or just standard button? Let's make it a Clear Filters button effectively.
+                            : 'hover:bg-black/5 dark:hover:bg-white/5 text-gray-600 dark:text-gray-400'
+                        }`}
+                        // Use "All Tags" to reset to "All Files" essentially
+                        style={{ display: selectedTag ? 'flex' : 'none' }} // Only show "Clear Tags" if a tag is selected? Or keep "All Tags" as "All Files"? 
+                        // The user prompt was "All Tags" button in the previous step. Let's keep "All Tags" visible but make it behave like "Show All".
+                    >
+                        <LayoutGrid size={16} />
+                        <span>All Files</span>
                     </button>
-                    <button className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm hover:bg-black/5 dark:hover:bg-white/5 text-gray-600 dark:text-gray-400">
-                        <Cloud size={16} />
-                        <span>OneDrive</span>
-                    </button>
-                     <button className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm hover:bg-black/5 dark:hover:bg-white/5 text-gray-600 dark:text-gray-400">
-                        <Download size={16} />
-                        <span>Downloads</span>
-                    </button>
+
+                    {allTags.map(tag => (
+                        <button
+                            key={tag}
+                            onClick={() => handleTagClick(tag)}
+                            className={`w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
+                                selectedTag === tag 
+                                ? 'bg-white dark:bg-white/10 shadow-sm font-medium' 
+                                : 'hover:bg-black/5 dark:hover:bg-white/5 text-gray-600 dark:text-gray-400'
+                            }`}
+                        >
+                            <Tag size={16} className={selectedTag === tag ? 'text-blue-500' : 'text-gray-400'} />
+                            <span>{tag}</span>
+                        </button>
+                    ))}
+                    
+                    {allTags.length === 0 && (
+                        <div className="px-3 py-2 text-xs text-gray-400 italic">No tags found</div>
+                    )}
                 </div>
             </div>
 
@@ -169,9 +257,36 @@ export const VaultApp: React.FC<VaultAppProps> = ({ onOpenFile }) => {
                     
                     {/* Breadcrumbs */}
                     <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
-                        <span className="hover:bg-gray-100 dark:hover:bg-white/10 px-2 py-1 rounded cursor-pointer">Vault</span>
-                        <ChevronRight size={14} className="text-gray-400" />
-                        <span className="font-medium hover:bg-gray-100 dark:hover:bg-white/10 px-2 py-1 rounded cursor-pointer">{selectedCategory}</span>
+                        <span 
+                            className="hover:bg-gray-100 dark:hover:bg-white/10 px-2 py-1 rounded cursor-pointer"
+                            onClick={() => { setSelectedCategory('All'); setSelectedTag(null); }}
+                        >
+                            Vault
+                        </span>
+                        
+                        {selectedCategory !== 'All' && (
+                            <>
+                                <ChevronRight size={14} className="text-gray-400" />
+                                <span className="font-medium hover:bg-gray-100 dark:hover:bg-white/10 px-2 py-1 rounded cursor-default">{selectedCategory}</span>
+                            </>
+                        )}
+
+                        {selectedTag && (
+                            <>
+                                <ChevronRight size={14} className="text-gray-400" />
+                                <span className="bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 px-2 py-0.5 rounded text-xs font-medium flex items-center gap-1">
+                                    <Tag size={10} />
+                                    {selectedTag}
+                                </span>
+                            </>
+                        )}
+                        
+                        {selectedCategory === 'All' && !selectedTag && (
+                             <>
+                                <ChevronRight size={14} className="text-gray-400" />
+                                <span className="font-medium px-2 py-1 rounded cursor-default">All Files</span>
+                             </>
+                        )}
                     </div>
 
                     {/* Actions */}
@@ -225,7 +340,7 @@ export const VaultApp: React.FC<VaultAppProps> = ({ onOpenFile }) => {
                                 <div 
                                     key={file.id}
                                     onDoubleClick={() => onOpenFile(file)}
-                                    className="group flex flex-col items-center gap-2 p-3 rounded-lg hover:bg-blue-50 dark:hover:bg-white/10 border border-transparent hover:border-blue-100 dark:hover:border-white/5 cursor-pointer transition-all"
+                                    className="group flex flex-col items-center gap-2 p-3 rounded-lg hover:bg-blue-50 dark:hover:bg-white/10 border border-transparent hover:border-blue-100 dark:hover:border-white/5 cursor-pointer transition-all relative"
                                 >
                                     <div className="w-20 h-20 flex items-center justify-center bg-white dark:bg-gray-800 rounded-lg shadow-sm group-hover:shadow-md transition-shadow relative overflow-hidden">
                                         {file.type === 'image' ? (
@@ -233,8 +348,26 @@ export const VaultApp: React.FC<VaultAppProps> = ({ onOpenFile }) => {
                                         ) : (
                                             getFileIcon(file.type)
                                         )}
+                                        
+                                        {/* Grid Badge */}
+                                        {file.status && file.status !== 'Ready' && (
+                                            <div className="absolute top-1 right-1">
+                                                {getStatusBadge(file.status, 'icon')}
+                                            </div>
+                                        )}
                                     </div>
                                     <span className="text-xs text-center font-medium truncate w-full px-1">{file.name}</span>
+                                    
+                                    {/* Tag Pills */}
+                                    {file.tags && file.tags.length > 0 && (
+                                        <div className="flex gap-1 overflow-hidden max-w-full px-1 h-3.5">
+                                            {file.tags.slice(0, 2).map(tag => (
+                                                <span key={tag} className="text-[9px] bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-300 px-1 rounded-sm leading-none flex items-center">
+                                                    {tag}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
                             ))}
                         </div>
@@ -245,7 +378,9 @@ export const VaultApp: React.FC<VaultAppProps> = ({ onOpenFile }) => {
                                     <thead className="bg-gray-50 dark:bg-[#252525]">
                                         <tr>
                                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Name</th>
+                                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
                                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Date Modified</th>
+                                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Tags</th>
                                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Type</th>
                                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Size</th>
                                         </tr>
@@ -267,8 +402,20 @@ export const VaultApp: React.FC<VaultAppProps> = ({ onOpenFile }) => {
                                                         </div>
                                                     </div>
                                                 </td>
+                                                <td className="px-6 py-3 whitespace-nowrap text-sm">
+                                                    {getStatusBadge(file.status, 'full')}
+                                                </td>
                                                 <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                                                     {file.date}
+                                                </td>
+                                                <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                                     <div className="flex gap-1">
+                                                        {file.tags?.map(tag => (
+                                                            <span key={tag} className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-800 rounded text-xs">
+                                                                {tag}
+                                                            </span>
+                                                        ))}
+                                                    </div>
                                                 </td>
                                                 <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 capitalize">
                                                     {file.type}
