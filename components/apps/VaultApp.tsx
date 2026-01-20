@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
     LayoutGrid, List, Search, Upload, File, Image, FileVideo, 
     FileText, FileSpreadsheet, FileCode, FolderClosed, MoreVertical,
-    Clock, HardDrive, Download, ChevronRight, Home, Cloud, Plus
+    Clock, Vault, Download, ChevronRight, Home, Cloud, Plus
 } from 'lucide-react';
 import { apiService } from '../../services/api';
 import { FileItem } from '../../types';
@@ -147,7 +147,7 @@ export const VaultApp: React.FC<VaultAppProps> = ({ onOpenFile }) => {
 
                     <h3 className="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Locations</h3>
                     <button className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm hover:bg-black/5 dark:hover:bg-white/5 text-gray-600 dark:text-gray-400">
-                        <HardDrive size={16} />
+                        <Vault size={16} />
                         <span>This PC</span>
                     </button>
                     <button className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm hover:bg-black/5 dark:hover:bg-white/5 text-gray-600 dark:text-gray-400">

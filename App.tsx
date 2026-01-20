@@ -10,9 +10,9 @@ import {
   Trash2,
   FolderClosed,
   Compass,
-  ShieldCheck,
+  ShieldUser,
   Bell,
-  HardDrive,
+  Vault,
   File,
   Eye
 } from 'lucide-react';
@@ -530,7 +530,7 @@ const App: React.FC = () => {
     },
     [AppId.ADMIN]: {
         title: 'Admin Console',
-        icon: <ShieldCheck className="text-red-500" size={20} />,
+        icon: <ShieldUser className="text-red-500" size={20} />,
         component: null, 
         defaultSize: { width: 800, height: 600 },
         requiresAdmin: true
@@ -543,7 +543,7 @@ const App: React.FC = () => {
     },
     [AppId.VAULT]: {
         title: 'Vault',
-        icon: <HardDrive className="text-yellow-500" size={20} />,
+        icon: <Vault className="text-yellow-500" size={20} />,
         component: null, // Dynamically rendered
         defaultSize: { width: 900, height: 600 }
     },
@@ -852,7 +852,7 @@ const App: React.FC = () => {
                     onDoubleClick={() => openApp(AppId.VAULT)}
                     className="w-20 flex flex-col items-center gap-1 group text-white hover:bg-white/10 rounded p-2 transition-colors"
                 >
-                    <FolderClosed className="w-10 h-10 text-yellow-400 fill-yellow-400 desktop-icon-shadow" />
+                    <Vault className="w-10 h-10 text-yellow-400 desktop-icon-shadow" />
                     <span className="text-xs text-center line-clamp-2 desktop-text-shadow font-medium">Vault</span>
                 </button>
 
@@ -861,7 +861,7 @@ const App: React.FC = () => {
                         onDoubleClick={() => openApp(AppId.ADMIN)}
                         className="w-20 flex flex-col items-center gap-1 group text-white hover:bg-white/10 rounded p-2 transition-colors"
                     >
-                        <ShieldCheck className="w-10 h-10 text-red-500 fill-red-900/50 desktop-icon-shadow" />
+                        <ShieldUser className="w-10 h-10 text-red-500 fill-red-900/50 desktop-icon-shadow" />
                         <span className="text-xs text-center desktop-text-shadow font-medium">Admin Console</span>
                     </button>
                 )}
@@ -870,17 +870,6 @@ const App: React.FC = () => {
                 >
                     <Trash2 className="w-10 h-10 text-gray-300 desktop-icon-shadow" />
                     <span className="text-xs text-center desktop-text-shadow font-medium">Recycle Bin</span>
-                </button>
-                <button 
-                    onDoubleClick={() => openApp(AppId.BROWSER)}
-                    className="w-20 flex flex-col items-center gap-1 group text-white hover:bg-white/10 rounded p-2 transition-colors"
-                >
-                    {theme === 'aqua' ? (
-                        <Compass className="w-10 h-10 text-blue-400 desktop-icon-shadow" />
-                    ) : (
-                        <Globe className="w-10 h-10 text-blue-400 desktop-icon-shadow" />
-                    )}
-                    <span className="text-xs text-center desktop-text-shadow font-medium">{theme === 'aqua' ? 'Safari' : 'Edge'}</span>
                 </button>
             </div>
 
@@ -975,6 +964,8 @@ const App: React.FC = () => {
                 notificationPanelOpen={notificationPanelOpen}
                 onToggleNotificationPanel={() => setNotificationPanelOpen(!notificationPanelOpen)}
                 recentItems={RECENT_ITEMS}
+                isFullscreen={isFullscreen}
+                onToggleFullscreen={toggleFullscreen}
             />
         </>
       )}

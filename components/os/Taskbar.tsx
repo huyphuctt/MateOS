@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { LayoutGrid, Search, Rocket, ChevronUp, Wifi, Volume2, Battery, Building, Layers, Check, Bell } from 'lucide-react';
+import { LayoutGrid, Search, Rocket, ChevronUp, Wifi, Volume2, Battery, Building, Layers, Check, Bell, Maximize, Minimize } from 'lucide-react';
 import { AppId, Theme, Organization, Workspace, RecentItem } from '../../types';
 
 interface TaskbarProps {
@@ -21,6 +21,9 @@ interface TaskbarProps {
   notificationPanelOpen: boolean;
   onToggleNotificationPanel: () => void;
   recentItems: RecentItem[];
+  // Fullscreen Props
+  isFullscreen?: boolean;
+  onToggleFullscreen?: () => void;
 }
 
 export const Taskbar: React.FC<TaskbarProps> = ({
@@ -39,7 +42,9 @@ export const Taskbar: React.FC<TaskbarProps> = ({
   onSwitchWorkspace,
   notificationPanelOpen,
   onToggleNotificationPanel,
-  recentItems
+  recentItems,
+  isFullscreen,
+  onToggleFullscreen
 }) => {
   const [time, setTime] = useState(new Date());
   const [orgMenuOpen, setOrgMenuOpen] = useState(false);
@@ -95,7 +100,7 @@ export const Taskbar: React.FC<TaskbarProps> = ({
                 <div className="w-[1px] h-10 bg-white/20 mx-1"></div>
 
                  {/* Dock Icons */}
-                 {[AppId.BROWSER, AppId.COPILOT, AppId.NOTEPAD, AppId.PHOTOS, AppId.SETTINGS].map(appId => {
+                 {[AppId.VAULT, AppId.SETTINGS].map(appId => {
                     const isOpen = openApps.includes(appId);
                     const isActive = activeApp === appId;
                     
@@ -159,12 +164,8 @@ export const Taskbar: React.FC<TaskbarProps> = ({
            <LayoutGrid className="w-6 h-6 text-blue-600 dark:text-blue-400 fill-blue-600 dark:fill-blue-400" />
         </button>
 
-        <button className="p-2 rounded hover:bg-white/50 dark:hover:bg-white/10 transition-all active:scale-95 duration-200 hidden sm:block">
-           <Search className="w-5 h-5 text-gray-700 dark:text-gray-200" />
-        </button>
-        
         {/* Pinned/Open Apps */}
-        {[AppId.COPILOT, AppId.BROWSER, AppId.NOTEPAD, AppId.SETTINGS].map(appId => {
+        {[AppId.VAULT, AppId.SETTINGS].map(appId => {
             const isOpen = openApps.includes(appId);
             const isActive = activeApp === appId;
             
@@ -254,6 +255,17 @@ export const Taskbar: React.FC<TaskbarProps> = ({
         )}
 
         <div className="hidden sm:block w-[1px] h-4 bg-gray-400/30 mx-1"></div>
+
+        {/* Fullscreen Toggle */}
+        {onToggleFullscreen && (
+            <button 
+                onClick={onToggleFullscreen}
+                className="p-1.5 rounded hover:bg-white/40 dark:hover:bg-white/10 transition-colors text-gray-700 dark:text-gray-200"
+                title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+            >
+                {isFullscreen ? <Minimize size={16} /> : <Maximize size={16} />}
+            </button>
+        )}
                 
         {/* System Group with Notification Toggle */}
         <div className="flex items-center gap-2 px-2 py-1 hover:bg-white/40 dark:hover:bg-white/10 rounded transition-colors cursor-pointer border border-transparent hover:border-gray-300/30">

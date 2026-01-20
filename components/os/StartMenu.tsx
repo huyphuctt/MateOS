@@ -47,13 +47,9 @@ export const StartMenu: React.FC<StartMenuProps> = ({
   }, [isOpen, onClose]);
 
   const pinnedApps = [
-    { id: AppId.BROWSER, name: 'Edge' },
-    { id: AppId.COPILOT, name: 'Copilot' },
-    { id: AppId.NOTEPAD, name: 'Notepad' },
-    { id: AppId.PHOTOS, name: 'Photos' },
+    { id: AppId.VAULT, name: 'Vault' },
     ...(isAdmin ? [{ id: AppId.ADMIN, name: 'Admin' }] : []),
     { id: AppId.SETTINGS, name: 'Settings' },
-    { id: AppId.CALCULATOR, name: 'Calculator' },
   ];
 
   return (
