@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Wifi, Battery, Search, Command, User, ChevronDown, Building, Layers, Check, Bell } from 'lucide-react';
+import { Wifi, Battery, Search, Command, User, ChevronDown, Building, Layers, Check, Bell, Maximize, Minimize } from 'lucide-react';
 import { RecentItem, Organization, Workspace } from '../../types';
 
 interface TopBarProps {
@@ -20,6 +20,9 @@ interface TopBarProps {
   // Notification Props
   notificationPanelOpen: boolean;
   onToggleNotificationPanel: () => void;
+  // Fullscreen Props
+  isFullscreen?: boolean;
+  onToggleFullscreen?: () => void;
 }
 
 export const TopBar: React.FC<TopBarProps> = ({ 
@@ -37,7 +40,9 @@ export const TopBar: React.FC<TopBarProps> = ({
     onSwitchOrg,
     onSwitchWorkspace,
     notificationPanelOpen,
-    onToggleNotificationPanel
+    onToggleNotificationPanel,
+    isFullscreen,
+    onToggleFullscreen
 }) => {
   const [time, setTime] = useState(new Date());
   const [menuOpen, setMenuOpen] = useState(false);
@@ -205,7 +210,18 @@ export const TopBar: React.FC<TopBarProps> = ({
             </>
             )}
 
-            <div className="flex items-center gap-3 px-2">
+            <div className="flex items-center gap-2 px-2">
+                 {/* Fullscreen Toggle */}
+                 {onToggleFullscreen && (
+                    <button 
+                        onClick={onToggleFullscreen}
+                        className="p-1 rounded hover:bg-white/10 transition-colors text-white"
+                        title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+                    >
+                        {isFullscreen ? <Minimize size={14} /> : <Maximize size={14} />}
+                    </button>
+                )}
+                
                 {/* Notification Bell */}
                 <button 
                     onClick={onToggleNotificationPanel}

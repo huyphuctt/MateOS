@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { 
   Monitor, 
   Globe, 
@@ -27,13 +27,14 @@ import { SettingsApp } from './components/apps/Settings';
 import { AdminPanel } from './components/apps/AdminPanel';
 import { NotificationsApp } from './components/apps/NotificationsApp';
 import { VaultApp } from './components/apps/VaultApp'; 
-import { PreviewApp } from './components/apps/DocViewerApp'; // Renamed import
+import { PreviewApp } from './components/apps/DocViewerApp'; 
 import { ContextSelector } from './components/os/ContextSelector';
 import { TopBar } from './components/os/TopBar';
 import { Launchpad } from './components/os/Launchpad';
 import { NotificationCenter } from './components/os/NotificationCenter';
 import { BootScreen } from './components/os/BootScreen';
 import { LoginScreen } from './components/os/LoginScreen';
+import { AppSwitcher } from './components/os/AppSwitcher';
 import { AppId, WindowState, Theme, AuthMode, User, Organization, Workspace, FileItem } from './types';
 import { apiService } from './services/api';
 import { RECENT_ITEMS, WALLPAPERS, MOCK_USERS } from './data/mock';
@@ -147,6 +148,12 @@ const App: React.FC = () => {
   const [startMenuOpen, setStartMenuOpen] = useState(false);
   const [nextZIndex, setNextZIndex] = useState(10);
   const [notificationPanelOpen, setNotificationPanelOpen] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  // --- App Switcher State ---
+  const [isSwitcherOpen, setIsSwitcherOpen] = useState(false);
+  const [switcherSelectedIndex, setSwitcherSelectedIndex] = useState(0);
+  const metaKeyRef = useRef(false);
 
   // --- Effects & Auth Logic ---
   useEffect(() => {
@@ -164,6 +171,115 @@ const App: React.FC = () => {
         localStorage.removeItem('mateos_avatar');
     }
   }, [userAvatar]);
+
+  // Fullscreen Change Listener
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
+
+  const toggleFullscreen = useCallback(() => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(err => {
+        console.error(`Error attempting to enable fullscreen: ${err.message}`);
+      });
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      }
+    }
+  }, []);
+
+  // Sorted windows for switcher (MRU - Most Recently Used based on zIndex)
+  const sortedWindows = useMemo(() => {
+    return [...windows].sort((a, b) => b.zIndex - a.zIndex);
+  }, [windows]);
+
+  // Keyboard Shortcuts (App Switcher & Close)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Meta' || e.key === 'OS') {
+            metaKeyRef.current = true;
+        }
+
+        // Navigation within Switcher
+        if (isSwitcherOpen) {
+            if (e.key === 'ArrowRight') {
+                e.preventDefault();
+                setSwitcherSelectedIndex(prev => (prev + 1) % sortedWindows.length);
+            }
+            if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                setSwitcherSelectedIndex(prev => (prev - 1 + sortedWindows.length) % sortedWindows.length);
+            }
+            if (e.key === 'Enter') {
+                 e.preventDefault();
+                 setIsSwitcherOpen(false);
+                 if (sortedWindows[switcherSelectedIndex]) {
+                     focusWindow(sortedWindows[switcherSelectedIndex].id);
+                 }
+                 setSwitcherSelectedIndex(0);
+            }
+        }
+
+        // Only activate shortcuts if Meta is held
+        if (metaKeyRef.current) {
+            
+            // Super + Tab: Switcher
+            if (e.key === 'Tab') {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                if (sortedWindows.length > 0) {
+                     if (!isSwitcherOpen) {
+                         setIsSwitcherOpen(true);
+                         // Select the next window (previous MRU), or 0 if only 1
+                         setSwitcherSelectedIndex(sortedWindows.length > 1 ? 1 : 0);
+                     } else {
+                         // Cycle
+                         setSwitcherSelectedIndex(prev => (prev + 1) % sortedWindows.length);
+                     }
+                }
+            }
+            
+            // Super + W: Close Active
+            if (e.key.toLowerCase() === 'w') {
+                e.preventDefault();
+                e.stopPropagation();
+                if (activeWindowId) {
+                    closeWindow(activeWindowId);
+                }
+            }
+        }
+    };
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+        if (e.key === 'Meta' || e.key === 'OS') {
+            metaKeyRef.current = false;
+            if (isSwitcherOpen) {
+                // Confirm switch
+                setIsSwitcherOpen(false);
+                if (sortedWindows[switcherSelectedIndex]) {
+                    focusWindow(sortedWindows[switcherSelectedIndex].id);
+                }
+                setSwitcherSelectedIndex(0);
+            }
+        }
+    };
+
+    // We attach to window to catch everything
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    
+    return () => {
+        window.removeEventListener('keydown', handleKeyDown);
+        window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, [isSwitcherOpen, switcherSelectedIndex, sortedWindows, activeWindowId]);
+
 
   const checkSession = useCallback(async (isBackgroundCheck = false) => {
     const localUser = localStorage.getItem('mateos_user');
@@ -723,6 +839,8 @@ const App: React.FC = () => {
                     onSwitchWorkspace={handleSwitchWorkspace}
                     notificationPanelOpen={notificationPanelOpen}
                     onToggleNotificationPanel={() => setNotificationPanelOpen(!notificationPanelOpen)}
+                    isFullscreen={isFullscreen}
+                    onToggleFullscreen={toggleFullscreen}
                 />
             )}
 
@@ -780,6 +898,20 @@ const App: React.FC = () => {
                    {renderWindowContent(window)}
                 </WindowFrame>
             ))}
+
+            <AppSwitcher 
+                isOpen={isSwitcherOpen} 
+                windows={sortedWindows}
+                selectedIndex={switcherSelectedIndex}
+                onClose={() => setIsSwitcherOpen(false)}
+                onSelect={(idx) => {
+                    setSwitcherSelectedIndex(idx);
+                    if (sortedWindows[idx]) {
+                        focusWindow(sortedWindows[idx].id);
+                    }
+                    setIsSwitcherOpen(false);
+                }}
+            />
 
             {theme === 'aero' ? (
                 <StartMenu 
