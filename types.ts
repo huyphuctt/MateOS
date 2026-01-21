@@ -74,14 +74,21 @@ export interface Organization {
   role?: 'admin' | 'user';
 }
 
+export interface ThemePreference {
+    theme?: Theme;
+    wallpaper?: string;
+}
+
+export interface Preferences{
+    theme_preference?: ThemePreference[];
+}
+
 export interface User {
   id: string;
   username: string;
   email: string;
   avatar?: string;
   token?: string;
-  wallpaper?: string;
+  preferences?: Preferences;
   organizations: Organization[];
-  // Global role or primary role fallback
-  role?: 'admin' | 'user'; 
 }

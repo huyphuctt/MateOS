@@ -1,14 +1,5 @@
 import { MOCK_USERS } from '../data/mock';
-import { FileItem } from '../types';
-
-interface User {
-    id: string;
-    username: string;
-    email: string;
-    avatar?: string;
-    token?: string;
-    wallpaper?: string;
-}
+import { User, FileItem, Organization } from '../types';
 
 interface AuthResponse {
     success: boolean;
@@ -98,12 +89,12 @@ class ApiService {
 
     // --- Auth Functions ---
 
-    public async login(identifier: string, password: string): Promise<AuthResponse> {
-        console.log(`ApiService: Performing login for ${identifier}`);
+    public async login(email: string, password: string): Promise<AuthResponse> {
+        console.log(`ApiService: Performing login for ${email}`);
         if (this.isMock) {
             await this.mockDelay();
             const user = MOCK_USERS.find(
-                u => (u.username.toLowerCase() === identifier.toLowerCase() || u.email.toLowerCase() === identifier.toLowerCase()) && u.password === password
+                u => (u.username.toLowerCase() === email.toLowerCase() || u.email.toLowerCase() === email.toLowerCase()) && u.password === password
             );
 
             if (user) {
@@ -120,7 +111,7 @@ class ApiService {
             const response = await fetch(`${this.apiUrl}/auth/sign-in`, {
                 method: 'POST',
                 headers: this.getHeaders(),
-                body: JSON.stringify({ username: identifier, password }), // Assuming backend handles identifier as username param
+                body: JSON.stringify({ email, password }), // Assuming backend handles identifier as username param
             });
 
             const data = await response.json();
@@ -132,12 +123,12 @@ class ApiService {
             return { success: false, message: error.message || 'Network error' };
         }
     }
-    public async resetPassword(identifier: string): Promise<ApiResponse> {
-        console.log(`ApiService: Performing resetPassword for ${identifier}`);
+    public async resetPassword(email: string): Promise<ApiResponse> {
+        console.log(`ApiService: Performing resetPassword for ${email}`);
         if (this.isMock) {
             await this.mockDelay();
             const user = MOCK_USERS.find(
-                u => u.username.toLowerCase() === identifier.toLowerCase() || u.email.toLowerCase() === identifier.toLowerCase()
+                u => u.username.toLowerCase() === email.toLowerCase() || u.email.toLowerCase() === email.toLowerCase()
             );
 
             if (user) {
@@ -151,7 +142,7 @@ class ApiService {
             const response = await fetch(`${this.apiUrl}/auth/reset-password`, {
                 method: 'POST',
                 headers: this.getHeaders(),
-                body: JSON.stringify({ username: identifier }),
+                body: JSON.stringify({ email }),
             });
 
             const data = await response.json();
@@ -199,11 +190,11 @@ class ApiService {
         }
     }
 
-    public async changePassword(username: string, oldPassword: string, newPassword: string, token?: string): Promise<AuthResponse> {
+    public async changePassword(email: string, oldPassword: string, newPassword: string, token?: string): Promise<AuthResponse> {
         if (this.isMock) {
             await this.mockDelay();
             const userIndex = MOCK_USERS.findIndex(
-                u => u.username.toLowerCase() === username.toLowerCase() && u.password === oldPassword
+                u => u.email.toLowerCase() === email.toLowerCase() && u.password === oldPassword
             );
 
             if (userIndex !== -1) {
@@ -219,7 +210,7 @@ class ApiService {
             const response = await fetch(`${this.apiUrl}/auth/change-password`, {
                 method: 'POST',
                 headers: this.getHeaders(token),
-                body: JSON.stringify({ username, oldPassword, newPassword }),
+                body: JSON.stringify({ email, oldPassword, newPassword }),
             });
 
             const data = await response.json();

@@ -51,12 +51,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
             const response = await apiService.login(email, password);
 
             if (response.success && response.user) {
-                onLogin({
-                    username: response.user.username,
-                    avatar: response.user.avatar,
-                    wallpaper: response.user.wallpaper,
-                    token: response.token
-                });
+                onLogin(response.user);
             } else {
                 setError(response.message || 'Invalid credentials');
                 setPassword('');

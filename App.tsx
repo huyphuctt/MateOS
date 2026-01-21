@@ -89,7 +89,23 @@ const App: React.FC = () => {
   
   // --- User & Org Context State ---
   const currentUser = useMemo(() => {
-    return MOCK_USERS.find(u => u.username.toLowerCase() === username.toLowerCase()) as unknown as User | undefined;
+    // 2. Handle Production Case: Retrieve full user object from LocalStorage
+    // In production, user data isn't in MOCK_USERS, but persisted in localStorage by handleLoginSuccess
+    const localUser = localStorage.getItem('mateos_user');
+    if (localUser) {
+        try {
+            const parsed = JSON.parse(localUser);
+            if (parsed.username.toLowerCase() === username.toLowerCase()) {
+                // Ensure it looks like a valid User object with organizations
+                if (parsed.organizations && Array.isArray(parsed.organizations)) {
+                    return parsed as User;
+                }
+            }
+        } catch (e) {
+            console.error("Failed to parse local user data", e);
+        }
+    }
+    return undefined;
   }, [username]);
 
   const [activeOrgId, setActiveOrgId] = useState<number | null>(() => {
@@ -373,9 +389,10 @@ const App: React.FC = () => {
      setAuthMode('login_full');
   };
 
-  const handleLoginSuccess = (user: { username: string, avatar?: string, wallpaper?: string, token?: string }) => {
+  const handleLoginSuccess = (user: any) => {
     const now = Date.now();
-    localStorage.setItem('mateos_user', JSON.stringify({ username: user.username }));
+    // Persist full user object to handle production cases where user is not in MOCK_USERS
+    localStorage.setItem('mateos_user', JSON.stringify(user));
     localStorage.setItem('mateos_last_login', now.toString());
     localStorage.removeItem('mateos_is_locked'); 
     
@@ -390,15 +407,17 @@ const App: React.FC = () => {
     }
     setUsername(user.username);
 
-    const fullUser = MOCK_USERS.find(u => u.username.toLowerCase() === user.username.toLowerCase());
-    if (fullUser) {
+    // Try to get full user details from arg or MOCK_USERS for logic below
+    const fullUser = user.organizations ? user : MOCK_USERS.find(u => u.username.toLowerCase() === user.username.toLowerCase());
+    
+    if (fullUser && fullUser.organizations) {
         const savedContextStr = localStorage.getItem('mateos_active_context');
         if (savedContextStr) {
              try {
                 const { orgId, wkId } = JSON.parse(savedContextStr);
-                const org = fullUser.organizations.find(o => o.id === orgId);
+                const org = fullUser.organizations.find((o: any) => o.id === orgId);
                 if (org) {
-                    const wk = org.workspaces.find(w => w.id === wkId);
+                    const wk = org.workspaces.find((w: any) => w.id === wkId);
                     if (wk || org.workspaces.length === 0) {
                         setActiveOrgId(orgId);
                         setActiveWorkspaceId(wkId);
@@ -417,7 +436,7 @@ const App: React.FC = () => {
              }
         }
         const hasMultipleOrgs = fullUser.organizations.length > 1;
-        const hasMultipleWorkspaces = fullUser.organizations.some(o => o.workspaces.length > 1);
+        const hasMultipleWorkspaces = fullUser.organizations.some((o: any) => o.workspaces.length > 1);
         if (hasMultipleOrgs || hasMultipleWorkspaces) {
             setAuthMode('context_selection');
             return;
