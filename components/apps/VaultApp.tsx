@@ -11,7 +11,7 @@ interface VaultAppProps {
     onOpenFile: (file: FileItem) => void;
 }
 
-type Category = 'All' | 'Images' | 'Videos' | 'Docs' | 'Sheets' | 'PDF';
+type Category = 'All' | 'Images' | 'Videos' | 'Docs' | 'Spreadsheets' | 'PDF' | 'Presentation';
 
 export const VaultApp: React.FC<VaultAppProps> = ({ onOpenFile }) => {
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -102,7 +102,8 @@ export const VaultApp: React.FC<VaultAppProps> = ({ onOpenFile }) => {
                 if (selectedCategory === 'Images') return f.type === 'image';
                 if (selectedCategory === 'Videos') return f.type === 'video';
                 if (selectedCategory === 'Docs') return f.type === 'doc';
-                if (selectedCategory === 'Sheets') return f.type === 'sheet';
+                if (selectedCategory === 'Spreadsheets') return f.type === 'sheet';
+                if (selectedCategory === 'Presentation') return f.type === 'presentation';
                 if (selectedCategory === 'PDF') return f.type === 'pdf';
                 return true;
             });
@@ -130,6 +131,7 @@ export const VaultApp: React.FC<VaultAppProps> = ({ onOpenFile }) => {
             case 'video': return <FileVideo className="text-red-500" size={32} />;
             case 'doc': return <FileText className="text-blue-500" size={32} />;
             case 'sheet': return <FileSpreadsheet className="text-green-500" size={32} />;
+            case 'presentation': return <FileSpreadsheet className="text-green-500" size={32} />;
             case 'pdf': return <FileText className="text-red-400" size={32} />;
             case 'code': return <FileCode className="text-yellow-500" size={32} />;
             default: return <File className="text-gray-400" size={32} />;
@@ -189,7 +191,7 @@ export const VaultApp: React.FC<VaultAppProps> = ({ onOpenFile }) => {
 
                 <div className="flex-1 overflow-y-auto px-2 space-y-1">
                     <h3 className="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Categories</h3>
-                    {(['All', 'Images', 'Videos', 'Docs', 'Sheets', 'PDF'] as Category[]).map(cat => (
+                    {(['All', 'Images', 'Videos', 'Docs', 'Spreadsheets', 'Presentation', 'PDF'] as Category[]).map(cat => (
                         <button
                             key={cat}
                             onClick={() => handleCategoryClick(cat)}
@@ -203,7 +205,8 @@ export const VaultApp: React.FC<VaultAppProps> = ({ onOpenFile }) => {
                             {cat === 'Images' && <Image size={16} />}
                             {cat === 'Videos' && <FileVideo size={16} />}
                             {cat === 'Docs' && <FileText size={16} />}
-                            {cat === 'Sheets' && <FileSpreadsheet size={16} />}
+                            {cat === 'Spreadsheets' && <FileSpreadsheet size={16} />}
+                            {cat === 'Presentation' && <FileText size={16} />}
                             {cat === 'PDF' && <FileText size={16} />}
                             <span>{cat}</span>
                         </button>

@@ -55,7 +55,7 @@ export const StartMenu: React.FC<StartMenuProps> = ({
   return (
     <div 
         ref={menuRef}
-        className={`absolute left-1/2 -translate-x-1/2 w-[640px] max-w-[90vw] h-[650px] max-h-[70vh] bg-white/80 dark:bg-[#1c1c1c]/80 backdrop-blur-3xl rounded-lg shadow-[0_0_40px_rgba(0,0,0,0.25)] border border-white/40 dark:border-gray-700/50 z-[9998] flex flex-col transition-all duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1.0)] origin-bottom
+        className={`absolute left-1/2 -translate-x-1/2 w-[640px] max-w-[90vw] h-[350px] max-h-[70vh] bg-white/80 dark:bg-[#1c1c1c]/80 backdrop-blur-3xl rounded-lg shadow-[0_0_40px_rgba(0,0,0,0.25)] border border-white/40 dark:border-gray-700/50 z-[9998] flex flex-col transition-all duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1.0)] origin-bottom
         ${isOpen 
             ? 'bottom-14 opacity-100 translate-y-0 scale-100 pointer-events-auto' 
             : 'bottom-14 opacity-0 translate-y-12 scale-95 pointer-events-none' 
@@ -66,7 +66,6 @@ export const StartMenu: React.FC<StartMenuProps> = ({
         {/* Pinned Section */}
         <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100 ml-2">Pinned</h3>
-            <button className="text-xs bg-white/50 dark:bg-[#333]/50 px-2 py-1 rounded border border-gray-200/50 dark:border-gray-600/50 text-gray-600 dark:text-gray-300 shadow-sm backdrop-blur-sm">All apps &gt;</button>
         </div>
         
         <div className="grid grid-cols-6 gap-2 mb-8">
@@ -80,31 +79,6 @@ export const StartMenu: React.FC<StartMenuProps> = ({
                         {appIcons[app.id]}
                     </div>
                     <span className="text-xs text-gray-700 dark:text-gray-200 font-medium truncate w-full text-center">{app.name}</span>
-                </button>
-            ))}
-        </div>
-
-        {/* Recommended Section (Recent Items) */}
-        <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100 ml-2">Recommended</h3>
-            <button className="text-xs bg-white/50 dark:bg-[#333]/50 px-2 py-1 rounded border border-gray-200/50 dark:border-gray-600/50 text-gray-600 dark:text-gray-300 shadow-sm backdrop-blur-sm">More &gt;</button>
-        </div>
-
-        <div className="grid grid-cols-2 gap-2">
-            {recentItems.map((item, i) => (
-                <button key={item.id} className="flex items-center gap-3 p-3 hover:bg-white/50 dark:hover:bg-white/5 rounded-md text-left transition-colors group">
-                     {/* Use icon from global data, fallback to generic styling if icon isn't standard */}
-                    <div className="w-8 h-8 bg-blue-100/80 dark:bg-blue-900/40 rounded flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold text-xs shadow-sm overflow-hidden group-hover:scale-105 transition-transform">
-                        {item.icon ? (
-                            React.cloneElement(item.icon as React.ReactElement<any>, { size: 16 })
-                        ) : (
-                            item.title.split('.').pop()?.toUpperCase().substring(0, 3) || 'DOC'
-                        )}
-                    </div>
-                    <div className="flex flex-col min-w-0">
-                        <span className="text-sm text-gray-800 dark:text-gray-200 font-medium truncate">{item.title}</span>
-                        <span className="text-xs text-gray-500 dark:text-gray-400">{item.timestamp}</span>
-                    </div>
                 </button>
             ))}
         </div>
