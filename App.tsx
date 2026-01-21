@@ -147,6 +147,9 @@ const App: React.FC = () => {
   const [nextZIndex, setNextZIndex] = useState(10);
   const [notificationPanelOpen, setNotificationPanelOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  
+  // Track if we have restored the session from local storage to prevent overwriting
+  const [hasRestored, setHasRestored] = useState(false);
 
   // --- App Switcher State ---
   const [isSwitcherOpen, setIsSwitcherOpen] = useState(false);
@@ -435,6 +438,10 @@ const App: React.FC = () => {
     localStorage.removeItem('mateos_last_login');
     localStorage.removeItem('mateos_token');
     localStorage.removeItem('mateos_is_locked');
+    // Clear session state
+    localStorage.removeItem('mateos_windows');
+    localStorage.removeItem('mateos_window_meta');
+
     setWallpaper(WALLPAPERS[0].src);
     setTheme('aqua');
     setUserAvatar(null);
@@ -445,6 +452,7 @@ const App: React.FC = () => {
     setActiveWindowId(null);
     setStartMenuOpen(false);
     setAuthMode('login_full');
+    setHasRestored(false);
   };
   
   const handleLock = useCallback(() => {
@@ -494,7 +502,7 @@ const App: React.FC = () => {
     requiresAdmin?: boolean; 
   };
 
-  const appRegistry: Record<AppId, AppRegistryItem> = {    
+  const appRegistry: Record<AppId, AppRegistryItem> = useMemo(() => ({    
     [AppId.BROWSER]: {
       title: theme === 'aqua' ? 'Safari' : 'Edge Browser',
       icon: theme === 'aqua' ? <Compass className="text-blue-500" size={20} /> : <Globe className="text-green-500" size={20} />,
@@ -550,7 +558,72 @@ const App: React.FC = () => {
         component: <Placeholder text="Calculator" />,
         defaultSize: { width: 300, height: 400 }
     }
-  };
+  }), [theme]); // Re-create registry when theme changes (for icons)
+
+  // --- Session Persistence ---
+  
+  // 1. Restore State Logic
+  useEffect(() => {
+      if (authMode === 'desktop' && !hasRestored) {
+          const savedWindowsStr = localStorage.getItem('mateos_windows');
+          const savedMetaStr = localStorage.getItem('mateos_window_meta');
+
+          if (savedWindowsStr) {
+              try {
+                  const savedWindows = JSON.parse(savedWindowsStr);
+                  // Rehydrate windows by attaching fresh icons/components from appRegistry
+                  const hydratedWindows = savedWindows.map((w: any) => {
+                      const app = appRegistry[w.id as AppId];
+                      if (!app) return null; // App might have been removed from registry
+                      return {
+                          ...w,
+                          icon: app.icon, 
+                          component: app.component
+                      };
+                  }).filter(Boolean);
+                  
+                  setWindows(hydratedWindows);
+
+                  if (savedMetaStr) {
+                      const meta = JSON.parse(savedMetaStr);
+                      setActiveWindowId(meta.activeWindowId);
+                      setNextZIndex(meta.nextZIndex);
+                  }
+              } catch (e) {
+                  console.error("Failed to restore session windows:", e);
+              }
+          }
+          setHasRestored(true);
+      }
+  }, [authMode, hasRestored, appRegistry]);
+
+  // 2. Save State Logic (Auto-save on change)
+  useEffect(() => {
+      // Only save if we are logged in and have already attempted restoration (to avoid overwriting with empty state on boot)
+      if (authMode === 'desktop' && hasRestored) {
+          const serializableWindows = windows.map(w => {
+              // Exclude React Nodes (icon, component) before saving
+              const { icon, component, ...rest } = w;
+              return rest;
+          });
+          
+          localStorage.setItem('mateos_windows', JSON.stringify(serializableWindows));
+          localStorage.setItem('mateos_window_meta', JSON.stringify({
+              activeWindowId,
+              nextZIndex
+          }));
+      }
+  }, [windows, activeWindowId, nextZIndex, authMode, hasRestored]);
+
+  // 3. Update Icons on Theme Change
+  useEffect(() => {
+      setWindows(prev => prev.map(w => {
+          const app = appRegistry[w.id];
+          if (!app) return w;
+          return { ...w, icon: app.icon };
+      }));
+  }, [theme, appRegistry]);
+
 
   // --- Window Management ---
 
