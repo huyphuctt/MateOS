@@ -7,7 +7,7 @@ import { RecentItem, Theme } from '../types';
 export const MOCK_USERS = [
     {
         id: '1',
-        username: 'Admin',
+        name: 'Admin',
         password: 'password',
         email: 'admin@mateos.com',
         avatar: null,
@@ -43,7 +43,7 @@ export const MOCK_USERS = [
     },
     {
         id: '2',
-        username: 'Mateo',
+        name: 'Mateo',
         password: '123',
         email: 'mateo@mateos.com',
         avatar: null,

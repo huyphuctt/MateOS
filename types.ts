@@ -1,3 +1,4 @@
+
 import { ReactNode } from 'react';
 
 export enum AppId {
@@ -86,7 +87,7 @@ export interface Preferences{
 
 export interface User {
   id: string;
-  username: string;
+  name: string;
   email: string;
   avatar?: string;
   token?: string;

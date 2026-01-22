@@ -95,7 +95,7 @@ class ApiService {
         if (this.isMock) {
             await this.mockDelay();
             const user = MOCK_USERS.find(
-                u => (u.username.toLowerCase() === email.toLowerCase() || u.email.toLowerCase() === email.toLowerCase()) && u.password === password
+                u => (u.name.toLowerCase() === email.toLowerCase() || u.email.toLowerCase() === email.toLowerCase()) && u.password === password
             );
 
             if (user) {
@@ -130,7 +130,7 @@ class ApiService {
         if (this.isMock) {
             await this.mockDelay();
             const user = MOCK_USERS.find(
-                u => u.username.toLowerCase() === email.toLowerCase() || u.email.toLowerCase() === email.toLowerCase()
+                u => u.name.toLowerCase() === email.toLowerCase() || u.email.toLowerCase() === email.toLowerCase()
             );
 
             if (user) {

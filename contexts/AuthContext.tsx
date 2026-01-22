@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback, ReactNode } from 'react';
 import { User, AuthMode, Organization, Workspace } from '../types';
 import { apiService } from '../services/api';
@@ -5,6 +6,7 @@ import { MOCK_USERS } from '../data/mock';
 
 interface AuthContextType {
     user: User | undefined;
+    token: string | undefined;
     authMode: AuthMode;
     activeOrg: Organization | undefined;
     activeWorkspace: Workspace | undefined;
@@ -24,13 +26,15 @@ const CHECK_INTERVAL_MS = 10 * 60 * 1000;
 const INACTIVITY_TIMEOUT_MS = 30 * 60 * 1000;
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const [username, setUsername] = useState<string>(() => {
+    const [name, setName] = useState<string>(() => {
         const localUser = localStorage.getItem('mateos_user');
         if (localUser) {
-            try { return JSON.parse(localUser).username || JSON.parse(localUser).name || ''; } catch (e) { return ''; }
+            try { return JSON.parse(localUser).name || ''; } catch (e) { return ''; }
         }
         return '';
     });
+
+    const [token, setToken] = useState<string | undefined>(() => localStorage.getItem('mateos_token') || undefined);
 
     const [authMode, setAuthMode] = useState<AuthMode>(() => {
         const bootCompleted = localStorage.getItem('mateos_boot_completed');
@@ -48,14 +52,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     });
 
     const user = useMemo(() => {
-        const mockUser = MOCK_USERS.find(u => u.username.toLowerCase() === username.toLowerCase());
+        const mockUser = MOCK_USERS.find(u => u.name.toLowerCase() === name.toLowerCase());
         if (mockUser) return mockUser as unknown as User;
         const localUser = localStorage.getItem('mateos_user');
         if (localUser) {
             try { return JSON.parse(localUser) as User; } catch (e) { }
         }
         return undefined;
-    }, [username]);
+    }, [name]);
 
     const [activeOrgId, setActiveOrgId] = useState<number | null>(() => {
         const saved = localStorage.getItem('mateos_active_context');
@@ -93,7 +97,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const checkSession = useCallback(async (isBackgroundCheck = false) => {
         const localUser = localStorage.getItem('mateos_user');
         const lastLoginStr = localStorage.getItem('mateos_last_login');
-        const token = localStorage.getItem('mateos_token');
+        const currentToken = localStorage.getItem('mateos_token');
         const isLocked = localStorage.getItem('mateos_is_locked') === 'true';
         const now = Date.now();
 
@@ -108,9 +112,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             return;
         }
 
-        if (token) {
+        if (currentToken) {
             try {
-                const isValid = await apiService.checkSession(token);
+                const isValid = await apiService.checkSession(currentToken);
                 if (!isValid) setAuthMode('login_partial');
             } catch (e) {
                 setAuthMode('login_partial');
@@ -127,14 +131,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
     }, [authMode, checkSession]);
 
-    const login = useCallback((userData: any, token: string) => {
+    const login = useCallback((userData: any, newToken: string) => {
         const now = Date.now();
         localStorage.setItem('mateos_user', JSON.stringify(userData));
         localStorage.setItem('mateos_last_login', now.toString());
         localStorage.removeItem('mateos_is_locked');
-        if (token) localStorage.setItem('mateos_token', token);
+        if (newToken) {
+            localStorage.setItem('mateos_token', newToken);
+            setToken(newToken);
+        }
         
-        setUsername(userData.username || userData.name);
+        setName(userData.name);
 
         const orgs = userData.organizations || [];
         if (orgs.length > 1 || (orgs[0]?.workspaces.length > 1)) {
@@ -145,18 +152,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }, []);
 
     const logout = useCallback(async () => {
-        await apiService.logout();
+        await apiService.logout(token);
         localStorage.removeItem('mateos_user');
         localStorage.removeItem('mateos_last_login');
         localStorage.removeItem('mateos_token');
         localStorage.removeItem('mateos_is_locked');
         localStorage.removeItem('mateos_windows');
         localStorage.removeItem('mateos_window_meta');
-        setUsername('');
+        setName('');
+        setToken(undefined);
         setActiveOrgId(null);
         setActiveWorkspaceId(null);
         setAuthMode('login_full');
-    }, []);
+    }, [token]);
 
     const lock = useCallback(() => {
         localStorage.setItem('mateos_is_locked', 'true');
@@ -179,6 +187,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     const value = useMemo(() => ({
         user,
+        token,
         authMode,
         activeOrg,
         activeWorkspace,
@@ -188,7 +197,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         switchOrg,
         switchWorkspace,
         setAuthMode
-    }), [user, authMode, activeOrg, activeWorkspace, login, logout, lock, switchOrg, switchWorkspace]);
+    }), [user, token, authMode, activeOrg, activeWorkspace, login, logout, lock, switchOrg, switchWorkspace]);
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

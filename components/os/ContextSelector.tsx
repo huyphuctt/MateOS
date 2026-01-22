@@ -139,7 +139,8 @@ export const ContextSelector: React.FC<ContextSelectorProps> = ({
       {/* Footer User Info */}
       <div className="absolute bottom-10 flex items-center gap-3 text-white/50 bg-black/20 px-4 py-2 rounded-full backdrop-blur-sm border border-white/5">
         <img src={user.avatar} className="w-6 h-6 rounded-full" alt="" />
-        <span className="text-xs">Logged in as <span className="text-white font-medium">{user.username}</span></span>
+        {/* Fix: Use user.name instead of user.username */}
+        <span className="text-xs">Logged in as <span className="text-white font-medium">{user.name}</span></span>
       </div>
     </div>
   );

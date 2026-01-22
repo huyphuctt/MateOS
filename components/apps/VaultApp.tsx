@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { 
     LayoutGrid, List, Search, Plus, File, Image, FileVideo, 
@@ -6,6 +7,7 @@ import {
 } from 'lucide-react';
 import { apiService } from '../../services/api';
 import { FileItem } from '../../types';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface VaultAppProps {
     onOpenFile: (file: FileItem) => void;
@@ -14,6 +16,7 @@ interface VaultAppProps {
 type Category = 'All' | 'Images' | 'Videos' | 'Docs' | 'Spreadsheets' | 'PDF' | 'Presentation';
 
 export const VaultApp: React.FC<VaultAppProps> = ({ onOpenFile }) => {
+    const { token } = useAuth();
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
     const [selectedCategory, setSelectedCategory] = useState<Category>('All');
     const [selectedTag, setSelectedTag] = useState<string | null>(null);
@@ -27,7 +30,7 @@ export const VaultApp: React.FC<VaultAppProps> = ({ onOpenFile }) => {
     // Initial Load
     useEffect(() => {
         loadFiles();
-    }, []);
+    }, [token]);
 
     // Simulate file status update (Indexing -> Ready)
     useEffect(() => {
@@ -49,7 +52,7 @@ export const VaultApp: React.FC<VaultAppProps> = ({ onOpenFile }) => {
     const loadFiles = async () => {
         setLoading(true);
         try {
-            const data = await apiService.getVaultContents();
+            const data = await apiService.getVaultContents(token);
             setFiles(data);
         } catch (e) {
             console.error("Failed to load vault content");
@@ -68,7 +71,7 @@ export const VaultApp: React.FC<VaultAppProps> = ({ onOpenFile }) => {
 
         setUploading(true);
         try {
-            const newFile = await apiService.uploadVaultFile(file);
+            const newFile = await apiService.uploadVaultFile(file, token);
             if (newFile) {
                 setFiles(prev => [newFile, ...prev]);
             }

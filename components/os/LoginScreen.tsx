@@ -1,11 +1,12 @@
+
 import React, { useState, useEffect } from 'react';
 import { ArrowRight, XCircle, HelpCircle, RefreshCw, Check, Mail, AlertCircle, User as UserIcon } from 'lucide-react';
 import { apiService } from '../../services/api';
-import { User } from '@/types';
+import { User } from '../../types';
 
 interface LoginScreenProps {
     mode: 'full' | 'partial';
-    savedUsername?: string;
+    savedName?: string;
     onLogin: (user: User, token: string) => void;
     onSwitchAccount: () => void;
     onForgotPassword: () => void;
@@ -14,7 +15,7 @@ interface LoginScreenProps {
 
 export const LoginScreen: React.FC<LoginScreenProps> = ({
     mode,
-    savedUsername,
+    savedName,
     onLogin,
     onSwitchAccount,
     onForgotPassword,
@@ -24,18 +25,17 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
     const [view, setView] = useState<'login' | 'forgot' | 'success'>('login');
 
     // Login Form State
-    // Consolidated 'username' and 'recoveryEmail' into a single 'email' state
-    const [email, setEmail] = useState(savedUsername || '');
+    const [email, setEmail] = useState(savedName || '');
     const [password, setPassword] = useState('');
     const [error, setError] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // Sync savedUsername prop to state when it changes
+    // Sync savedName prop to state when it changes
     useEffect(() => {
-        if (savedUsername) {
-            setEmail(savedUsername);
+        if (savedName) {
+            setEmail(savedName);
         }
-    }, [savedUsername]);
+    }, [savedName]);
 
     // --- Handlers ---
 
@@ -52,7 +52,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
             const response = await apiService.login(email, password);
 
             if (response.success && response.user) {
-                onLogin(response.user, response.token);
+                onLogin(response.user, response.token || '');
             } else {
                 setError(response.message || 'Invalid credentials');
                 setPassword('');
@@ -92,7 +92,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
         setView('login');
         setError(null);
         setPassword('');
-        // We do NOT clear 'email' here so it persists when navigating back
     };
 
     // --- Render Helpers ---
@@ -141,7 +140,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
                                 name="email"
                                 value={email}
                                 onChange={(e) => { setEmail(e.target.value); setError(null); }}
-                                placeholder="Email Address"
+                                placeholder="Email or Name"
                                 className="w-48 bg-white/20 hover:bg-white/30 text-white placeholder-white/70 text-center rounded-full py-1.5 px-4 focus:outline-none focus:ring-2 focus:ring-white/40 transition-all border border-transparent focus:border-white/20 backdrop-blur-md"
                                 autoFocus
                                 autoComplete="username email"

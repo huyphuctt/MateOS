@@ -47,8 +47,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ currentOrg, currentWorks
         const userOrgData = user.organizations.find(o => o.id === currentOrg.id);
         const existingWorkspaceIds = userOrgData ? userOrgData.workspaces.map(w => w.id) : [];
 
+        // Fix: Use user.name instead of user.username
         setFormData({
-            username: user.username,
+            username: user.name,
             email: user.email,
             workspaceIds: existingWorkspaceIds
         });
@@ -61,7 +62,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ currentOrg, currentWorks
         if (modalMode === 'add') {
             const newUser = {
                 id: Date.now().toString(),
-                username: formData.username,
+                // Fix: Use 'name' instead of 'username' to align with User interface
+                name: formData.username,
                 email: formData.email,
                 password: 'password', // Default
                 avatar: `https://ui-avatars.com/api/?name=${formData.username.replace(' ', '+')}&background=random`,
@@ -92,7 +94,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ currentOrg, currentWorks
 
                     return {
                         ...u,
-                        username: formData.username,
+                        // Fix: Use 'name' instead of 'username'
+                        name: formData.username,
                         email: formData.email,
                         organizations: [...otherOrgs, updatedOrgData]
                     };
@@ -123,7 +126,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ currentOrg, currentWorks
     // Filter Logic
     const filteredUsers = users.filter(u => {
         // Basic Search
-        const matchesSearch = u.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        // Fix: Use u.name instead of u.username
+        const matchesSearch = u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             u.email.toLowerCase().includes(searchTerm.toLowerCase());
 
         if (!matchesSearch) return false;
@@ -260,7 +264,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ currentOrg, currentWorks
                                                 <img src={user.avatar} alt="" className="w-full h-full object-cover" />
                                             </div>
                                             <div className="min-w-0">
-                                                <div className="font-medium text-sm text-gray-900 dark:text-gray-100 truncate">{user.username}</div>
+                                                {/* Fix: Use user.name instead of user.username */}
+                                                <div className="font-medium text-sm text-gray-900 dark:text-gray-100 truncate">{user.name}</div>
                                                 <div className="text-xs text-gray-500">ID: {user.id}</div>
                                             </div>
                                         </div>

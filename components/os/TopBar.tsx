@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Wifi, Battery, Search, Command, User, ChevronDown, Building, Layers, Check, Bell, Maximize, Minimize } from 'lucide-react';
 import { RecentItem, Organization, Workspace } from '../../types';
@@ -8,7 +9,7 @@ interface TopBarProps {
   onOpenSettings: () => void;
   onLogout: () => void;
   recentItems: RecentItem[];
-  username: string;
+  name: string;
   onOpenUserProfile: () => void;
   userAvatar?: string | null;
   onLock: () => void;
@@ -82,7 +83,7 @@ export const TopBar: React.FC<TopBarProps> = ({
                             {userAvatar ? <img src={userAvatar} className="w-full h-full object-cover" alt="User" /> : <User size={24} className="text-gray-500 group-hover:text-white" />}
                         </div>
                         <div className="flex flex-col min-w-0">
-                            <span className="font-medium text-sm truncate">{user?.username || 'User'}</span>
+                            <span className="font-medium text-sm truncate">{user?.name || 'User'}</span>
                             <span className="text-[11px] text-gray-500 dark:text-gray-400 group-hover:text-blue-100 truncate font-normal">
                                 {user?.email || 'guest@mateos.com'}
                             </span>

@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect } from 'react';
 import { Search, Power, User, Lock } from 'lucide-react';
 import { AppId, RecentItem } from '../../types';
@@ -9,7 +10,7 @@ interface StartMenuProps {
   onClose: () => void;
   onLogout: () => void;
   recentItems: RecentItem[];
-  username: string;
+  name: string;
   onOpenUserProfile: () => void;
   userAvatar?: string | null;
   onLock: () => void;
@@ -23,7 +24,7 @@ export const StartMenu: React.FC<StartMenuProps> = ({
     onClose, 
     onLogout, 
     recentItems,
-    username,
+    name,
     onOpenUserProfile,
     userAvatar,
     onLock,
@@ -98,9 +99,9 @@ export const StartMenu: React.FC<StartMenuProps> = ({
                 )}
             </div>
             <div className="flex flex-col">
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-200 leading-tight">{username || 'Guest User'}</span>
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-200 leading-tight">{name || 'Guest User'}</span>
                 <span className="text-[11px] text-gray-500 dark:text-gray-400 leading-tight mt-0.5">
-                    {username ? `${username.toLowerCase().replace(/\s+/g, '.')}@mateos.com` : 'guest@mateos.com'}
+                    {name ? `${name.toLowerCase().replace(/\s+/g, '.')}@mateos.com` : 'guest@mateos.com'}
                 </span>
             </div>
         </button>

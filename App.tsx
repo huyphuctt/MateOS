@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { 
   Monitor, 
@@ -323,7 +324,7 @@ const App: React.FC = () => {
            return <BrowserApp />;
       }
       if (window.id === AppId.SETTINGS) {
-          return <SettingsApp theme={theme} setTheme={setTheme} hideTaskbar={hideTaskbar} setHideTaskbar={setHideTaskbar} username={user?.username} wallpaper={wallpaper} setWallpaper={setWallpaper} userAvatar={userAvatar} setUserAvatar={setUserAvatar} />;
+          return <SettingsApp theme={theme} setTheme={setTheme} hideTaskbar={hideTaskbar} setHideTaskbar={setHideTaskbar} name={user?.name} wallpaper={wallpaper} setWallpaper={setWallpaper} userAvatar={userAvatar} setUserAvatar={setUserAvatar} />;
       }
       if (window.id === AppId.ADMIN && activeOrg) return <AdminPanel currentOrg={activeOrg} currentWorkspace={activeWorkspace} />;
       if (window.id === AppId.VAULT) return <VaultApp onOpenFile={(file) => openApp(AppId.PREVIEW, { file })} />;
@@ -340,7 +341,7 @@ const App: React.FC = () => {
       {(authMode === 'login_full' || authMode === 'login_partial') && (
         <LoginScreen 
             mode={authMode === 'login_full' ? 'full' : 'partial'}
-            savedUsername={user?.username}
+            savedName={user?.name}
             onLogin={login}
             onSwitchAccount={logout}
             onForgotPassword={() => alert("Recovery link sent.")}
@@ -359,7 +360,7 @@ const App: React.FC = () => {
                     onOpenSettings={() => openApp(AppId.SETTINGS)}
                     onLogout={logout}
                     recentItems={RECENT_ITEMS}
-                    username={user?.username || ''}
+                    name={user?.name || ''}
                     onOpenUserProfile={() => openApp(AppId.SETTINGS)}
                     userAvatar={userAvatar}
                     onLock={lock}
@@ -395,7 +396,7 @@ const App: React.FC = () => {
             <AppSwitcher isOpen={isSwitcherOpen} windows={sortedWindows} selectedIndex={switcherSelectedIndex} onClose={() => setIsSwitcherOpen(false)} onSelect={(idx) => { setSwitcherSelectedIndex(idx); if (sortedWindows[idx]) focusWindow(sortedWindows[idx].id); setIsSwitcherOpen(false); }} />
 
             {theme === 'aero' ? (
-                <StartMenu isOpen={startMenuOpen} onAppClick={openApp} appIcons={appIcons} onClose={() => setStartMenuOpen(false)} onLogout={logout} recentItems={RECENT_ITEMS} username={user?.username || ''} onOpenUserProfile={() => openApp(AppId.SETTINGS)} userAvatar={userAvatar} onLock={lock} isAdmin={activeOrg?.role === 'admin'} />
+                <StartMenu isOpen={startMenuOpen} onAppClick={openApp} appIcons={appIcons} onClose={() => setStartMenuOpen(false)} onLogout={logout} recentItems={RECENT_ITEMS} name={user?.name || ''} onOpenUserProfile={() => openApp(AppId.SETTINGS)} userAvatar={userAvatar} onLock={lock} isAdmin={activeOrg?.role === 'admin'} />
             ) : (
                 <Launchpad isOpen={startMenuOpen} onAppClick={openApp} appIcons={appIcons} onClose={() => setStartMenuOpen(false)} isAdmin={activeOrg?.role === 'admin'} />
             )}
