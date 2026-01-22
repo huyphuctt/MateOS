@@ -225,15 +225,15 @@ class ApiService {
 
     // --- Vault Functions ---
 
-    public async getVaultContent(token?: string): Promise<FileItem[]> {
-        console.log('ApiService: getVaultContent');
+    public async getVaultContents(token?: string): Promise<FileItem[]> {
+        console.log('ApiService: getVaultContents');
         if (this.isMock) {
             await this.mockDelay(500);
             return [...MOCK_FILES];
         }
 
         try {
-             const response = await fetch(`${this.apiUrl}/vault/content`, {
+             const response = await fetch(`${this.apiUrl}/vault/contents`, {
                 headers: this.getHeaders(token),
             });
             const data = await response.json();

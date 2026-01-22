@@ -75,12 +75,13 @@ export interface Organization {
 }
 
 export interface ThemePreference {
-    theme?: Theme;
+    name?: Theme;
     wallpaper?: string;
 }
 
 export interface Preferences{
-    theme_preference?: ThemePreference[];
+    themes?: ThemePreference[];
+    active_theme?: Theme;
 }
 
 export interface User {

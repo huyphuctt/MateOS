@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowRight, XCircle, HelpCircle, RefreshCw, Check, Mail, AlertCircle, User } from 'lucide-react';
+import { ArrowRight, XCircle, HelpCircle, RefreshCw, Check, Mail, AlertCircle, User as UserIcon } from 'lucide-react';
 import { apiService } from '../../services/api';
+import { User } from '@/types';
 
 interface LoginScreenProps {
     mode: 'full' | 'partial';
     savedUsername?: string;
-    onLogin: (user: { username: string; avatar?: string; wallpaper?: string; token?: string }) => void;
+    onLogin: (user: User, token: string) => void;
     onSwitchAccount: () => void;
     onForgotPassword: () => void;
     userAvatar?: string | null;
@@ -51,7 +52,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
             const response = await apiService.login(email, password);
 
             if (response.success && response.user) {
-                onLogin(response.user);
+                onLogin(response.user, response.token);
             } else {
                 setError(response.message || 'Invalid credentials');
                 setPassword('');
@@ -114,7 +115,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
                         alt="User Avatar"
                     />
                 ) : (
-                    <User size={48} className="text-white/80" />
+                    <UserIcon size={48} className="text-white/80" />
                 )}
             </div>
         </div>
@@ -186,7 +187,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
                     <div className="mt-8 flex flex-col items-center gap-4">
                         <button
                             type="button"
-                            onClick={() => {setError(null); setView('forgot')}}
+                            onClick={() => { setError(null); setView('forgot') }}
                             className="text-xs text-white/70 hover:text-white transition-colors font-light"
                         >
                             Forgot Password?
@@ -229,12 +230,12 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
                             autoFocus
                         />
                     </div>
-                        {error && (
-                            <div className="flex items-center gap-1.5 text-red-200 bg-red-900/40 px-3 py-1 rounded-md backdrop-blur-sm animate-in fade-in slide-in-from-top-1">
-                                <AlertCircle size={12} />
-                                <span className="text-xs font-medium">{error}</span>
-                            </div>
-                        )}
+                    {error && (
+                        <div className="flex items-center gap-1.5 text-red-200 bg-red-900/40 px-3 py-1 rounded-md backdrop-blur-sm animate-in fade-in slide-in-from-top-1">
+                            <AlertCircle size={12} />
+                            <span className="text-xs font-medium">{error}</span>
+                        </div>
+                    )}
 
                     <div className="flex items-center gap-4 mt-2">
                         <button

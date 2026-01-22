@@ -56,7 +56,7 @@ const App: React.FC = () => {
     const localUser = localStorage.getItem('mateos_user');
     if (localUser) {
         try {
-            return JSON.parse(localUser).username;
+            return JSON.parse(localUser).name;
         } catch (e) {
             return '';
         }
@@ -95,12 +95,7 @@ const App: React.FC = () => {
     if (localUser) {
         try {
             const parsed = JSON.parse(localUser);
-            if (parsed.username.toLowerCase() === username.toLowerCase()) {
-                // Ensure it looks like a valid User object with organizations
-                if (parsed.organizations && Array.isArray(parsed.organizations)) {
-                    return parsed as User;
-                }
-            }
+            return parsed as User;
         } catch (e) {
             console.error("Failed to parse local user data", e);
         }
@@ -389,23 +384,25 @@ const App: React.FC = () => {
      setAuthMode('login_full');
   };
 
-  const handleLoginSuccess = (user: any) => {
+  const handleLoginSuccess = (user: any, token:string) => {
     const now = Date.now();
     // Persist full user object to handle production cases where user is not in MOCK_USERS
     localStorage.setItem('mateos_user', JSON.stringify(user));
     localStorage.setItem('mateos_last_login', now.toString());
     localStorage.removeItem('mateos_is_locked'); 
     
-    if (user.token) {
-        localStorage.setItem('mateos_token', user.token);
+    if (token) {
+        localStorage.setItem('mateos_token', token);
     }
     if (user.avatar) {
         setUserAvatar(user.avatar);
     }
-    if (user.wallpaper) {
-        setWallpaper(user.wallpaper);
+    const active_theme = user.preferences?.active_theme;
+    const theme = user.preferences.themes.find((t => t.name === active_theme));
+    if (theme?.wallpaper) {
+        setWallpaper(theme.wallpaper);
     }
-    setUsername(user.username);
+    setUsername(user.name);
 
     // Try to get full user details from arg or MOCK_USERS for logic below
     const fullUser = user.organizations ? user : MOCK_USERS.find(u => u.username.toLowerCase() === user.username.toLowerCase());
@@ -460,6 +457,8 @@ const App: React.FC = () => {
     // Clear session state
     localStorage.removeItem('mateos_windows');
     localStorage.removeItem('mateos_window_meta');
+    localStorage.removeItem('mateos_wallpaper');
+    localStorage.removeItem('mateos_theme');
 
     setWallpaper(WALLPAPERS[0].src);
     setTheme('aqua');

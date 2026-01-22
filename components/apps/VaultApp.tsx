@@ -49,7 +49,7 @@ export const VaultApp: React.FC<VaultAppProps> = ({ onOpenFile }) => {
     const loadFiles = async () => {
         setLoading(true);
         try {
-            const data = await apiService.getVaultContent();
+            const data = await apiService.getVaultContents();
             setFiles(data);
         } catch (e) {
             console.error("Failed to load vault content");
