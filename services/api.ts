@@ -1,4 +1,3 @@
-
 import { MOCK_USERS, MOCK_FILES } from '../data/mock';
 import { User, FileItem, Organization } from '../types';
 
@@ -187,8 +186,8 @@ class ApiService {
 
     // --- Vault Functions ---
 
-    public async getVaultContents(token?: string): Promise<FileItem[]> {
-        console.log('ApiService: getVaultContents');
+    public async vaultContents(token: string): Promise<FileItem[]> {
+        console.log('ApiService: vaultContents');
         if (this.isMock) {
             await this.mockDelay(500);
             return [...MOCK_FILES];
@@ -203,6 +202,33 @@ class ApiService {
         } catch (error) {
             console.error('Vault content error:', error);
             return [];
+        }
+    }
+
+    public async vaultRefresh(token: string, id: string): Promise<FileItem | null> {
+        console.log(`ApiService: vaultRefresh for item ${id}`);
+        if (this.isMock) {
+            await this.mockDelay(300);
+            const file = MOCK_FILES.find(f => f.id === id);
+            if (file) {
+                // In mock, if it was Indexing, 50% chance to become Ready on refresh
+                return { 
+                    ...file, 
+                    status: file.status === 'Indexing' && Math.random() > 0.5 ? 'Ready' : file.status 
+                };
+            }
+            return null;
+        }
+
+        try {
+             const response = await fetch(`${this.apiUrl}/vault/${id}/refresh`, {
+                headers: this.getHeaders(token),
+            });
+            const data = await response.json();
+            return data || null;
+        } catch (error) {
+            console.error('Vault refresh error:', error);
+            return null;
         }
     }
 

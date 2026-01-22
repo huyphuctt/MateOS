@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { 
     LayoutGrid, List, Search, Plus, File, Image, FileVideo, 
@@ -39,7 +38,7 @@ export const VaultApp: React.FC<VaultAppProps> = ({ onOpenFile }) => {
         lastFetchedToken.current = token;
         
         try {
-            const data = await apiService.getVaultContents(token);
+            const data = await apiService.vaultContents(token || '');
             setFiles(data);
         } catch (e) {
             console.error("Failed to load vault content");
@@ -60,21 +59,29 @@ export const VaultApp: React.FC<VaultAppProps> = ({ onOpenFile }) => {
         }
     }, [loadFiles, token]);
 
-    // Simulate file status update (Indexing -> Ready)
+    // Polling for non-ready files status updates
     useEffect(() => {
-        const interval = setInterval(() => {
-            setFiles(prev => prev.map(f => {
-                if (f.status === 'Indexing') {
-                    if (Math.random() > 0.7) {
-                        return { ...f, status: 'Ready' };
-                    }
-                }
-                return f;
-            }));
-        }, 2000);
+        const nonReadyFiles = files.filter(f => f.status && f.status !== 'Ready');
+        if (nonReadyFiles.length === 0 || !token) return;
 
-        return () => clearInterval(interval);
-    }, []);
+        const pollInterval = setInterval(async () => {
+            // Re-evaluate list of files that still need refreshing
+            // We use functional update to ensure we don't hold stale 'files'
+            // but for the iterator we need the IDs.
+            for (const file of nonReadyFiles) {
+                try {
+                    const refreshedItem = await apiService.vaultRefresh(token, file.id);
+                    if (refreshedItem) {
+                        setFiles(prev => prev.map(f => f.id === refreshedItem.id ? refreshedItem : f));
+                    }
+                } catch (err) {
+                    console.error(`Failed to refresh status for file ${file.id}:`, err);
+                }
+            }
+        }, 10000); // 10 seconds interval
+
+        return () => clearInterval(pollInterval);
+    }, [files, token]);
 
     const handleUploadClick = () => {
         fileInputRef.current?.click();
@@ -192,7 +199,7 @@ export const VaultApp: React.FC<VaultAppProps> = ({ onOpenFile }) => {
                         )}
                         <span>New Upload</span>
                     </button>
-                    <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileChange} />
+                    <input type="file" accept="*/*" ref={fileInputRef} className="hidden" onChange={handleFileChange} />
                 </div>
 
                 <div className="flex-1 overflow-y-auto px-2 space-y-1">
