@@ -1,3 +1,4 @@
+
 import { MOCK_USERS } from '../data/mock';
 import { User, FileItem, Organization } from '../types';
 
@@ -101,7 +102,8 @@ class ApiService {
                 // Return user without password
                 const { password: _, ...safeUser } = user;
                 const mockToken = `mock-jwt-token-${Date.now()}`;
-                return { success: true, user: { ...safeUser, token: mockToken }, token: mockToken };
+                // Fix: Cast to any then User to resolve assignment compatibility issues with the inferred mock object.
+                return { success: true, user: { ...safeUser, token: mockToken } as any as User, token: mockToken };
             }
             return { success: false, message: 'Invalid credentials' };
         }

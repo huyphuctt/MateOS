@@ -1,6 +1,7 @@
+
 import React from 'react';
 import { Calendar, FileText, Image as ImageIcon, Command } from 'lucide-react';
-import { RecentItem } from '../types';
+import { RecentItem, Theme } from '../types';
 
 // Mock Data for "Database"
 export const MOCK_USERS = [
@@ -13,28 +14,28 @@ export const MOCK_USERS = [
         preferences: {
             themes: [
                 {
-                    name: 'aqua',
+                    name: 'aqua' as Theme,
                     wallpaper: 'images/wallpaper-1.jpeg'
                 },
                 {
-                    name: 'aero',
+                    name: 'aero' as Theme,
                     wallpaper: 'images/wallpaper-1.jpeg'
                 },
 
             ],
-            active_theme: 'aqua'
+            active_theme: 'aqua' as Theme
         },
         organizations: [
             {
                 id: 1,
                 name: 'Solar System',
-                role: 'admin',
+                role: 'admin' as const,
                 workspaces: [{ id: 1, name: 'Earth' }, { id: 2, name: 'Mars' }, { id: 3, name: 'Venus' }]
             },
             {
                 id: 2,
                 name: 'Milky Way',
-                role: 'user',
+                role: 'user' as const,
                 workspaces: [{ id: 4, name: 'Core' }, { id: 5, name: 'Spiral Arm' }]
             }
         ],
@@ -48,16 +49,16 @@ export const MOCK_USERS = [
         avatar: null,
         preferences: {
             themes: [{
-                name: 'aqua',
+                name: 'aqua' as Theme,
                 wallpaper: 'images/wallpaper-2.jpeg',
             }],
-            active_theme: 'aqua'
+            active_theme: 'aqua' as Theme
         },
         organizations: [
             {
                 id: 1,
                 name: 'Solar System',
-                role: 'user',
+                role: 'user' as const,
                 workspaces: [{ id: 1, name: 'Earth' }]
             }
         ],
