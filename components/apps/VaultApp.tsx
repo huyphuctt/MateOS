@@ -219,21 +219,6 @@ export const VaultApp: React.FC<VaultAppProps> = ({ onOpenFile }) => {
 
                     <h3 className="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Tags</h3>
                     
-                    <button
-                        onClick={() => handleTagClick(null)}
-                        className={`w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
-                            selectedTag === null && selectedCategory === 'All'
-                            ? 'bg-transparent text-gray-600 dark:text-gray-400 opacity-50 cursor-default' // Disabled look for clear when already clear, or just standard button? Let's make it a Clear Filters button effectively.
-                            : 'hover:bg-black/5 dark:hover:bg-white/5 text-gray-600 dark:text-gray-400'
-                        }`}
-                        // Use "All Tags" to reset to "All Files" essentially
-                        style={{ display: selectedTag ? 'flex' : 'none' }} // Only show "Clear Tags" if a tag is selected? Or keep "All Tags" as "All Files"? 
-                        // The user prompt was "All Tags" button in the previous step. Let's keep "All Tags" visible but make it behave like "Show All".
-                    >
-                        <LayoutGrid size={16} />
-                        <span>All Files</span>
-                    </button>
-
                     {allTags.map(tag => (
                         <button
                             key={tag}
