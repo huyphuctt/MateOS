@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { 
     LayoutGrid, List, Search, Plus, File, Image, FileVideo, 
     FileText, FileSpreadsheet, FileCode, FolderClosed, 
@@ -26,18 +26,45 @@ export const VaultApp: React.FC<VaultAppProps> = ({ onOpenFile }) => {
     const [searchTerm, setSearchTerm] = useState('');
     
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const isInitialMount = useRef(true);
+    const lastFetchedToken = useRef<string | undefined>(undefined);
+
+    const loadFiles = useCallback(async (force = false) => {
+        // Prevent duplicate calls if token hasn't changed, unless forced
+        if (!force && token === lastFetchedToken.current && files.length > 0) {
+            return;
+        }
+
+        setLoading(true);
+        lastFetchedToken.current = token;
+        
+        try {
+            const data = await apiService.getVaultContents(token);
+            setFiles(data);
+        } catch (e) {
+            console.error("Failed to load vault content");
+        } finally {
+            setLoading(false);
+        }
+    }, [token, files.length]);
 
     // Initial Load
     useEffect(() => {
-        loadFiles();
-    }, [token]);
+        // In React 18 Strict Mode, useEffect runs twice in dev. 
+        // This check ensures we only fire the actual fetch once per mount/token change.
+        if (isInitialMount.current) {
+            isInitialMount.current = false;
+            loadFiles();
+        } else if (token !== lastFetchedToken.current) {
+            loadFiles();
+        }
+    }, [loadFiles, token]);
 
     // Simulate file status update (Indexing -> Ready)
     useEffect(() => {
         const interval = setInterval(() => {
             setFiles(prev => prev.map(f => {
                 if (f.status === 'Indexing') {
-                    // Randomly decide to finish indexing to stagger them slightly
                     if (Math.random() > 0.7) {
                         return { ...f, status: 'Ready' };
                     }
@@ -48,18 +75,6 @@ export const VaultApp: React.FC<VaultAppProps> = ({ onOpenFile }) => {
 
         return () => clearInterval(interval);
     }, []);
-
-    const loadFiles = async () => {
-        setLoading(true);
-        try {
-            const data = await apiService.getVaultContents(token);
-            setFiles(data);
-        } catch (e) {
-            console.error("Failed to load vault content");
-        } finally {
-            setLoading(false);
-        }
-    };
 
     const handleUploadClick = () => {
         fileInputRef.current?.click();
@@ -92,14 +107,10 @@ export const VaultApp: React.FC<VaultAppProps> = ({ onOpenFile }) => {
         setSelectedCategory('All');
     };
 
-    // Get Unique Tags
     const allTags = Array.from(new Set(files.flatMap(f => f.tags || []))).sort();
 
-    // Filters
     const getFilteredFiles = () => {
         let filtered = files;
-
-        // Category Filter
         if (selectedCategory !== 'All') {
             filtered = filtered.filter(f => {
                 if (selectedCategory === 'Images') return f.type === 'image';
@@ -111,23 +122,17 @@ export const VaultApp: React.FC<VaultAppProps> = ({ onOpenFile }) => {
                 return true;
             });
         }
-
-        // Tag Filter
         if (selectedTag) {
             filtered = filtered.filter(f => f.tags?.includes(selectedTag));
         }
-
-        // Search Filter
         if (searchTerm) {
             filtered = filtered.filter(f => f.name.toLowerCase().includes(searchTerm.toLowerCase()));
         }
-
         return filtered;
     };
 
     const filteredFiles = getFilteredFiles();
 
-    // Icons Helper
     const getFileIcon = (type: FileItem['type']) => {
         switch (type) {
             case 'image': return <Image className="text-purple-500" size={32} />;
@@ -152,7 +157,7 @@ export const VaultApp: React.FC<VaultAppProps> = ({ onOpenFile }) => {
             );
         }
         if (status === 'Ready') {
-             if (mode === 'icon') return null; // Don't show icon for ready in grid to reduce clutter
+             if (mode === 'icon') return null;
              return (
                 <div className="flex items-center gap-1.5 px-2 py-0.5 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 rounded-full text-xs">
                     <CheckCircle2 size={12} />
@@ -173,8 +178,6 @@ export const VaultApp: React.FC<VaultAppProps> = ({ onOpenFile }) => {
 
     return (
         <div className="flex h-full bg-[#f9f9f9] dark:bg-[#202020] text-gray-800 dark:text-gray-100 font-sans">
-            
-            {/* Sidebar */}
             <div className="w-56 flex flex-col border-r border-gray-200 dark:border-gray-700 bg-[#f3f3f3] dark:bg-[#1a1a1a] pt-4">
                 <div className="px-4 mb-6">
                     <button 
@@ -218,7 +221,6 @@ export const VaultApp: React.FC<VaultAppProps> = ({ onOpenFile }) => {
                     <div className="my-4 border-t border-gray-200 dark:border-gray-700"></div>
 
                     <h3 className="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Tags</h3>
-                    
                     {allTags.map(tag => (
                         <button
                             key={tag}
@@ -233,20 +235,14 @@ export const VaultApp: React.FC<VaultAppProps> = ({ onOpenFile }) => {
                             <span>{tag}</span>
                         </button>
                     ))}
-                    
                     {allTags.length === 0 && (
                         <div className="px-3 py-2 text-xs text-gray-400 italic">No tags found</div>
                     )}
                 </div>
             </div>
 
-            {/* Main Content */}
             <div className="flex-1 flex flex-col min-w-0">
-                
-                {/* Header / Toolbar */}
                 <div className="h-14 flex items-center justify-between px-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-[#252525]">
-                    
-                    {/* Breadcrumbs */}
                     <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
                         <span 
                             className="hover:bg-gray-100 dark:hover:bg-white/10 px-2 py-1 rounded cursor-pointer"
@@ -254,14 +250,12 @@ export const VaultApp: React.FC<VaultAppProps> = ({ onOpenFile }) => {
                         >
                             Vault
                         </span>
-                        
                         {selectedCategory !== 'All' && (
                             <>
                                 <ChevronRight size={14} className="text-gray-400" />
                                 <span className="font-medium hover:bg-gray-100 dark:hover:bg-white/10 px-2 py-1 rounded cursor-default">{selectedCategory}</span>
                             </>
                         )}
-
                         {selectedTag && (
                             <>
                                 <ChevronRight size={14} className="text-gray-400" />
@@ -271,7 +265,6 @@ export const VaultApp: React.FC<VaultAppProps> = ({ onOpenFile }) => {
                                 </span>
                             </>
                         )}
-                        
                         {selectedCategory === 'All' && !selectedTag && (
                              <>
                                 <ChevronRight size={14} className="text-gray-400" />
@@ -280,9 +273,7 @@ export const VaultApp: React.FC<VaultAppProps> = ({ onOpenFile }) => {
                         )}
                     </div>
 
-                    {/* Actions */}
                     <div className="flex items-center gap-2">
-                        {/* Search */}
                         <div className="relative group mr-2">
                             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500" size={14} />
                             <input 
@@ -293,8 +284,6 @@ export const VaultApp: React.FC<VaultAppProps> = ({ onOpenFile }) => {
                                 className="w-48 bg-gray-100 dark:bg-black/20 border border-transparent focus:bg-white dark:focus:bg-black/40 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 rounded-md py-1.5 pl-8 pr-3 text-sm transition-all focus:outline-none placeholder-gray-500"
                             />
                         </div>
-
-                        {/* View Toggle */}
                         <div className="flex bg-gray-100 dark:bg-black/20 rounded-md p-0.5 border border-gray-200 dark:border-white/5">
                             <button 
                                 onClick={() => setViewMode('grid')}
@@ -312,8 +301,7 @@ export const VaultApp: React.FC<VaultAppProps> = ({ onOpenFile }) => {
                     </div>
                 </div>
 
-                {/* File Area */}
-                <div className="flex-1 overflow-y-auto p-4" onClick={() => {}}>
+                <div className="flex-1 overflow-y-auto p-4">
                     {loading ? (
                          <div className="h-full flex flex-col items-center justify-center text-gray-400 gap-3">
                              <div className="w-8 h-8 border-4 border-gray-300 border-t-blue-500 rounded-full animate-spin"></div>
@@ -339,8 +327,6 @@ export const VaultApp: React.FC<VaultAppProps> = ({ onOpenFile }) => {
                                         ) : (
                                             getFileIcon(file.type)
                                         )}
-                                        
-                                        {/* Grid Badge */}
                                         {file.status && file.status !== 'Ready' && (
                                             <div className="absolute top-1 right-1">
                                                 {getStatusBadge(file.status, 'icon')}
@@ -348,8 +334,6 @@ export const VaultApp: React.FC<VaultAppProps> = ({ onOpenFile }) => {
                                         )}
                                     </div>
                                     <span className="text-xs text-center font-medium truncate w-full px-1">{file.name}</span>
-                                    
-                                    {/* Tag Pills */}
                                     {file.tags && file.tags.length > 0 && (
                                         <div className="flex gap-1 overflow-hidden max-w-full px-1 h-3.5">
                                             {file.tags.slice(0, 2).map(tag => (
@@ -423,7 +407,6 @@ export const VaultApp: React.FC<VaultAppProps> = ({ onOpenFile }) => {
                     )}
                 </div>
                 
-                {/* Footer status bar */}
                 <div className="bg-white dark:bg-[#252525] border-t border-gray-200 dark:border-gray-700 px-4 py-1 flex items-center justify-between text-[10px] text-gray-500">
                     <span>{filteredFiles.length} items</span>
                     <span>All items synchronized</span>
