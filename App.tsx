@@ -23,7 +23,7 @@ import { StartMenu } from './components/os/StartMenu';
 import { WindowFrame } from './components/os/WindowFrame';
 import { BrowserApp } from './components/apps/Browser';
 import { SettingsApp } from './components/apps/Settings';
-import { AdminPanel } from './components/apps/AdminPanel';
+import { AdminConsole } from './components/apps/AdminConsole';
 import { NotificationsApp } from './components/apps/NotificationsApp';
 import { VaultApp } from './components/apps/VaultApp'; 
 import { PreviewApp } from './components/apps/DocViewerApp'; 
@@ -336,7 +336,7 @@ const App: React.FC = () => {
       if (window.id === AppId.SETTINGS) {
           return <SettingsApp theme={theme} setTheme={setTheme} hideTaskbar={hideTaskbar} setHideTaskbar={setHideTaskbar} name={user?.name} wallpaper={wallpaper} setWallpaper={setWallpaper} userAvatar={userAvatar} setUserAvatar={setUserAvatar} />;
       }
-      if (window.id === AppId.ADMIN && activeOrg) return <AdminPanel currentOrg={activeOrg} currentWorkspace={activeWorkspace} />;
+      if (window.id === AppId.ADMIN && activeOrg) return <AdminConsole currentOrg={activeOrg} currentWorkspace={activeWorkspace} />;
       if (window.id === AppId.VAULT) return <VaultApp onOpenFile={handleOpenFile} />;
       if (window.id === AppId.PREVIEW) return <PreviewApp tabs={window.data?.tabs || []} activeTabId={window.data?.activeTabId} onUpdate={(newData) => updateWindowData(AppId.PREVIEW, newData)} />;
       return window.component;

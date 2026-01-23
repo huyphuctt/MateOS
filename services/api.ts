@@ -1,5 +1,6 @@
-import { MOCK_USERS, MOCK_FILES } from '../data/mock';
-import { User, FileItem, Organization } from '../types';
+
+import { MOCK_USERS, MOCK_FILES, MOCK_ADMIN_CONSOLE } from '../data/mock';
+import { User, FileItem, Organization, AdminConsoleData, Workspace } from '../types';
 
 interface AuthResponse {
     success: boolean;
@@ -184,9 +185,53 @@ class ApiService {
         }
     }
 
+    // --- Admin Console ---
+    public async adminConsole(token: string, organization_id: number): Promise<AdminConsoleData> {
+        console.log(`ApiService: adminConsole for org ${organization_id}`);
+        if (this.isMock) {
+            await this.mockDelay(500);
+            return {...MOCK_ADMIN_CONSOLE} as AdminConsoleData;
+        }
+
+        try {
+             const response = await fetch(`${this.apiUrl}/admin/${organization_id}/console`, {
+                headers: this.getHeaders(token),
+            });
+            const data = await response.json();
+            return data || [];
+        } catch (error) {
+            console.error('Vault content error:', error);
+            return { workspaces: [], users: [] };
+        }
+    }
+
+    public async createWorkspace(token: string, organization_id: number, name: string): Promise<Workspace | null> {
+        console.log(`ApiService: createWorkspace '${name}' for org ${organization_id}`);
+        if (this.isMock) {
+            await this.mockDelay(800);
+            return {
+                id: Date.now(),
+                name: name
+            };
+        }
+
+        try {
+            const response = await fetch(`${this.apiUrl}/admin/${organization_id}/workspaces`, {
+                method: 'POST',
+                headers: this.getHeaders(token),
+                body: JSON.stringify({ name })
+            });
+            const data = await response.json();
+            return data.workspace;
+        } catch (error) {
+            console.error('Create workspace error:', error);
+            return null;
+        }
+    }
+
     // --- Vault Functions ---
 
-    public async vaultContents(token: string): Promise<FileItem[]> {
+    public async vaultContents(token: string, workspace_id: number): Promise<FileItem[]> {
         console.log('ApiService: vaultContents');
         if (this.isMock) {
             await this.mockDelay(500);
@@ -194,7 +239,7 @@ class ApiService {
         }
 
         try {
-             const response = await fetch(`${this.apiUrl}/vault/contents`, {
+             const response = await fetch(`${this.apiUrl}/vault/${workspace_id}/contents`, {
                 headers: this.getHeaders(token),
             });
             const data = await response.json();
@@ -205,11 +250,11 @@ class ApiService {
         }
     }
 
-    public async vaultRefresh(token: string, id: string): Promise<FileItem | null> {
-        console.log(`ApiService: vaultRefresh for item ${id}`);
+    public async vaultRefresh(token: string, fileId: string): Promise<FileItem | null> {
+        console.log(`ApiService: vaultRefresh for item ${fileId}`);
         if (this.isMock) {
             await this.mockDelay(300);
-            const file = MOCK_FILES.find(f => f.id === id);
+            const file = MOCK_FILES.find(f => f.id === fileId);
             if (file) {
                 // In mock, if it was Indexing, 50% chance to become Ready on refresh
                 return { 
@@ -221,7 +266,7 @@ class ApiService {
         }
 
         try {
-             const response = await fetch(`${this.apiUrl}/vault/${id}/refresh`, {
+             const response = await fetch(`${this.apiUrl}/vault/${fileId}/refresh`, {
                 headers: this.getHeaders(token),
             });
             const data = await response.json();
@@ -232,7 +277,7 @@ class ApiService {
         }
     }
 
-    public async uploadVaultFile(file: File, token?: string): Promise<FileItem | null> {
+    public async uploadVaultFile(file: File, workspace_id: number, token?: string): Promise<FileItem | null> {
         console.log('ApiService: uploadVaultFile', file.name);
         if (this.isMock) {
             await this.mockDelay(1500);
@@ -271,7 +316,7 @@ class ApiService {
             const formData = new FormData();
             formData.append('file', file);
 
-            const response = await fetch(`${this.apiUrl}/vault/upload`, {
+            const response = await fetch(`${this.apiUrl}/vault/${workspace_id}/upload`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`

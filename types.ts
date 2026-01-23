@@ -94,3 +94,18 @@ export interface User {
   preferences?: Preferences;
   organizations: Organization[];
 }
+
+export interface AdminConsoleData{
+  // current workspace in the org
+  workspaces: { id: number; name: string}[];
+  // current user in the org
+  users: {
+      id: string;
+      name: string;
+      email: string;
+      avatar?: string;
+      role: 'admin' | 'user';    
+      workspaces?: { id: number; role: string }[];
+  }[];
+}
+

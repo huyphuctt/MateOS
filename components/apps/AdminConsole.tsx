@@ -1,22 +1,28 @@
-import React, { useState } from 'react';
-import { Users, ShieldUser, CheckCircle, XCircle, Search, Building, Plus, Filter, X, Check, Mail, User } from 'lucide-react';
-import Select from 'react-select';
-import { Organization, Workspace } from '../../types';
-import { MOCK_USERS } from '../../data/mock';
 
-interface AdminPanelProps {
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Users, ShieldUser, CheckCircle, XCircle, Search, Building, Plus, Filter, X, Check, Mail, UserIcon, Layers, Loader2 } from 'lucide-react';
+import Select from 'react-select';
+import { AdminConsoleData, Organization, User, Workspace } from '../../types';
+import { useAuth } from '../../contexts/AuthContext';
+import { apiService } from '@/services/api';
+
+interface AdminConsoleProps {
     currentOrg: Organization;
     currentWorkspace?: Workspace;
 }
 
-export const AdminPanel: React.FC<AdminPanelProps> = ({ currentOrg, currentWorkspace }) => {
+type AdminUser = AdminConsoleData['users'][0];
+
+export const AdminConsole: React.FC<AdminConsoleProps> = ({ currentOrg, currentWorkspace }) => {
+    const { token, activeOrg } = useAuth();
     // Local state for users to simulate persistence within session
-    const [users, setUsers] = useState(MOCK_USERS);
+    const [data, setData] = useState<AdminConsoleData>({ workspaces: [], users: [] });
     const [searchTerm, setSearchTerm] = useState('');
     const [workspaceFilter, setWorkspaceFilter] = useState<number | 'all'>('all');
 
     // Modal State
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isWorkspaceModalOpen, setIsWorkspaceModalOpen] = useState(false);
     const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
     const [editingUserId, setEditingUserId] = useState<string | null>(null);
 
@@ -26,7 +32,43 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ currentOrg, currentWorks
         email: '',
         workspaceIds: [] as number[]
     });
+    
+    // Workspace Creation Form State
+    const [newWorkspaceName, setNewWorkspaceName] = useState('');
+    const [isCreatingWorkspace, setIsCreatingWorkspace] = useState(false);
 
+    const isInitialMount = useRef(true);
+    const lastFetchedToken = useRef<string | undefined>(undefined);
+    const [loading, setLoading] = useState(true);
+    
+    const loadData = useCallback(async (force = false) => {
+        // Prevent duplicate calls if token hasn't changed, unless forced
+        if (!force && token === lastFetchedToken.current && data.users.length > 0) {
+            return;
+        }
+        setLoading(true);
+        lastFetchedToken.current = token;
+        try {
+            const fetchedData = await apiService.adminConsole(token || '', activeOrg!.id);
+            setData(fetchedData);
+        } catch (e) {
+            console.error("Failed to load admin content");
+        } finally {
+            setLoading(false);
+        }
+    }, [token, data.users.length, activeOrg]);
+
+    // Initial Load
+    useEffect(() => {
+        // In React 18 Strict Mode, useEffect runs twice in dev. 
+        // This check ensures we only fire the actual fetch once per mount/token change.
+        if (isInitialMount.current) {
+            isInitialMount.current = false;
+            loadData();
+        } else if (token !== lastFetchedToken.current) {
+            loadData();
+        }
+    }, [loadData, token]);
     // --- Handlers ---
 
     const handleOpenAdd = () => {
@@ -39,13 +81,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ currentOrg, currentWorks
         setIsModalOpen(true);
     };
 
-    const handleOpenEdit = (user: typeof MOCK_USERS[0]) => {
+    const handleOpenEdit = (user: AdminUser) => {
         setModalMode('edit');
         setEditingUserId(user.id);
 
-        // Get user's workspaces for this org
-        const userOrgData = user.organizations.find(o => o.id === currentOrg.id);
-        const existingWorkspaceIds = userOrgData ? userOrgData.workspaces.map(w => w.id) : [];
+        // Get user's workspaces for this org directly from AdminUser structure
+        const existingWorkspaceIds = user.workspaces ? user.workspaces.map(w => w.id) : [];
 
         // Fix: Use user.name instead of user.username
         setFormData({
@@ -58,53 +99,32 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ currentOrg, currentWorks
 
     const handleSaveUser = (e: React.FormEvent) => {
         e.preventDefault();
-
-        if (modalMode === 'add') {
-            const newUser = {
-                id: Date.now().toString(),
-                // Fix: Use 'name' instead of 'username' to align with User interface
-                name: formData.username,
-                email: formData.email,
-                password: 'password', // Default
-                avatar: `https://ui-avatars.com/api/?name=${formData.username.replace(' ', '+')}&background=random`,
-                role: 'user',
-                organizations: [
-                    {
-                        id: currentOrg.id,
-                        name: currentOrg.name,
-                        role: 'user',
-                        workspaces: currentOrg.workspaces.filter(w => formData.workspaceIds.includes(w.id))
-                    }
-                ]
-            };
-            // In a real app, this would be an API call
-            setUsers(prev => [...prev, newUser as any]);
-        } else if (modalMode === 'edit' && editingUserId) {
-            setUsers(prev => prev.map(u => {
-                if (u.id === editingUserId) {
-                    // Preserve other orgs
-                    const otherOrgs = u.organizations.filter(o => o.id !== currentOrg.id);
-                    // Update current org data
-                    const currentOrgData = u.organizations.find(o => o.id === currentOrg.id) || { id: currentOrg.id, name: currentOrg.name, role: 'user' };
-
-                    const updatedOrgData = {
-                        ...currentOrgData,
-                        workspaces: currentOrg.workspaces.filter(w => formData.workspaceIds.includes(w.id))
-                    };
-
-                    return {
-                        ...u,
-                        // Fix: Use 'name' instead of 'username'
-                        name: formData.username,
-                        email: formData.email,
-                        organizations: [...otherOrgs, updatedOrgData]
-                    };
-                }
-                return u;
-            }));
-        }
-
+        // In a real implementation, you'd call apiService.createUser or updateUser here
+        // For now, we are just mocking the UI state update if we were to support it fully client-side
         setIsModalOpen(false);
+    };
+
+    const handleCreateWorkspace = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!newWorkspaceName.trim() || !activeOrg) return;
+
+        setIsCreatingWorkspace(true);
+        try {
+            const newWorkspace = await apiService.createWorkspace(token || '', activeOrg.id, newWorkspaceName);
+            if (newWorkspace) {
+                // Update local state immediately
+                setData(prev => ({
+                    ...prev,
+                    workspaces: [...prev.workspaces, newWorkspace]
+                }));
+                setIsWorkspaceModalOpen(false);
+                setNewWorkspaceName('');
+            }
+        } catch (error) {
+            console.error('Failed to create workspace', error);
+        } finally {
+            setIsCreatingWorkspace(false);
+        }
     };
 
     const toggleWorkspaceSelection = (wkId: number) => {
@@ -119,38 +139,22 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ currentOrg, currentWorks
 
     const handleRevoke = (userId: string) => {
         if (confirm('Are you sure you want to remove this user from the organization?')) {
-            setUsers(prev => prev.filter(u => u.id !== userId));
+            setData(prev => ({ ...prev, users: prev.users.filter(u => u.id !== userId) }));
         }
     };
 
     // Filter Logic
-    const filteredUsers = users.filter(u => {
-        // Basic Search
-        // Fix: Use u.name instead of u.username
-        const matchesSearch = u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            u.email.toLowerCase().includes(searchTerm.toLowerCase());
 
-        if (!matchesSearch) return false;
-
-        // Must belong to current Org
-        const userOrgData = u.organizations.find(o => o.id === currentOrg.id);
-        if (!userOrgData) return false;
-
-        // Workspace Filter
-        if (workspaceFilter !== 'all') {
-            return userOrgData.workspaces.some(w => w.id === workspaceFilter);
-        }
-
-        return true;
-    });
-
-    // Prepare React Select options
+    // Prepare React Select options from fetched data, not props, to ensure it includes newly added workspaces
     const filterOptions = [
         { value: 'all', label: 'All Workspaces' },
-        ...currentOrg.workspaces.map(wk => ({ value: wk.id, label: wk.name }))
+        ...(data.workspaces || []).map(wk => ({ value: wk.id, label: wk.name }))
     ];
 
     const currentFilterOption = filterOptions.find(opt => opt.value === workspaceFilter);
+
+    // If data isn't loaded yet, default to empty
+    const availableWorkspaces = data.workspaces || [];
 
     return (
         <div className="flex flex-col h-full bg-[#f8f9fa] dark:bg-[#1c1c1c] text-gray-900 dark:text-gray-100 relative">
@@ -171,14 +175,23 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ currentOrg, currentWorks
                     </div>
                 </div>
 
-                {/* Add User Button */}
-                <button
-                    onClick={handleOpenAdd}
-                    className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm"
-                >
-                    <Plus size={16} />
-                    Add User
-                </button>
+                {/* Action Buttons */}
+                <div className="flex items-center gap-3">
+                    <button
+                        onClick={() => setIsWorkspaceModalOpen(true)}
+                        className="flex items-center gap-2 bg-white dark:bg-[#3d3d3d] hover:bg-gray-50 dark:hover:bg-[#4d4d4d] text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-600 px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm"
+                    >
+                        <Layers size={16} />
+                        Add Workspace
+                    </button>
+                    <button
+                        onClick={handleOpenAdd}
+                        className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm"
+                    >
+                        <Plus size={16} />
+                        Add User
+                    </button>
+                </div>
             </div>
 
             {/* Content */}
@@ -193,8 +206,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ currentOrg, currentWorks
 
                     <div className="flex items-center gap-3">
                         {/* Workspace Filter */}
-                        {currentOrg.workspaces.length > 1 && (
-                            <div className="w-[180px]">
+                        {availableWorkspaces.length > 0 && (
+                            <div className="w-[200px]">
                                 <Select
                                     value={currentFilterOption}
                                     onChange={(option: any) => setWorkspaceFilter(option?.value)}
@@ -242,21 +255,20 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ currentOrg, currentWorks
                     <div className="grid grid-cols-12 gap-4 p-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-white/5 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider shrink-0">
                         <div className="col-span-4">User</div>
                         <div className="col-span-3">Email</div>
-                        <div className="col-span-2">Org Role</div>
-                        <div className="col-span-3 text-right">Access</div>
+                        <div className="col-span-2">Organization Role</div>
+                        <div className="col-span-2">Workspaces</div>
+                        <div className="col-span-1 text-right">Access</div>
                     </div>
 
                     <div className="overflow-y-auto flex-1">
-                        {filteredUsers.length === 0 ? (
+                        {!data || !data.users || data.users.length === 0 ? (
                             <div className="flex flex-col items-center justify-center h-full text-gray-400 p-8">
                                 <Users size={48} className="mb-2 opacity-20" />
                                 <p>No users found matching your filters.</p>
                             </div>
                         ) : (
-                            filteredUsers.map(user => {
-                                const userInOrg = user.organizations.find(o => o.id === currentOrg.id);
-                                const roleInOrg = userInOrg?.role || 'No Access';
-
+                            data.users.map(user => {
+                                const roleInOrg = user?.role || 'No Access';
                                 return (
                                     <div key={user.id} className="grid grid-cols-12 gap-4 p-4 border-b border-gray-100 dark:border-gray-700/50 items-center hover:bg-blue-50/50 dark:hover:bg-white/5 transition-colors">
                                         <div className="col-span-4 flex items-center gap-3">
@@ -282,18 +294,21 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ currentOrg, currentWorks
                                                 {roleInOrg.toUpperCase()}
                                             </span>
                                         </div>
-                                        <div className="col-span-3 flex justify-end gap-2">
-                                            <button
-                                                onClick={() => handleRevoke(user.id)}
-                                                className="text-xs font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 px-3 py-1.5 rounded transition-colors"
-                                            >
-                                                Revoke
-                                            </button>
+                                        <div className="col-span-2">
+                                            <div className="flex flex-wrap gap-1">
+                                                {user.workspaces?.map((wk) => (
+                                                    <span key={wk.id} className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200">
+                                                        {(availableWorkspaces.find(w => w.id === wk.id)?.name) || wk.id}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                        <div className="col-span-1 flex justify-end gap-2">
                                             <button
                                                 onClick={() => handleOpenEdit(user)}
                                                 className="text-xs font-medium text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 px-3 py-1.5 rounded transition-colors border border-blue-200 dark:border-blue-800"
                                             >
-                                                Manage
+                                                Edit
                                             </button>
                                         </div>
                                     </div>
@@ -302,22 +317,22 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ currentOrg, currentWorks
                         )}
                     </div>
                     <div className="p-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-white/5 text-xs text-gray-500 text-center flex justify-between items-center px-6 shrink-0">
-                        <span>Displaying {filteredUsers.length} users</span>
+                        <span>Displaying {data.users?.length || 0} users</span>
                         {workspaceFilter !== 'all' && (
-                            <span>Filtered by Workspace: {currentOrg.workspaces.find(w => w.id === workspaceFilter)?.name}</span>
+                            <span>Filtered by Workspace: {availableWorkspaces.find(w => w.id === workspaceFilter)?.name}</span>
                         )}
                     </div>
                 </div>
             </div>
 
-            {/* --- Modal --- */}
+            {/* --- User Modal --- */}
             {isModalOpen && (
                 <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-200 p-4">
                     <div
                         className="bg-white dark:bg-[#2d2d2d] rounded-2xl shadow-2xl w-full max-w-md border border-gray-200 dark:border-gray-600 overflow-hidden flex flex-col max-h-[85vh]"
                         onClick={e => e.stopPropagation()}
                     >
-                        {/* Modal Body (Wraps Header, Content, Footer to ensure full height) */}
+                        {/* Modal Body */}
                         <form onSubmit={handleSaveUser} className="flex flex-col h-full min-h-0">
 
                             {/* Modal Header */}
@@ -340,7 +355,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ currentOrg, currentWorks
                                 {/* Name Input */}
                                 <div className="space-y-1.5">
                                     <label className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
-                                        <User size={14} /> Name
+                                        <UserIcon size={14} /> Name
                                     </label>
                                     <input
                                         type="text"
@@ -373,10 +388,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ currentOrg, currentWorks
                                         <Building size={14} /> Workspaces
                                     </label>
                                     <div className="border border-gray-200 dark:border-gray-600 rounded-lg overflow-hidden divide-y divide-gray-100 dark:divide-gray-700">
-                                        {currentOrg.workspaces.length === 0 ? (
+                                        {availableWorkspaces.length === 0 ? (
                                             <div className="p-3 text-sm text-gray-400 italic">No workspaces available in this organization.</div>
                                         ) : (
-                                            currentOrg.workspaces.map(wk => {
+                                            availableWorkspaces.map(wk => {
                                                 const isSelected = formData.workspaceIds.includes(wk.id);
                                                 return (
                                                     <div
@@ -416,6 +431,67 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ currentOrg, currentWorks
                                     className="px-6 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-sm transition-colors"
                                 >
                                     {modalMode === 'add' ? 'Create User' : 'Save Changes'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* --- Add Workspace Modal --- */}
+            {isWorkspaceModalOpen && (
+                <div className="absolute inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-200 p-4">
+                    <div
+                        className="bg-white dark:bg-[#2d2d2d] rounded-2xl shadow-2xl w-full max-w-sm border border-gray-200 dark:border-gray-600 overflow-hidden"
+                        onClick={e => e.stopPropagation()}
+                    >
+                        <form onSubmit={handleCreateWorkspace}>
+                            <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                                <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                                    New Workspace
+                                </h3>
+                                <button
+                                    type="button"
+                                    onClick={() => setIsWorkspaceModalOpen(false)}
+                                    className="p-1.5 hover:bg-gray-100 dark:hover:bg-white/10 rounded-full transition-colors"
+                                >
+                                    <X size={18} className="text-gray-500" />
+                                </button>
+                            </div>
+                            
+                            <div className="p-6">
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
+                                        <Layers size={14} /> Workspace Name
+                                    </label>
+                                    <input
+                                        type="text"
+                                        required
+                                        value={newWorkspaceName}
+                                        onChange={e => setNewWorkspaceName(e.target.value)}
+                                        placeholder="e.g. Marketing, Development"
+                                        autoFocus
+                                        className="w-full px-3 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-black/20 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="p-4 bg-gray-50 dark:bg-black/20 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsWorkspaceModalOpen(false)}
+                                    className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/10 rounded-lg transition-colors"
+                                    disabled={isCreatingWorkspace}
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={isCreatingWorkspace || !newWorkspaceName.trim()}
+                                    className="px-6 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg shadow-sm transition-colors flex items-center gap-2"
+                                >
+                                    {isCreatingWorkspace && <Loader2 size={14} className="animate-spin" />}
+                                    Create
                                 </button>
                             </div>
                         </form>

@@ -150,3 +150,14 @@ export const MOCK_FILES: FileItem[] = [
     { id: '6', name: 'Meeting_Notes.txt', type: 'doc', size: '1 KB', date: '2024-05-01', url: '#', tags: ['Work'], status: 'Ready' },
     { id: '7', name: 'README.md', type: 'markdown', size: '1 KB', date: '2024-05-22', url: readmeDataUrl, tags: ['Doc', 'Dev'], status: 'Ready' },
 ];
+
+export const MOCK_ADMIN_CONSOLE = {
+    workspaces: [{ id: 1, name: 'Earth'}, { id: 2, name: 'Mars'}, { id: 3, name: 'Venus'}],
+    users:[{
+        id: '1',
+        name:'Admin',
+        email:'admin@mateos.com',
+        role: 'admin' as const,
+        workspaces: [{ id: 1, role: 'admin'}, { id: 2, role: 'admin'}, { id: 3, role: 'admin'}],
+    }]
+};

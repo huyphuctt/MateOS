@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { 
     LayoutGrid, List, Search, Plus, File, Image, FileVideo, 
@@ -15,7 +16,7 @@ interface VaultAppProps {
 type Category = 'All' | 'Images' | 'Videos' | 'Docs' | 'Spreadsheets' | 'PDF' | 'Presentation';
 
 export const VaultApp: React.FC<VaultAppProps> = ({ onOpenFile }) => {
-    const { token } = useAuth();
+    const { token, activeWorkspace } = useAuth();
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
     const [selectedCategory, setSelectedCategory] = useState<Category>('All');
     const [selectedTag, setSelectedTag] = useState<string | null>(null);
@@ -38,14 +39,14 @@ export const VaultApp: React.FC<VaultAppProps> = ({ onOpenFile }) => {
         lastFetchedToken.current = token;
         
         try {
-            const data = await apiService.vaultContents(token || '');
+            const data = await apiService.vaultContents(token || '', activeWorkspace?.id || 0);
             setFiles(data);
         } catch (e) {
             console.error("Failed to load vault content");
         } finally {
             setLoading(false);
         }
-    }, [token, files.length]);
+    }, [token, files.length, activeWorkspace]);
 
     // Initial Load
     useEffect(() => {
@@ -93,7 +94,7 @@ export const VaultApp: React.FC<VaultAppProps> = ({ onOpenFile }) => {
 
         setUploading(true);
         try {
-            const newFile = await apiService.uploadVaultFile(file, token);
+            const newFile = await apiService.uploadVaultFile(file, activeWorkspace?.id || 0, token);
             if (newFile) {
                 setFiles(prev => [newFile, ...prev]);
             }
