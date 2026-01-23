@@ -2,11 +2,7 @@
 import { ReactNode } from 'react';
 
 export enum AppId {
-  NOTEPAD = 'notepad',
-  BROWSER = 'browser',
-  PHOTOS = 'photos',
   SETTINGS = 'settings',
-  CALCULATOR = 'calculator',
   ADMIN = 'admin',
   NOTIFICATIONS = 'notifications',
   VAULT = 'vault',

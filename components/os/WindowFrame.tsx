@@ -40,7 +40,7 @@ export const WindowFrame: React.FC<WindowFrameProps> = ({
 
   // Dimensions
   const topBarHeight = theme === 'aqua' ? 28 : 0;
-  const taskbarHeight = hideTaskbar ? 6 : (theme === 'aero' ? 48 : 80);
+  const taskbarHeight = hideTaskbar ? 6 : (theme === 'aero' ? 48 : 97);
 
   useEffect(() => {
     const timer = requestAnimationFrame(() => setIsMounted(true));

@@ -220,24 +220,6 @@ const App: React.FC = () => {
 
   // --- App Registry ---
   const appRegistry: Record<AppId, any> = useMemo(() => ({    
-    [AppId.BROWSER]: {
-      title: theme === 'aqua' ? 'Safari' : 'Edge Browser',
-      icon: theme === 'aqua' ? <Compass className="text-blue-500" size={20} /> : <Globe className="text-green-500" size={20} />,
-      component: null, 
-      defaultSize: { width: 800, height: 600 }
-    },
-    [AppId.NOTEPAD]: {
-      title: 'Notepad',
-      icon: <FileText className="text-blue-500" size={20} />,
-      component: <Placeholder text="Notepad" />,
-      defaultSize: { width: 600, height: 400 }
-    },
-    [AppId.PHOTOS]: {
-      title: 'Photos',
-      icon: <ImageIcon className="text-purple-500" size={20} />,
-      component: null, 
-      defaultSize: { width: 700, height: 500 }
-    },
     [AppId.SETTINGS]: {
         title: 'Settings',
         icon: <Settings className="text-gray-100" size={20} />,
@@ -269,12 +251,6 @@ const App: React.FC = () => {
         component: null,
         defaultSize: { width: 800, height: 800 }
     },
-    [AppId.CALCULATOR]: {
-        title: 'Calculator',
-        icon: <Calculator className="text-orange-500" size={20} />,
-        component: <Placeholder text="Calculator" />,
-        defaultSize: { width: 300, height: 400 }
-    }
   }), [theme]);
 
   // Session Persistence
@@ -326,13 +302,6 @@ const App: React.FC = () => {
   const activeAppTitle = windows.find(w => w.id === activeWindowId)?.title || 'MateOS';
 
   const renderWindowContent = (window: WindowState) => {
-      if (window.id === AppId.PHOTOS) {
-           return <div className="p-4 bg-black h-full overflow-y-auto grid grid-cols-3 gap-2">{[...Array(12)].map((_, i) => <img key={i} src={`https://picsum.photos/300/200?random=${i}`} className="w-full h-auto rounded-sm hover:opacity-80 transition-opacity cursor-pointer" alt="Gallery" />)}</div>;
-      }
-      if (window.id === AppId.BROWSER) {
-           if (window.data?.url) return <div className="flex flex-col h-full"><div className="bg-gray-100 p-2 text-sm truncate border-b">{window.data.url}</div><iframe src={window.data.url} className="flex-1 w-full border-0" title="Browser" /></div>;
-           return <BrowserApp />;
-      }
       if (window.id === AppId.SETTINGS) {
           return <SettingsApp theme={theme} setTheme={setTheme} hideTaskbar={hideTaskbar} setHideTaskbar={setHideTaskbar} name={user?.name} wallpaper={wallpaper} setWallpaper={setWallpaper} userAvatar={userAvatar} setUserAvatar={setUserAvatar} />;
       }
