@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { 
   Monitor, 
@@ -33,6 +34,7 @@ import { NotificationCenter } from './components/os/NotificationCenter';
 import { BootScreen } from './components/os/BootScreen';
 import { LoginScreen } from './components/os/LoginScreen';
 import { AppSwitcher } from './components/os/AppSwitcher';
+import { Modal } from './components/os/Modal';
 import { AppId, WindowState, Theme, AuthMode, User, Organization, Workspace, FileItem, ColorMode } from './types';
 import { useAuth } from './contexts/AuthContext';
 import { RECENT_ITEMS, WALLPAPERS } from './data/mock';
@@ -86,6 +88,12 @@ const App: React.FC = () => {
   const [hasRestored, setHasRestored] = useState(false);
   const [isSwitcherOpen, setIsSwitcherOpen] = useState(false);
   const [switcherSelectedIndex, setSwitcherSelectedIndex] = useState(0);
+
+  // Track context to close apps on switch
+  const lastContextId = useRef<string>("");
+
+  // Modal State
+  const [showRecoveryModal, setShowRecoveryModal] = useState(false);
 
   // Appearance Sync (Dark Mode Implementation)
   useEffect(() => {
@@ -245,6 +253,27 @@ const App: React.FC = () => {
     };
   }, [authMode, lock]);
 
+  // Close all apps when switching Organization or Workspace
+  useEffect(() => {
+    if (authMode !== 'desktop') return;
+    
+    const currentContextId = `${activeOrg?.id}-${activeWorkspace?.id}`;
+    
+    // We only clear if the user has already restored their session and manually switches.
+    // Restoration phase is when authMode is 'desktop' but hasRestored is false.
+    if (hasRestored) {
+        if (lastContextId.current && lastContextId.current !== currentContextId) {
+            setWindows([]);
+            setActiveWindowId(null);
+            // Optional: Close start menu/notification panel on context switch
+            setStartMenuOpen(false);
+            setNotificationPanelOpen(false);
+        }
+    }
+    
+    lastContextId.current = currentContextId;
+  }, [activeOrg?.id, activeWorkspace?.id, authMode, hasRestored]);
+
   // --- App Registry ---
   const appRegistry: Record<AppId, any> = useMemo(() => ({    
     [AppId.SETTINGS]: {
@@ -351,7 +380,7 @@ const App: React.FC = () => {
             savedEmail={user?.email}
             onLogin={login}
             onSwitchAccount={logout}
-            onForgotPassword={() => alert("Recovery link sent.")}
+            onForgotPassword={() => setShowRecoveryModal(true)}
             userAvatar={userAvatar}
         />
       )}
@@ -415,6 +444,15 @@ const App: React.FC = () => {
             <Taskbar openApps={windows.map(w => w.id)} activeApp={activeWindowId} onAppClick={(id) => { const win = windows.find(w => w.id === id); if (!win) openApp(id); else if (win.isMinimized) { focusWindow(id); setWindows(prev => prev.map(w => w.id === id ? { ...w, isMinimized: false } : w)); } else if (activeWindowId === id) minimizeWindow(id); else focusWindow(id); }} onStartClick={toggleStartMenu} startMenuOpen={startMenuOpen} appIcons={appIcons} theme={theme} hideTaskbar={hideTaskbar} organizations={user?.organizations || []} currentOrg={activeOrg} currentWorkspace={activeWorkspace} onSwitchOrg={switchOrg} onSwitchWorkspace={switchWorkspace} notificationPanelOpen={notificationPanelOpen} onToggleNotificationPanel={() => setNotificationPanelOpen(!notificationPanelOpen)} recentItems={RECENT_ITEMS} isFullscreen={isFullscreen} onToggleFullscreen={toggleFullscreen} />
         </div>
       )}
+
+      {/* Global Modals */}
+      <Modal
+        isOpen={showRecoveryModal}
+        onClose={() => setShowRecoveryModal(false)}
+        title="Recovery Email Sent"
+        message="We have sent a password recovery link to your email address. Please check your inbox."
+        type="success"
+      />
     </div>
   );
 };
