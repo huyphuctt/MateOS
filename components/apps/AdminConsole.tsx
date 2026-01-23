@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Users, ShieldUser, CheckCircle, XCircle, Search, Building, Plus, Filter, X, Check, Mail, UserIcon, Layers, Loader2 } from 'lucide-react';
+import { Users, ShieldUser, Search, Building, Plus, X, Mail, UserIcon, Layers, Loader2, ChevronDown } from 'lucide-react';
 import Select from 'react-select';
-import { AdminConsoleData, Organization, User, Workspace } from '../../types';
+import { AdminConsoleData, Organization, Workspace } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
-import { apiService } from '@/services/api';
+import { apiService } from '../../services/api';
 
 interface AdminConsoleProps {
     currentOrg: Organization;
@@ -15,7 +14,6 @@ type AdminUser = AdminConsoleData['users'][0];
 
 export const AdminConsole: React.FC<AdminConsoleProps> = ({ currentOrg, currentWorkspace }) => {
     const { token, activeOrg } = useAuth();
-    // Local state for users to simulate persistence within session
     const [data, setData] = useState<AdminConsoleData>({ workspaces: [], users: [] });
     const [searchTerm, setSearchTerm] = useState('');
     const [workspaceFilter, setWorkspaceFilter] = useState<number | 'all'>('all');
@@ -30,7 +28,7 @@ export const AdminConsole: React.FC<AdminConsoleProps> = ({ currentOrg, currentW
     const [formData, setFormData] = useState({
         username: '',
         email: '',
-        workspaceIds: [] as number[]
+        workspaces: [] as { id: number; role: string }[]
     });
     
     // Workspace Creation Form State
@@ -42,7 +40,6 @@ export const AdminConsole: React.FC<AdminConsoleProps> = ({ currentOrg, currentW
     const [loading, setLoading] = useState(true);
     
     const loadData = useCallback(async (force = false) => {
-        // Prevent duplicate calls if token hasn't changed, unless forced
         if (!force && token === lastFetchedToken.current && data.users.length > 0) {
             return;
         }
@@ -58,10 +55,7 @@ export const AdminConsole: React.FC<AdminConsoleProps> = ({ currentOrg, currentW
         }
     }, [token, data.users.length, activeOrg]);
 
-    // Initial Load
     useEffect(() => {
-        // In React 18 Strict Mode, useEffect runs twice in dev. 
-        // This check ensures we only fire the actual fetch once per mount/token change.
         if (isInitialMount.current) {
             isInitialMount.current = false;
             loadData();
@@ -69,14 +63,13 @@ export const AdminConsole: React.FC<AdminConsoleProps> = ({ currentOrg, currentW
             loadData();
         }
     }, [loadData, token]);
-    // --- Handlers ---
 
     const handleOpenAdd = () => {
         setModalMode('add');
         setFormData({
             username: '',
             email: '',
-            workspaceIds: [] // Default to none
+            workspaces: []
         });
         setIsModalOpen(true);
     };
@@ -85,22 +78,18 @@ export const AdminConsole: React.FC<AdminConsoleProps> = ({ currentOrg, currentW
         setModalMode('edit');
         setEditingUserId(user.id);
 
-        // Get user's workspaces for this org directly from AdminUser structure
-        const existingWorkspaceIds = user.workspaces ? user.workspaces.map(w => w.id) : [];
+        const userWorkspaces = user.workspaces ? user.workspaces.map(w => ({ id: w.id, role: w.role })) : [];
 
-        // Fix: Use user.name instead of user.username
         setFormData({
             username: user.name,
             email: user.email,
-            workspaceIds: existingWorkspaceIds
+            workspaces: userWorkspaces
         });
         setIsModalOpen(true);
     };
 
     const handleSaveUser = (e: React.FormEvent) => {
         e.preventDefault();
-        // In a real implementation, you'd call apiService.createUser or updateUser here
-        // For now, we are just mocking the UI state update if we were to support it fully client-side
         setIsModalOpen(false);
     };
 
@@ -112,7 +101,6 @@ export const AdminConsole: React.FC<AdminConsoleProps> = ({ currentOrg, currentW
         try {
             const newWorkspace = await apiService.createWorkspace(token || '', activeOrg.id, newWorkspaceName);
             if (newWorkspace) {
-                // Update local state immediately
                 setData(prev => ({
                     ...prev,
                     workspaces: [...prev.workspaces, newWorkspace]
@@ -127,33 +115,39 @@ export const AdminConsole: React.FC<AdminConsoleProps> = ({ currentOrg, currentW
         }
     };
 
-    const toggleWorkspaceSelection = (wkId: number) => {
+    const handleWorkspaceRoleChange = (wkId: number, role: string) => {
         setFormData(prev => {
-            if (prev.workspaceIds.includes(wkId)) {
-                return { ...prev, workspaceIds: prev.workspaceIds.filter(id => id !== wkId) };
+            const exists = prev.workspaces.find(w => w.id === wkId);
+            if (role === 'none') {
+                return { ...prev, workspaces: prev.workspaces.filter(w => w.id !== wkId) };
+            }
+            if (exists) {
+                return {
+                    ...prev,
+                    workspaces: prev.workspaces.map(w => w.id === wkId ? { ...w, role } : w)
+                };
             } else {
-                return { ...prev, workspaceIds: [...prev.workspaceIds, wkId] };
+                return {
+                    ...prev,
+                    workspaces: [...prev.workspaces, { id: wkId, role }]
+                };
             }
         });
     };
 
-    const handleRevoke = (userId: string) => {
-        if (confirm('Are you sure you want to remove this user from the organization?')) {
-            setData(prev => ({ ...prev, users: prev.users.filter(u => u.id !== userId) }));
-        }
-    };
-
-    // Filter Logic
-
-    // Prepare React Select options from fetched data, not props, to ensure it includes newly added workspaces
     const filterOptions = [
         { value: 'all', label: 'All Workspaces' },
         ...(data.workspaces || []).map(wk => ({ value: wk.id, label: wk.name }))
     ];
 
-    const currentFilterOption = filterOptions.find(opt => opt.value === workspaceFilter);
+    const roleOptions = [
+        { value: 'none', label: 'No Access' },
+        { value: 'admin', label: 'Admin' },
+        { value: 'user', label: 'User' },
+        { value: 'viewer', label: 'Viewer' }
+    ];
 
-    // If data isn't loaded yet, default to empty
+    const currentFilterOption = filterOptions.find(opt => opt.value === workspaceFilter);
     const availableWorkspaces = data.workspaces || [];
 
     return (
@@ -175,7 +169,6 @@ export const AdminConsole: React.FC<AdminConsoleProps> = ({ currentOrg, currentW
                     </div>
                 </div>
 
-                {/* Action Buttons */}
                 <div className="flex items-center gap-3">
                     <button
                         onClick={() => setIsWorkspaceModalOpen(true)}
@@ -205,7 +198,6 @@ export const AdminConsole: React.FC<AdminConsoleProps> = ({ currentOrg, currentW
                     </h2>
 
                     <div className="flex items-center gap-3">
-                        {/* Workspace Filter */}
                         {availableWorkspaces.length > 0 && (
                             <div className="w-[200px]">
                                 <Select
@@ -236,7 +228,6 @@ export const AdminConsole: React.FC<AdminConsoleProps> = ({ currentOrg, currentW
                             </div>
                         )}
 
-                        {/* Search */}
                         <div className="relative">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
                             <input
@@ -261,7 +252,12 @@ export const AdminConsole: React.FC<AdminConsoleProps> = ({ currentOrg, currentW
                     </div>
 
                     <div className="overflow-y-auto flex-1">
-                        {!data || !data.users || data.users.length === 0 ? (
+                        {loading ? (
+                             <div className="flex flex-col items-center justify-center h-full text-gray-400 p-8">
+                                <Loader2 size={32} className="animate-spin mb-2" />
+                                <p>Loading users...</p>
+                            </div>
+                        ) : !data || !data.users || data.users.length === 0 ? (
                             <div className="flex flex-col items-center justify-center h-full text-gray-400 p-8">
                                 <Users size={48} className="mb-2 opacity-20" />
                                 <p>No users found matching your filters.</p>
@@ -276,7 +272,6 @@ export const AdminConsole: React.FC<AdminConsoleProps> = ({ currentOrg, currentW
                                                 <img src={user.avatar} alt="" className="w-full h-full object-cover" />
                                             </div>
                                             <div className="min-w-0">
-                                                {/* Fix: Use user.name instead of user.username */}
                                                 <div className="font-medium text-sm text-gray-900 dark:text-gray-100 truncate">{user.name}</div>
                                                 <div className="text-xs text-gray-500">ID: {user.id}</div>
                                             </div>
@@ -298,7 +293,7 @@ export const AdminConsole: React.FC<AdminConsoleProps> = ({ currentOrg, currentW
                                             <div className="flex flex-wrap gap-1">
                                                 {user.workspaces?.map((wk) => (
                                                     <span key={wk.id} className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200">
-                                                        {(availableWorkspaces.find(w => w.id === wk.id)?.name) || wk.id}
+                                                        {(availableWorkspaces.find(w => w.id === wk.id)?.name) || wk.id} ({wk.role})
                                                     </span>
                                                 ))}
                                             </div>
@@ -329,13 +324,11 @@ export const AdminConsole: React.FC<AdminConsoleProps> = ({ currentOrg, currentW
             {isModalOpen && (
                 <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-200 p-4">
                     <div
-                        className="bg-white dark:bg-[#2d2d2d] rounded-2xl shadow-2xl w-full max-w-md border border-gray-200 dark:border-gray-600 overflow-hidden flex flex-col max-h-[85vh]"
+                        className="bg-white dark:bg-[#2d2d2d] rounded-2xl shadow-2xl w-full max-w-lg border border-gray-200 dark:border-gray-600 overflow-hidden flex flex-col max-h-[90%]"
                         onClick={e => e.stopPropagation()}
                     >
-                        {/* Modal Body */}
                         <form onSubmit={handleSaveUser} className="flex flex-col h-full min-h-0">
 
-                            {/* Modal Header */}
                             <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between shrink-0">
                                 <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">
                                     {modalMode === 'add' ? 'Add New User' : 'Manage User'}
@@ -349,12 +342,11 @@ export const AdminConsole: React.FC<AdminConsoleProps> = ({ currentOrg, currentW
                                 </button>
                             </div>
 
-                            {/* Content */}
-                            <div className="p-6 space-y-5 flex-1 overflow-y-auto">
+                            {/* SCROLLABLE FORM AREA */}
+                            <div className="p-6 space-y-6 flex-1 overflow-y-auto custom-scrollbar">
 
-                                {/* Name Input */}
                                 <div className="space-y-1.5">
-                                    <label className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
+                                    <label className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
                                         <UserIcon size={14} /> Name
                                     </label>
                                     <input
@@ -367,9 +359,8 @@ export const AdminConsole: React.FC<AdminConsoleProps> = ({ currentOrg, currentW
                                     />
                                 </div>
 
-                                {/* Email Input */}
                                 <div className="space-y-1.5">
-                                    <label className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
+                                    <label className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
                                         <Mail size={14} /> Email Address
                                     </label>
                                     <input
@@ -382,53 +373,78 @@ export const AdminConsole: React.FC<AdminConsoleProps> = ({ currentOrg, currentW
                                     />
                                 </div>
 
-                                {/* Workspace Selection */}
-                                <div className="space-y-2">
-                                    <label className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
-                                        <Building size={14} /> Workspaces
+                                <div className="space-y-3">
+                                    <label className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
+                                        <Building size={14} /> Workspace Access & Roles
                                     </label>
                                     <div className="border border-gray-200 dark:border-gray-600 rounded-lg overflow-hidden divide-y divide-gray-100 dark:divide-gray-700">
                                         {availableWorkspaces.length === 0 ? (
                                             <div className="p-3 text-sm text-gray-400 italic">No workspaces available in this organization.</div>
                                         ) : (
                                             availableWorkspaces.map(wk => {
-                                                const isSelected = formData.workspaceIds.includes(wk.id);
+                                                const userWorkspace = formData.workspaces.find(w => w.id === wk.id);
+                                                const currentRole = userWorkspace ? userWorkspace.role : 'none';
+                                                const currentRoleOption = roleOptions.find(opt => opt.value === currentRole);
+
                                                 return (
                                                     <div
                                                         key={wk.id}
-                                                        onClick={() => toggleWorkspaceSelection(wk.id)}
-                                                        className={`flex items-center justify-between p-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-white/5 transition-colors ${isSelected ? 'bg-blue-50/50 dark:bg-blue-900/10' : ''}`}
+                                                        className={`flex items-center justify-between p-3 transition-colors ${currentRole !== 'none' ? 'bg-blue-50/30 dark:bg-blue-900/10' : ''}`}
                                                     >
-                                                        <span className={`text-sm ${isSelected ? 'font-medium text-blue-700 dark:text-blue-300' : 'text-gray-700 dark:text-gray-300'}`}>
-                                                            {wk.name}
-                                                        </span>
-                                                        <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${isSelected
-                                                                ? 'bg-blue-500 border-blue-500 text-white'
-                                                                : 'border-gray-300 dark:border-gray-500 bg-white dark:bg-transparent'
-                                                            }`}>
-                                                            {isSelected && <Check size={12} />}
+                                                        <div className="flex flex-col min-w-0 mr-4">
+                                                            <span className={`text-sm font-bold truncate ${currentRole !== 'none' ? 'text-blue-700 dark:text-blue-300' : 'text-gray-700 dark:text-gray-300'}`}>
+                                                                {wk.name}
+                                                            </span>
+                                                        </div>
+                                                        <div className="w-[140px] shrink-0">
+                                                            <Select
+                                                                value={currentRoleOption}
+                                                                onChange={(option: any) => handleWorkspaceRoleChange(wk.id, option?.value)}
+                                                                options={roleOptions}
+                                                                unstyled
+                                                                classNames={{
+                                                                    control: (state) => `pl-3 pr-1 py-1 rounded-md text-xs font-bold transition-all cursor-pointer flex items-center justify-between border ${
+                                                                        currentRole === 'none'
+                                                                        ? 'bg-white dark:bg-black/20 border-gray-300 dark:border-gray-600 text-gray-500'
+                                                                        : 'bg-blue-600 border-blue-600 text-white shadow-sm'
+                                                                    } ${state.isFocused ? 'ring-2 ring-blue-500/50' : ''}`,
+                                                                    menu: () => "bg-white dark:bg-[#2d2d2d] border border-gray-200 dark:border-gray-700 rounded-md shadow-xl mt-1 overflow-hidden z-50",
+                                                                    option: (state) => `px-3 py-2 text-xs font-semibold cursor-pointer ${
+                                                                        state.isSelected
+                                                                        ? 'bg-blue-600 text-white'
+                                                                        : state.isFocused
+                                                                            ? 'bg-gray-100 dark:bg-white/10 text-gray-900 dark:text-gray-100'
+                                                                            : 'text-gray-700 dark:text-gray-300'
+                                                                    }`,
+                                                                    singleValue: () => currentRole === 'none' ? "text-gray-500 dark:text-gray-400" : "text-white",
+                                                                    dropdownIndicator: () => `p-0.5 ${currentRole === 'none' ? 'text-gray-400' : 'text-white'}`
+                                                                }}
+                                                                menuPortalTarget={document.body}
+                                                                styles={{
+                                                                    menuPortal: (base) => ({ ...base, zIndex: 9999 })
+                                                                }}
+                                                            />
                                                         </div>
                                                     </div>
                                                 );
                                             })
                                         )}
                                     </div>
-                                    <p className="text-[10px] text-gray-400">Selected users will only have access to checked workspaces.</p>
+                                    <p className="text-[10px] text-gray-400 font-medium">Grant specific permissions per workspace. "No Access" removes the user from that workspace.</p>
                                 </div>
                             </div>
 
-                            {/* Footer Actions */}
                             <div className="p-4 bg-gray-50 dark:bg-black/20 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-3 shrink-0">
                                 <button
                                     type="button"
                                     onClick={() => setIsModalOpen(false)}
-                                    className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/10 rounded-lg transition-colors"
+                                    className="px-4 py-2 text-sm font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/10 rounded-lg transition-colors"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
-                                    className="px-6 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-sm transition-colors"
+                                    className="px-6 py-2 text-sm font-bold bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-sm transition-colors"
                                 >
                                     {modalMode === 'add' ? 'Create User' : 'Save Changes'}
                                 </button>
@@ -461,7 +477,7 @@ export const AdminConsole: React.FC<AdminConsoleProps> = ({ currentOrg, currentW
                             
                             <div className="p-6">
                                 <div className="space-y-1.5">
-                                    <label className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
+                                    <label className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
                                         <Layers size={14} /> Workspace Name
                                     </label>
                                     <input
@@ -480,7 +496,7 @@ export const AdminConsole: React.FC<AdminConsoleProps> = ({ currentOrg, currentW
                                 <button
                                     type="button"
                                     onClick={() => setIsWorkspaceModalOpen(false)}
-                                    className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/10 rounded-lg transition-colors"
+                                    className="px-4 py-2 text-sm font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/10 rounded-lg transition-colors"
                                     disabled={isCreatingWorkspace}
                                 >
                                     Cancel
@@ -488,7 +504,7 @@ export const AdminConsole: React.FC<AdminConsoleProps> = ({ currentOrg, currentW
                                 <button
                                     type="submit"
                                     disabled={isCreatingWorkspace || !newWorkspaceName.trim()}
-                                    className="px-6 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg shadow-sm transition-colors flex items-center gap-2"
+                                    className="px-6 py-2 text-sm font-bold bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg shadow-sm transition-colors flex items-center gap-2"
                                 >
                                     {isCreatingWorkspace && <Loader2 size={14} className="animate-spin" />}
                                     Create

@@ -10,6 +10,7 @@ export enum AppId {
 }
 
 export type Theme = 'aero' | 'aqua';
+export type ColorMode = 'light' | 'dark' | 'auto';
 
 export type AuthMode = 'boot' | 'login_full' | 'login_partial' | 'context_selection' | 'desktop';
 
@@ -104,4 +105,3 @@ export interface AdminConsoleData{
       workspaces?: { id: number; role: string }[];
   }[];
 }
-

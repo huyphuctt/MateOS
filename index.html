@@ -5,10 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>MateOS</title>
     <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Outfit', 'sans-serif'],
+            },
+            scale: {
+              '102': '1.02',
+            }
+          }
+        }
+      }
+    </script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
       :root {
         --black-0: #000;
+        --white-0: #fff;
       }
       body {
         font-family: 'Outfit', sans-serif;
@@ -16,11 +32,12 @@
         overflow: hidden;
         user-select: none;
       }
+      /* Strengthened text shadows for desktop icons and text visibility */
       .desktop-text-shadow {
-        text-shadow: .1rem .1rem .2rem color-mix(in srgb, var(--black-0) 75%, transparent);
+        text-shadow: 0 1px 3px rgba(0,0,0,0.9), 0 0 10px rgba(0,0,0,0.5);
       }
       .desktop-icon-shadow {
-        filter: drop-shadow(.1rem .1rem .2rem color-mix(in srgb, var(--black-0) 75%, transparent));
+        filter: drop-shadow(0 4px 6px rgba(0,0,0,0.4));
       }
       /* Custom Scrollbar for apps */
       ::-webkit-scrollbar {
@@ -30,11 +47,26 @@
         background: transparent;
       }
       ::-webkit-scrollbar-thumb {
-        background: rgba(156, 163, 175, 0.5);
+        background: rgba(156, 163, 175, 0.4);
         border-radius: 4px;
       }
       ::-webkit-scrollbar-thumb:hover {
-        background: rgba(156, 163, 175, 0.8);
+        background: rgba(156, 163, 175, 0.6);
+      }
+      /* Animation for smooth mode switching */
+      .dark-transition, .dark-transition * {
+        transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), 
+                    color 0.4s cubic-bezier(0.4, 0, 0.2, 1), 
+                    border-color 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+                    backdrop-filter 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      
+      .no-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+      .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
       }
     </style>
   <script type="importmap">
@@ -51,9 +83,8 @@
   }
 }
 </script>
-<link rel="stylesheet" href="/index.css">
 </head>
-  <body>
+  <body class="dark-transition">
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
   </body>

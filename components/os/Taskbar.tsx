@@ -92,22 +92,22 @@ export const Taskbar: React.FC<TaskbarProps> = ({
              <div 
                 className={`
                     pointer-events-auto flex items-end gap-3 px-4 py-3 
-                    bg-sky-200/80 dark:bg-sky-900/80 backdrop-blur-2xl 
-                    rounded-2xl border border-white/20 shadow-2xl transition-transform duration-300 ease-in-out origin-bottom mb-2
+                    bg-white/80 dark:bg-black/40 backdrop-blur-2xl 
+                    rounded-2xl border border-white/40 dark:border-white/10 shadow-2xl transition-transform duration-300 ease-in-out origin-bottom mb-2
                     ${hideTaskbar ? 'translate-y-[calc(100%-4px)] group-hover/dock:translate-y-0' : 'translate-y-0'}
                 `}
              >
                  {/* Launchpad Button */}
                 <button 
                     onClick={onStartClick}
-                    className="group/icon relative p-2 rounded-2xl hover:bg-white/30 transition-all duration-300 active:scale-95 mb-1"
+                    className="group/icon relative p-2 rounded-2xl hover:bg-black/10 dark:hover:bg-white/10 transition-all duration-300 active:scale-95 mb-1"
                 >
-                     <div className="w-12 h-12 bg-gradient-to-b from-gray-300 to-gray-400 rounded-xl flex items-center justify-center shadow-lg">
+                     <div className="w-12 h-12 bg-gradient-to-b from-gray-400 to-gray-600 rounded-xl flex items-center justify-center shadow-lg">
                         <Rocket className="w-7 h-7 text-white fill-white" />
                      </div>
                 </button>
 
-                <div className="w-[1px] h-12 bg-white/20 mx-1 mb-1"></div>
+                <div className="w-[1px] h-12 bg-black/10 dark:bg-white/20 mx-1 mb-1"></div>
 
                  {/* Dock Icons */}
                  {displayedApps.map(appId => {
@@ -120,8 +120,7 @@ export const Taskbar: React.FC<TaskbarProps> = ({
                             className="group/icon relative p-1 transition-all duration-300 hover:-translate-y-3 active:scale-95 active:-translate-y-1"
                         >
                             <div className="w-14 h-14 flex items-center justify-center transition-transform">
-                                {/* Removed the dark bounding box (bg-white/10). Now transparent by default, light on hover */}
-                                <div className="bg-transparent group-hover/icon:bg-white/20 p-2 rounded-2xl transition-colors duration-200">
+                                <div className="bg-transparent group-hover/icon:bg-black/10 dark:group-hover/icon:bg-white/10 p-2 rounded-2xl transition-colors duration-200">
                                     {appIcons[appId] ? (
                                         React.cloneElement(appIcons[appId] as React.ReactElement<any>, { size: 32 })
                                     ) : (
@@ -130,10 +129,10 @@ export const Taskbar: React.FC<TaskbarProps> = ({
                                 </div>
                             </div>
                             {isOpen && (
-                                <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-black/60 dark:bg-white/80 rounded-full" />
+                                <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-black/80 dark:bg-white rounded-full" />
                             )}
                             {/* Tooltip */}
-                            <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-gray-800/90 text-white text-xs px-3 py-1.5 rounded-lg opacity-0 group-hover/icon:opacity-100 transition-opacity pointer-events-none whitespace-nowrap shadow-lg backdrop-blur-sm border border-white/10">
+                            <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs px-3 py-1.5 rounded-lg opacity-0 group-hover/icon:opacity-100 transition-opacity pointer-events-none whitespace-nowrap shadow-lg backdrop-blur-sm border border-white/10">
                                 {appId.charAt(0).toUpperCase() + appId.slice(1)}
                             </div>
                         </button>
@@ -151,7 +150,7 @@ export const Taskbar: React.FC<TaskbarProps> = ({
     <div 
         className={`
             absolute bottom-0 left-0 right-0 h-12 
-            bg-sky-200/80 dark:bg-sky-900/80 backdrop-blur-xl border-t border-sky-200/30 dark:border-sky-500/20 
+            bg-white/90 dark:bg-black/80 backdrop-blur-2xl border-t border-gray-300/50 dark:border-white/10 
             flex items-center justify-between px-3 z-[9999] shadow-lg
             transition-transform duration-300 ease-in-out
             ${hideTaskbar ? 'translate-y-[calc(100%-6px)] hover:translate-y-0' : 'translate-y-0'}
@@ -163,9 +162,9 @@ export const Taskbar: React.FC<TaskbarProps> = ({
         <button 
             onClick={onStartClick}
             data-start-trigger="true"
-            className={`p-2 rounded hover:bg-stone-500/50 dark:hover:bg-stone-500/10 transition-all active:scale-95 duration-200 ${startMenuOpen ? 'bg-stone-600 dark:bg-stone-500/10' : ''}`}
+            className={`p-2 rounded hover:bg-black/10 dark:hover:bg-white/10 transition-all active:scale-95 duration-200 ${startMenuOpen ? 'bg-black/10 dark:bg-white/20 shadow-inner' : ''}`}
         >
-           <LayoutGrid className="w-6 h-6 text-blue-400 dark:text-sky-400 fill-blue-400 dark:fill-sky-400" />
+           <LayoutGrid className="w-6 h-6 text-blue-700 dark:text-sky-400 fill-blue-700 dark:fill-sky-400" />
         </button>
 
         {/* Pinned/Open Apps */}
@@ -178,15 +177,15 @@ export const Taskbar: React.FC<TaskbarProps> = ({
                     key={appId}
                     onClick={() => onAppClick(appId)}
                     className={`
-                        relative p-2 rounded hover:bg-stone-500/50 dark:hover:bg-stone-500/10 transition-all active:scale-95 duration-200 group
-                        ${isActive ? 'bg-stone-600 dark:bg-stone-900' : ''}
+                        relative p-2 rounded hover:bg-black/10 dark:hover:bg-white/10 transition-all active:scale-95 duration-200 group
+                        ${isActive ? 'bg-black/10 dark:bg-white/20 shadow-inner' : ''}
                     `}
                 >
-                    <div className="w-6 h-6 text-gray-700 dark:text-gray-200 flex items-center justify-center transition-transform group-hover:-translate-y-0.5">
+                    <div className="w-6 h-6 text-gray-900 dark:text-gray-100 flex items-center justify-center transition-transform group-hover:-translate-y-0.5">
                         {appIcons[appId]}
                     </div>
                     {isOpen && (
-                        <div className={`absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1.5 h-1 rounded-full transition-all duration-300 ${isActive ? 'w-4 bg-sky-500' : 'bg-gray-400'}`} />
+                        <div className={`absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1.5 h-1 rounded-full transition-all duration-300 ${isActive ? 'w-4 bg-blue-700 dark:bg-sky-400' : 'bg-gray-500 dark:bg-gray-400'}`} />
                     )}
                 </button>
             );
@@ -202,55 +201,55 @@ export const Taskbar: React.FC<TaskbarProps> = ({
               <button
                   onClick={() => setOrgMenuOpen(!orgMenuOpen)}
                   className={`
-                    flex items-center gap-2 px-3 py-1.5 rounded-md transition-all cursor-pointer border border-white/10 
+                    flex items-center gap-2 px-3 py-1.5 rounded-md transition-all cursor-pointer border
                     ${orgMenuOpen 
-                        ? 'bg-white/90 dark:bg-white/20 shadow-sm text-gray-900 dark:text-white' 
-                        : 'bg-white/50 dark:bg-white/10 hover:bg-white/70 dark:hover:bg-white/15 text-gray-800 dark:text-gray-200'}
+                        ? 'bg-blue-700 border-blue-700 text-white shadow-md' 
+                        : 'bg-black/5 dark:bg-white/10 border-transparent hover:border-gray-400/50 dark:hover:border-white/20 text-gray-900 dark:text-gray-200'}
                   `}
               >
-                   <Building size={14} className={orgMenuOpen ? "text-blue-600 dark:text-sky-400" : "text-gray-700 dark:text-gray-300"}/>
-                   <span className="text-xs font-semibold hidden md:block max-w-[100px] truncate">{currentOrg?.name}</span>
-                   <ChevronUp size={12} className={`opacity-50 transition-transform ${orgMenuOpen ? 'rotate-180' : ''}`} />
+                   <Building size={14} className={orgMenuOpen ? "text-white" : "text-blue-700 dark:text-sky-400"}/>
+                   <span className="text-xs font-bold hidden md:block max-w-[100px] truncate">{currentOrg?.name}</span>
+                   <ChevronUp size={12} className={`opacity-70 transition-transform ${orgMenuOpen ? 'rotate-180' : ''}`} />
               </button>
 
               {orgMenuOpen && (
-                  <div className="absolute bottom-full right-0 mb-2 w-64 bg-white/90 dark:bg-[#1e1e1e]/90 backdrop-blur-xl rounded-lg shadow-2xl border border-white/20 dark:border-gray-700/50 p-2 flex flex-col z-[10000] animate-in slide-in-from-bottom-2 fade-in">
+                  <div className="absolute bottom-full right-0 mb-2 w-64 bg-white/95 dark:bg-[#1c1c1c]/95 backdrop-blur-xl rounded-lg shadow-2xl border border-gray-300 dark:border-white/10 p-2 flex flex-col z-[10000] animate-in slide-in-from-bottom-2 fade-in">
                        {/* Org List */}
-                       <div className="px-2 py-1 text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Organization</div>
+                       <div className="px-2 py-1 text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Organization</div>
                        {organizations.map(org => (
                            <button
                               key={org.id}
                               onClick={() => { onSwitchOrg(org.id); setOrgMenuOpen(false); }}
                               className={`text-left px-3 py-1.5 rounded text-sm flex items-center justify-between mb-1 transition-colors ${
                                   currentOrg?.id === org.id 
-                                  ? 'bg-sky-500 text-white' 
-                                  : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/10'
+                                  ? 'bg-blue-600 text-white shadow-sm' 
+                                  : 'text-gray-900 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/10'
                               }`}
                            >
-                               <span className="truncate">{org.name}</span>
+                               <span className="truncate font-medium">{org.name}</span>
                                {currentOrg?.id === org.id && <Check size={14} />}
                            </button>
                        ))}
 
-                       <div className="h-[1px] bg-gray-400/20 my-2 mx-1"></div>
+                       <div className="h-[1px] bg-gray-200 dark:bg-white/10 my-2 mx-1"></div>
 
                        {/* Workspace List */}
-                       <div className="px-2 py-1 text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Workspace</div>
+                       <div className="px-2 py-1 text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Workspace</div>
                        {currentOrg?.workspaces.map(wk => (
                            <button
                               key={wk.id}
                               onClick={() => { onSwitchWorkspace(wk.id); setOrgMenuOpen(false); }}
                               className={`text-left px-3 py-1.5 rounded text-sm flex items-center justify-between mb-1 transition-colors ${
                                   currentWorkspace?.id === wk.id 
-                                  ? 'bg-sky-500/10 text-sky-600 dark:text-sky-400 font-medium' 
-                                  : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/10'
+                                  ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-sky-400 font-bold' 
+                                  : 'text-gray-900 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/10'
                               }`}
                            >
                                <div className="flex items-center gap-2">
-                                   <Layers size={12} className={currentWorkspace?.id === wk.id ? 'text-sky-500' : 'text-gray-400'}/>
+                                   <Layers size={12} className={currentWorkspace?.id === wk.id ? 'text-blue-700 dark:text-sky-400' : 'text-gray-500'}/>
                                    <span className="truncate">{wk.name}</span>
                                </div>
-                               {currentWorkspace?.id === wk.id && <Check size={14} className="text-sky-500" />}
+                               {currentWorkspace?.id === wk.id && <Check size={14} className="text-blue-700 dark:text-sky-400" />}
                            </button>
                        ))}
                   </div>
@@ -258,13 +257,13 @@ export const Taskbar: React.FC<TaskbarProps> = ({
           </div>
         )}
 
-        <div className="hidden sm:block w-[1px] h-4 bg-gray-400/30 mx-1"></div>
+        <div className="hidden sm:block w-[1px] h-4 bg-gray-400 dark:bg-white/20 mx-1"></div>
 
         {/* Fullscreen Toggle */}
         {onToggleFullscreen && (
             <button 
                 onClick={onToggleFullscreen}
-                className="p-1.5 rounded hover:bg-white/40 dark:hover:bg-white/10 transition-colors text-gray-700 dark:text-gray-200"
+                className="p-1.5 rounded hover:bg-black/10 dark:hover:bg-white/10 transition-colors text-gray-900 dark:text-gray-100"
                 title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
             >
                 {isFullscreen ? <Minimize size={16} /> : <Maximize size={16} />}
@@ -272,26 +271,25 @@ export const Taskbar: React.FC<TaskbarProps> = ({
         )}
                 
         {/* System Group with Notification Toggle */}
-        <div className="flex items-center gap-2 px-2 py-1 hover:bg-white/40 dark:hover:bg-white/10 rounded transition-colors cursor-pointer border border-transparent hover:border-gray-300/30">
+        <div className="flex items-center gap-2 px-2 py-1 hover:bg-black/10 dark:hover:bg-white/10 rounded transition-colors cursor-pointer">
             <button
                 onClick={(e) => { e.stopPropagation(); onToggleNotificationPanel(); }}
                 data-panel-trigger="true"
-                className={`relative transition-colors rounded-sm flex items-center justify-center ${notificationPanelOpen ? 'text-sky-500' : 'text-gray-800 dark:text-gray-100'}`}
+                className={`relative transition-colors rounded-sm flex items-center justify-center ${notificationPanelOpen ? 'text-blue-700 dark:text-sky-400' : 'text-gray-900 dark:text-gray-100'}`}
             >
                 <Bell size={16} fill={notificationPanelOpen ? "currentColor" : "none"} />
                 {recentItems.length > 0 && (
-                    <span className="absolute -top-1.5 -right-1.5 h-3.5 min-w-[14px] flex items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white border border-white dark:border-gray-900 shadow-sm leading-none px-0.5">
+                    <span className="absolute -top-1.5 -right-1.5 h-3.5 min-w-[14px] flex items-center justify-center rounded-full bg-red-600 text-[9px] font-bold text-white border border-white dark:border-gray-900 shadow-sm leading-none px-0.5">
                         {recentItems.length > 9 ? '9+' : recentItems.length}
                     </span>
                 )}
             </button>
         </div>
         
-        <div className="flex flex-col items-end justify-center px-2 py-0.5 hover:bg-white/40 dark:hover:bg-white/10 rounded transition-colors cursor-pointer ml-1 text-right">
-            <span className="text-xs font-medium text-gray-800 dark:text-gray-100">{formatTime(time)}</span>
-            <span className="text-[10px] text-gray-600 dark:text-gray-300">{formatDate(time)}</span>
+        <div className="flex flex-col items-end justify-center px-2 py-0.5 hover:bg-black/10 dark:hover:bg-white/10 rounded transition-colors cursor-pointer ml-1 text-right">
+            <span className="text-xs font-bold text-gray-900 dark:text-gray-100">{formatTime(time)}</span>
+            <span className="text-[10px] text-gray-700 dark:text-gray-400 font-bold">{formatDate(time)}</span>
         </div>
-        <div className="w-1.5 h-full border-l border-gray-300/30 dark:border-gray-600/30 ml-1"></div>
       </div>
     </div>
   );

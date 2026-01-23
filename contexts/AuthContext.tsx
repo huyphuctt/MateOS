@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback, ReactNode } from 'react';
-import { User, AuthMode, Organization, Workspace } from '../types';
+import { User, AuthMode, Organization, Workspace, ColorMode } from '../types';
 import { apiService } from '../services/api';
 import { MOCK_USERS } from '../data/mock';
 
@@ -8,6 +8,8 @@ interface AuthContextType {
     user: User | undefined;
     token: string | undefined;
     authMode: AuthMode;
+    colorMode: ColorMode;
+    setColorMode: (mode: ColorMode) => void;
     activeOrg: Organization | undefined;
     activeWorkspace: Workspace | undefined;
     login: (user: any, token: string) => void;
@@ -35,6 +37,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     });
 
     const [token, setToken] = useState<string | undefined>(() => localStorage.getItem('mateos_token') || undefined);
+
+    const [colorMode, setColorModeState] = useState<ColorMode>(() => {
+        return (localStorage.getItem('mateos_color_mode') as ColorMode) || 'auto';
+    });
+
+    const setColorMode = useCallback((mode: ColorMode) => {
+        setColorModeState(mode);
+        localStorage.setItem('mateos_color_mode', mode);
+    }, []);
 
     const [authMode, setAuthMode] = useState<AuthMode>(() => {
         const bootCompleted = localStorage.getItem('mateos_boot_completed');
@@ -189,6 +200,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         user,
         token,
         authMode,
+        colorMode,
+        setColorMode,
         activeOrg,
         activeWorkspace,
         login,
@@ -197,7 +210,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         switchOrg,
         switchWorkspace,
         setAuthMode
-    }), [user, token, authMode, activeOrg, activeWorkspace, login, logout, lock, switchOrg, switchWorkspace]);
+    }), [user, token, authMode, colorMode, setColorMode, activeOrg, activeWorkspace, login, logout, lock, switchOrg, switchWorkspace]);
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

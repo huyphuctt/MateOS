@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { 
   Monitor, 
@@ -34,16 +33,13 @@ import { NotificationCenter } from './components/os/NotificationCenter';
 import { BootScreen } from './components/os/BootScreen';
 import { LoginScreen } from './components/os/LoginScreen';
 import { AppSwitcher } from './components/os/AppSwitcher';
-import { AppId, WindowState, Theme, AuthMode, User, Organization, Workspace, FileItem } from './types';
+import { AppId, WindowState, Theme, AuthMode, User, Organization, Workspace, FileItem, ColorMode } from './types';
 import { useAuth } from './contexts/AuthContext';
 import { RECENT_ITEMS, WALLPAPERS } from './data/mock';
 
-// Constants
-const INACTIVITY_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
-
 // Placeholder apps
 const Placeholder = ({ text }: { text: string }) => (
-  <div className="flex items-center justify-center h-full bg-white dark:bg-[#202020] text-gray-500 dark:text-gray-400">
+  <div className="flex items-center justify-center h-full bg-white dark:bg-[#202020] text-gray-900 dark:text-gray-100">
     {text}
   </div>
 );
@@ -52,6 +48,8 @@ const App: React.FC = () => {
   const { 
     user, 
     authMode, 
+    colorMode,
+    setColorMode,
     activeOrg, 
     activeWorkspace, 
     login, 
@@ -89,6 +87,39 @@ const App: React.FC = () => {
   const [isSwitcherOpen, setIsSwitcherOpen] = useState(false);
   const [switcherSelectedIndex, setSwitcherSelectedIndex] = useState(0);
 
+  // Appearance Sync (Dark Mode Implementation)
+  useEffect(() => {
+    const root = window.document.documentElement;
+    
+    const applyColorMode = (mode: ColorMode) => {
+        if (mode === 'dark') {
+            root.classList.add('dark');
+        } else if (mode === 'light') {
+            root.classList.remove('dark');
+        } else {
+            // Auto: use system media query
+            if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                root.classList.add('dark');
+            } else {
+                root.classList.remove('dark');
+            }
+        }
+    };
+
+    applyColorMode(colorMode);
+
+    // If Auto, we need a listener for system changes
+    if (colorMode === 'auto') {
+        const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+        const listener = (e: MediaQueryListEvent) => {
+            if (e.matches) root.classList.add('dark');
+            else root.classList.remove('dark');
+        };
+        mediaQuery.addEventListener('change', listener);
+        return () => mediaQuery.removeEventListener('change', listener);
+    }
+  }, [colorMode]);
+
   // Sync state to local storage for UI settings
   useEffect(() => { localStorage.setItem('mateos_theme', theme); }, [theme]);
   useEffect(() => { localStorage.setItem('mateos_wallpaper', wallpaper); }, [wallpaper]);
@@ -118,8 +149,6 @@ const App: React.FC = () => {
   const openApp = useCallback((id: AppId, payload?: any) => {
     setStartMenuOpen(false);
     
-    // We can't easily access appRegistry here without making it more complex,
-    // so we'll rely on the functional state update.
     setWindows(prevWindows => {
         const existingWindow = prevWindows.find(w => w.id === id);
         
@@ -135,8 +164,6 @@ const App: React.FC = () => {
              return prevWindows.map(w => w.id === id ? { ...w, isMinimized: false, data: newData, zIndex: nextZIndex } : w);
         }
 
-        // Logic for fresh window creation is handled in the effect or simplified here
-        // Note: For production apps, this would be cleaner with a proper registry lookup
         const title = id.charAt(0).toUpperCase() + id.slice(1);
         
         let initialData = payload;
@@ -147,7 +174,7 @@ const App: React.FC = () => {
         const newWindow: WindowState = {
             id,
             title: title,
-            icon: <File size={16} />, // Fallback icon
+            icon: <File size={16} />, 
             component: null, 
             isOpen: true,
             isMinimized: false,
@@ -207,7 +234,7 @@ const App: React.FC = () => {
     let timeoutId: ReturnType<typeof setTimeout>;
     const resetTimer = () => {
       if (timeoutId) clearTimeout(timeoutId);
-      timeoutId = setTimeout(lock, INACTIVITY_TIMEOUT_MS);
+      timeoutId = setTimeout(lock, 1800000); // 30 minutes
     };
     const events = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart', 'click'];
     events.forEach(event => window.addEventListener(event, resetTimer));
@@ -222,7 +249,7 @@ const App: React.FC = () => {
   const appRegistry: Record<AppId, any> = useMemo(() => ({    
     [AppId.SETTINGS]: {
         title: 'Settings',
-        icon: <Settings className="text-gray-100" size={20} />,
+        icon: <Settings className="text-gray-900 dark:text-gray-100" size={20} />,
         component: null, 
         defaultSize: { width: 600, height: 450 }
     },
@@ -235,23 +262,23 @@ const App: React.FC = () => {
     },
     [AppId.NOTIFICATIONS]: {
         title: 'Notifications',
-        icon: <Bell className="text-blue-400" size={20} />,
+        icon: <Bell className="text-blue-500" size={20} />,
         component: <NotificationsApp />,
         defaultSize: { width: 400, height: 600 }
     },
     [AppId.VAULT]: {
         title: 'Vault',
-        icon: <Vault className="text-amber-300" size={20} />,
+        icon: <Vault className="text-amber-500" size={20} />,
         component: null,
         defaultSize: { width: 900, height: 600 }
     },
     [AppId.PREVIEW]: {
         title: 'Preview',
-        icon: <Eye className="text-gray-500" size={20} />,
+        icon: <Eye className="text-gray-600 dark:text-gray-300" size={20} />,
         component: null,
         defaultSize: { width: 800, height: 800 }
     },
-  }), [theme]);
+  }), []);
 
   // Session Persistence
   useEffect(() => {
@@ -303,7 +330,7 @@ const App: React.FC = () => {
 
   const renderWindowContent = (window: WindowState) => {
       if (window.id === AppId.SETTINGS) {
-          return <SettingsApp theme={theme} setTheme={setTheme} hideTaskbar={hideTaskbar} setHideTaskbar={setHideTaskbar} name={user?.name} wallpaper={wallpaper} setWallpaper={setWallpaper} userAvatar={userAvatar} setUserAvatar={setUserAvatar} />;
+          return <SettingsApp theme={theme} setTheme={setTheme} colorMode={colorMode} setColorMode={setColorMode} hideTaskbar={hideTaskbar} setHideTaskbar={setHideTaskbar} name={user?.name} wallpaper={wallpaper} setWallpaper={setWallpaper} userAvatar={userAvatar} setUserAvatar={setUserAvatar} />;
       }
       if (window.id === AppId.ADMIN && activeOrg) return <AdminConsole currentOrg={activeOrg} currentWorkspace={activeWorkspace} />;
       if (window.id === AppId.VAULT) return <VaultApp onOpenFile={handleOpenFile} />;
@@ -332,7 +359,7 @@ const App: React.FC = () => {
       )}
 
       {authMode === 'desktop' && (
-        <>
+        <div className="w-full h-full relative dark-transition">
             {theme === 'aqua' && (
                 <TopBar 
                     activeAppTitle={activeAppTitle} 
@@ -355,13 +382,15 @@ const App: React.FC = () => {
                 />
             )}
 
-            <div className={`absolute left-4 flex flex-col gap-6 z-0 ${theme === 'aqua' ? 'top-12 right-4 items-end left-auto' : 'top-4 items-center'}`}>
-                <button onDoubleClick={() => openApp(AppId.VAULT)} className="w-20 flex flex-col items-center gap-1 group text-white hover:bg-white/10 rounded p-2 transition-colors">
-                    <Vault className="w-10 h-10 text-amber-300 desktop-icon-shadow" /><span className="text-xs text-center line-clamp-2 desktop-text-shadow font-medium">Vault</span>
+            <div className={`absolute left-4 flex flex-col gap-6 z-0 ${theme === 'aqua' ? 'top-14 right-4 items-end left-auto' : 'top-6 items-center'}`}>
+                <button onDoubleClick={() => openApp(AppId.VAULT)} className="w-20 flex flex-col items-center gap-1.5 group text-white hover:bg-white/10 rounded-xl p-2 transition-all active:scale-95">
+                    <Vault className="w-10 h-10 text-amber-400 desktop-icon-shadow" />
+                    <span className="text-xs text-center line-clamp-2 desktop-text-shadow font-bold">Vault</span>
                 </button>
                 {activeOrg?.role === 'admin' && (
-                    <button onDoubleClick={() => openApp(AppId.ADMIN)} className="w-20 flex flex-col items-center gap-1 group text-white hover:bg-white/10 rounded p-2 transition-colors">
-                        <ShieldUser className="w-10 h-10 text-red-500 fill-red-900/50 desktop-icon-shadow" /><span className="text-xs text-center desktop-text-shadow font-medium">Admin Console</span>
+                    <button onDoubleClick={() => openApp(AppId.ADMIN)} className="w-20 flex flex-col items-center gap-1.5 group text-white hover:bg-white/10 rounded-xl p-2 transition-all active:scale-95">
+                        <ShieldUser className="w-10 h-10 text-red-500 fill-red-900/30 desktop-icon-shadow" />
+                        <span className="text-xs text-center desktop-text-shadow font-bold">Admin Panel</span>
                     </button>
                 )}
             </div>
@@ -383,7 +412,7 @@ const App: React.FC = () => {
             <NotificationCenter isOpen={notificationPanelOpen} onClose={() => setNotificationPanelOpen(false)} recentItems={RECENT_ITEMS} onOpenNotificationsApp={() => openApp(AppId.NOTIFICATIONS)} theme={theme} />
 
             <Taskbar openApps={windows.map(w => w.id)} activeApp={activeWindowId} onAppClick={(id) => { const win = windows.find(w => w.id === id); if (!win) openApp(id); else if (win.isMinimized) { focusWindow(id); setWindows(prev => prev.map(w => w.id === id ? { ...w, isMinimized: false } : w)); } else if (activeWindowId === id) minimizeWindow(id); else focusWindow(id); }} onStartClick={toggleStartMenu} startMenuOpen={startMenuOpen} appIcons={appIcons} theme={theme} hideTaskbar={hideTaskbar} organizations={user?.organizations || []} currentOrg={activeOrg} currentWorkspace={activeWorkspace} onSwitchOrg={switchOrg} onSwitchWorkspace={switchWorkspace} notificationPanelOpen={notificationPanelOpen} onToggleNotificationPanel={() => setNotificationPanelOpen(!notificationPanelOpen)} recentItems={RECENT_ITEMS} isFullscreen={isFullscreen} onToggleFullscreen={toggleFullscreen} />
-        </>
+        </div>
       )}
     </div>
   );
