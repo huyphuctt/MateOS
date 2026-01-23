@@ -62,11 +62,13 @@ export interface RecentItem {
 export interface Workspace {
   id: number;
   name: string;
+  logo?: string;
 }
 
 export interface Organization {
   id: number;
   name: string;
+  logo?: string;
   workspaces: Workspace[];
   // The role of the current user in this organization
   role?: 'admin' | 'user';
@@ -93,8 +95,8 @@ export interface User {
 }
 
 export interface AdminConsoleData{
-  // current workspace in the org
-  workspaces: { id: number; name: string}[];
+  // list of workspaces in the org
+  workspaces: Workspace[];
   // current user in the org
   users: {
       id: string;

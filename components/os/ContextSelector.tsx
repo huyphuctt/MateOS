@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Building, Layers, ArrowRight, Check } from 'lucide-react';
 import Select from 'react-select';
@@ -46,7 +47,7 @@ export const ContextSelector: React.FC<ContextSelectorProps> = ({
     onComplete(selectedOrgId, selectedWorkspaceId);
   };
 
-  const workspaceOptions = selectedOrg ? selectedOrg.workspaces.map(wk => ({ value: wk.id, label: wk.name })) : [];
+  const workspaceOptions = selectedOrg ? selectedOrg.workspaces.map(wk => ({ value: wk.id, label: wk.name, logo: wk.logo })) : [];
   const currentWorkspaceOption = workspaceOptions.find(opt => opt.value === selectedWorkspaceId);
 
   return (
@@ -54,8 +55,12 @@ export const ContextSelector: React.FC<ContextSelectorProps> = ({
       <div className="w-full max-w-md bg-white/10 border border-white/20 shadow-2xl rounded-2xl p-8 backdrop-blur-md">
         
         <div className="text-center mb-8">
-            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full mx-auto mb-4 flex items-center justify-center shadow-lg border-2 border-white/20">
-                <Building className="text-white" size={32} />
+            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full mx-auto mb-4 flex items-center justify-center shadow-lg border-2 border-white/20 overflow-hidden">
+                {selectedOrg.logo ? (
+                    <img src={selectedOrg.logo} className="w-full h-full object-contain p-3 brightness-0 invert" alt="" />
+                ) : (
+                    <Building className="text-white" size={32} />
+                )}
             </div>
             <h2 className="text-2xl font-bold text-white mb-2">Select Environment</h2>
             <p className="text-white/60 text-sm">Choose where you want to start working today.</p>
@@ -77,7 +82,11 @@ export const ContextSelector: React.FC<ContextSelectorProps> = ({
                             }`}
                         >
                             <div className="flex items-center gap-3">
-                                <Building size={18} className={selectedOrgId === org.id ? 'text-white' : 'text-white/50'} />
+                                {org.logo ? (
+                                    <img src={org.logo} className={`w-5 h-5 object-contain ${selectedOrgId === org.id ? 'brightness-200' : ''}`} alt="" />
+                                ) : (
+                                    <Building size={18} className={selectedOrgId === org.id ? 'text-white' : 'text-white/50'} />
+                                )}
                                 <span className="font-medium">{org.name}</span>
                             </div>
                             {selectedOrgId === org.id && <Check size={18} />}
@@ -110,10 +119,16 @@ export const ContextSelector: React.FC<ContextSelectorProps> = ({
                                         ? 'bg-white/10 text-white' 
                                         : 'text-white/70'
                                 }`,
-                                singleValue: () => "text-white font-medium",
+                                singleValue: () => "text-white font-medium flex items-center gap-2",
                                 input: () => "text-white",
                                 dropdownIndicator: () => "text-white/50 p-1"
                             }}
+                            formatOptionLabel={(data: any) => (
+                                <div className="flex items-center gap-2">
+                                    {data.logo && <img src={data.logo} className="w-4 h-4 object-contain" alt="" />}
+                                    <span>{data.label}</span>
+                                </div>
+                            )}
                             menuPortalTarget={document.body}
                             styles={{
                                 menuPortal: (base) => ({ ...base, zIndex: 10000 })
@@ -139,7 +154,6 @@ export const ContextSelector: React.FC<ContextSelectorProps> = ({
       {/* Footer User Info */}
       <div className="absolute bottom-10 flex items-center gap-3 text-white/50 bg-black/20 px-4 py-2 rounded-full backdrop-blur-sm border border-white/5">
         <img src={user.avatar} className="w-6 h-6 rounded-full" alt="" />
-        {/* Fix: Use user.name instead of user.username */}
         <span className="text-xs">Logged in as <span className="text-white font-medium">{user.name}</span></span>
       </div>
     </div>

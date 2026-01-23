@@ -11,6 +11,7 @@ interface SettingsAppProps {
   hideTaskbar: boolean;
   setHideTaskbar: (hide: boolean) => void;
   name?: string;
+  email?: string;
   onManageAccount?: () => void;
   wallpaper: string;
   setWallpaper: (url: string) => void;
@@ -28,6 +29,7 @@ export const SettingsApp: React.FC<SettingsAppProps> = ({
     hideTaskbar, 
     setHideTaskbar, 
     name,
+    email,
     onManageAccount,
     wallpaper,
     setWallpaper,

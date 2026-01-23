@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect, useRef } from 'react';
-import { Wifi, Battery, Search, Command, User, ChevronDown, Building, Layers, Check, Bell, Maximize, Minimize } from 'lucide-react';
+import { Battery, Search, Command, User, ChevronDown, Building, Layers, Check, Bell, Maximize, Minimize } from 'lucide-react';
 import { RecentItem, Organization, Workspace } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -100,9 +101,19 @@ export const TopBar: React.FC<TopBarProps> = ({
             {showContextSwitcher && (
                 <div className="relative mr-2" ref={contextRef}>
                     <button onClick={() => setContextOpen(!contextOpen)} className={`flex items-center gap-2 px-2 py-0.5 rounded transition-colors cursor-pointer border border-transparent ${contextOpen ? 'bg-white/30' : 'hover:bg-white/20 hover:border-white/10'}`}>
-                        <div className="flex items-center gap-1.5 drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)]"><Building size={12} className="text-blue-300"/><span className="truncate max-w-[100px]">{activeOrg?.name}</span></div>
+                        <div className="flex items-center gap-1.5 drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)]">
+                            {activeOrg?.logo ? (
+                                <img src={activeOrg.logo} className="w-3 h-3 object-contain" alt="" />
+                            ) : (
+                                <Building size={12} className="text-blue-300"/>
+                            )}
+                            <span className="truncate max-w-[100px]">{activeOrg?.name}</span>
+                        </div>
                         <span className="opacity-60 text-[10px]">/</span>
-                        <div className="flex items-center gap-1.5 drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)]"><span className="truncate max-w-[80px]">{activeWorkspace?.name || 'All'}</span></div>
+                        <div className="flex items-center gap-1.5 drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)]">
+                            {activeWorkspace?.logo && <img src={activeWorkspace.logo} className="w-3 h-3 object-contain" alt="" />}
+                            <span className="truncate max-w-[80px]">{activeWorkspace?.name || 'All'}</span>
+                        </div>
                         <ChevronDown size={10} className="opacity-70 ml-1" />
                     </button>
 
@@ -111,14 +122,25 @@ export const TopBar: React.FC<TopBarProps> = ({
                              <div className="px-2 py-1 text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Organization</div>
                              {user?.organizations.map(org => (
                                  <button key={org.id} onClick={() => { switchOrg(org.id); setContextOpen(false); }} className={`text-left px-3 py-1.5 rounded text-sm flex items-center justify-between mb-1 transition-colors ${activeOrg?.id === org.id ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-900 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/10'}`}>
-                                     <span className="truncate font-bold">{org.name}</span>{activeOrg?.id === org.id && <Check size={12} />}
+                                     <div className="flex items-center gap-2">
+                                        {org.logo && <img src={org.logo} className={`w-4 h-4 object-contain ${activeOrg?.id === org.id ? 'brightness-200' : ''}`} alt="" />}
+                                        <span className="truncate font-bold">{org.name}</span>
+                                     </div>
+                                     {activeOrg?.id === org.id && <Check size={12} />}
                                  </button>
                              ))}
                              <div className="h-[1px] bg-gray-200 dark:bg-white/10 my-2 mx-1"></div>
                              <div className="px-2 py-1 text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Workspace</div>
                              {activeOrg?.workspaces.map(wk => (
                                  <button key={wk.id} onClick={() => { switchWorkspace(wk.id); setContextOpen(false); }} className={`text-left px-3 py-1.5 rounded text-sm flex items-center justify-between mb-1 transition-colors ${activeWorkspace?.id === wk.id ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-bold' : 'text-gray-900 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/10'}`}>
-                                     <div className="flex items-center gap-2"><Layers size={12} className={activeWorkspace?.id === wk.id ? 'text-blue-700 dark:text-blue-300' : 'text-gray-500'}/><span className="truncate">{wk.name}</span></div>
+                                     <div className="flex items-center gap-2">
+                                         {wk.logo ? (
+                                             <img src={wk.logo} className="w-4 h-4 object-contain" alt="" />
+                                         ) : (
+                                            <Layers size={12} className={activeWorkspace?.id === wk.id ? 'text-blue-700 dark:text-blue-300' : 'text-gray-500'}/>
+                                         )}
+                                         <span className="truncate">{wk.name}</span>
+                                     </div>
                                      {activeWorkspace?.id === wk.id && <Check size={12} className="text-blue-700 dark:text-blue-300" />}
                                  </button>
                              ))}

@@ -7,6 +7,7 @@ import { User } from '../../types';
 interface LoginScreenProps {
     mode: 'full' | 'partial';
     savedName?: string;
+    savedEmail?: string;
     onLogin: (user: User, token: string) => void;
     onSwitchAccount: () => void;
     onForgotPassword: () => void;
@@ -16,6 +17,7 @@ interface LoginScreenProps {
 export const LoginScreen: React.FC<LoginScreenProps> = ({
     mode,
     savedName,
+    savedEmail,
     onLogin,
     onSwitchAccount,
     onForgotPassword,
@@ -25,7 +27,8 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
     const [view, setView] = useState<'login' | 'forgot' | 'success'>('login');
 
     // Login Form State
-    const [email, setEmail] = useState(savedName || '');
+    const [email, setEmail] = useState(savedEmail || '');
+    const [name, setName] = useState(savedName || '');
     const [password, setPassword] = useState('');
     const [error, setError] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -33,10 +36,12 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
     // Sync savedName prop to state when it changes
     useEffect(() => {
         if (savedName) {
-            setEmail(savedName);
+            setName(savedName);
         }
-    }, [savedName]);
-
+        if (savedEmail) {
+            setEmail(savedEmail);
+        }
+    }, [savedName, savedEmail]);
     // --- Handlers ---
 
     const handleLoginSubmit = async (e: React.FormEvent) => {
@@ -133,7 +138,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
                     {/* Email Input */}
                     <div className="text-center mb-1">
                         {mode === 'partial' ? (
-                            <h2 className="text-xl font-semibold text-white tracking-wide drop-shadow-md">{email}</h2>
+                            <h2 className="text-xl font-semibold text-white tracking-wide drop-shadow-md">{name}</h2>
                         ) : (
                             <input
                                 type="text"

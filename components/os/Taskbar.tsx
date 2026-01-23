@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { LayoutGrid, Search, Rocket, ChevronUp, Wifi, Volume2, Battery, Building, Layers, Check, Bell, Maximize, Minimize } from 'lucide-react';
 import { AppId, Theme, Organization, Workspace, RecentItem } from '../../types';
@@ -207,7 +208,11 @@ export const Taskbar: React.FC<TaskbarProps> = ({
                         : 'bg-black/5 dark:bg-white/10 border-transparent hover:border-gray-400/50 dark:hover:border-white/20 text-gray-900 dark:text-gray-200'}
                   `}
               >
-                   <Building size={14} className={orgMenuOpen ? "text-white" : "text-blue-700 dark:text-sky-400"}/>
+                   {currentOrg?.logo ? (
+                       <img src={currentOrg.logo} className={`w-4 h-4 object-contain ${orgMenuOpen ? 'brightness-200' : ''}`} alt="" />
+                   ) : (
+                       <Building size={14} className={orgMenuOpen ? "text-white" : "text-blue-700 dark:text-sky-400"}/>
+                   )}
                    <span className="text-xs font-bold hidden md:block max-w-[100px] truncate">{currentOrg?.name}</span>
                    <ChevronUp size={12} className={`opacity-70 transition-transform ${orgMenuOpen ? 'rotate-180' : ''}`} />
               </button>
@@ -226,7 +231,10 @@ export const Taskbar: React.FC<TaskbarProps> = ({
                                   : 'text-gray-900 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/10'
                               }`}
                            >
-                               <span className="truncate font-medium">{org.name}</span>
+                               <div className="flex items-center gap-2 overflow-hidden">
+                                   {org.logo && <img src={org.logo} className={`w-4 h-4 object-contain shrink-0 ${currentOrg?.id === org.id ? 'brightness-200' : ''}`} alt="" />}
+                                   <span className="truncate font-medium">{org.name}</span>
+                               </div>
                                {currentOrg?.id === org.id && <Check size={14} />}
                            </button>
                        ))}
@@ -245,8 +253,12 @@ export const Taskbar: React.FC<TaskbarProps> = ({
                                   : 'text-gray-900 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/10'
                               }`}
                            >
-                               <div className="flex items-center gap-2">
-                                   <Layers size={12} className={currentWorkspace?.id === wk.id ? 'text-blue-700 dark:text-sky-400' : 'text-gray-500'}/>
+                               <div className="flex items-center gap-2 overflow-hidden">
+                                   {wk.logo ? (
+                                       <img src={wk.logo} className="w-4 h-4 object-contain shrink-0" alt="" />
+                                   ) : (
+                                       <Layers size={12} className={currentWorkspace?.id === wk.id ? 'text-blue-700 dark:text-sky-400' : 'text-gray-500'}/>
+                                   )}
                                    <span className="truncate">{wk.name}</span>
                                </div>
                                {currentWorkspace?.id === wk.id && <Check size={14} className="text-blue-700 dark:text-sky-400" />}

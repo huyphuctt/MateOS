@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Users, ShieldUser, Search, Building, Plus, X, Mail, UserIcon, Layers, Loader2, ChevronDown } from 'lucide-react';
+import { Users, ShieldUser, Search, Building, Plus, X, Mail, UserIcon, Layers, Loader2, ChevronDown, Info } from 'lucide-react';
 import Select from 'react-select';
 import { AdminConsoleData, Organization, Workspace } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
@@ -28,6 +29,7 @@ export const AdminConsole: React.FC<AdminConsoleProps> = ({ currentOrg, currentW
     const [formData, setFormData] = useState({
         username: '',
         email: '',
+        orgRole: 'user',
         workspaces: [] as { id: number; role: string }[]
     });
     
@@ -69,6 +71,7 @@ export const AdminConsole: React.FC<AdminConsoleProps> = ({ currentOrg, currentW
         setFormData({
             username: '',
             email: '',
+            orgRole: 'user',
             workspaces: []
         });
         setIsModalOpen(true);
@@ -83,6 +86,7 @@ export const AdminConsole: React.FC<AdminConsoleProps> = ({ currentOrg, currentW
         setFormData({
             username: user.name,
             email: user.email,
+            orgRole: user.role || 'user',
             workspaces: userWorkspaces
         });
         setIsModalOpen(true);
@@ -90,6 +94,7 @@ export const AdminConsole: React.FC<AdminConsoleProps> = ({ currentOrg, currentW
 
     const handleSaveUser = (e: React.FormEvent) => {
         e.preventDefault();
+        // In a real app, this would call the API to save/update the user
         setIsModalOpen(false);
     };
 
@@ -140,8 +145,14 @@ export const AdminConsole: React.FC<AdminConsoleProps> = ({ currentOrg, currentW
         ...(data.workspaces || []).map(wk => ({ value: wk.id, label: wk.name }))
     ];
 
-    const roleOptions = [
+    const workspaceRoleOptions = [
         { value: 'none', label: 'No Access' },
+        { value: 'admin', label: 'Admin' },
+        { value: 'user', label: 'User' },
+        { value: 'viewer', label: 'Viewer' }
+    ];
+
+    const orgRoleOptions = [
         { value: 'admin', label: 'Admin' },
         { value: 'user', label: 'User' },
         { value: 'viewer', label: 'Viewer' }
@@ -150,21 +161,46 @@ export const AdminConsole: React.FC<AdminConsoleProps> = ({ currentOrg, currentW
     const currentFilterOption = filterOptions.find(opt => opt.value === workspaceFilter);
     const availableWorkspaces = data.workspaces || [];
 
+    const selectClassNames = {
+        control: (state: any) => `w-full px-3 py-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-black/20 text-sm focus:outline-none transition-all flex items-center justify-between ${state.isFocused ? 'ring-2 ring-blue-500/50 border-blue-500' : ''} ${state.isDisabled ? 'opacity-70 cursor-not-allowed' : ''}`,
+        menu: () => "bg-white dark:bg-[#2d2d2d] border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl mt-1 overflow-hidden z-50",
+        option: (state: any) => `px-4 py-2 text-sm cursor-pointer ${state.isSelected ? 'bg-blue-600 text-white' : state.isFocused ? 'bg-gray-100 dark:bg-white/10 text-gray-900 dark:text-gray-100' : 'text-gray-700 dark:text-gray-300'}`,
+        singleValue: () => "text-gray-900 dark:text-gray-100",
+        placeholder: () => "text-gray-400",
+        dropdownIndicator: () => "text-gray-400 p-1"
+    };
+
+    const isOrgAdmin = formData.orgRole === 'admin';
+
     return (
         <div className="flex flex-col h-full bg-[#f8f9fa] dark:bg-[#1c1c1c] text-gray-900 dark:text-gray-100 relative">
 
             {/* Header */}
             <div className="bg-white dark:bg-[#2d2d2d] border-b border-gray-200 dark:border-gray-700 p-6 shadow-sm flex justify-between items-center shrink-0">
                 <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center text-white shadow-lg">
-                        <ShieldUser size={24} />
+                    <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center text-white shadow-lg overflow-hidden">
+                        {currentOrg.logo ? (
+                            <img src={currentOrg.logo} className="w-full h-full object-contain p-2 brightness-0 invert" alt="" />
+                        ) : (
+                            <ShieldUser size={24} />
+                        )}
                     </div>
                     <div>
                         <h1 className="text-xl font-bold">Admin Console</h1>
                         <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
-                            <Building size={12} />
+                            {currentOrg.logo ? (
+                                <img src={currentOrg.logo} className="w-3 h-3 object-contain" alt="" />
+                            ) : (
+                                <Building size={12} />
+                            )}
                             {currentOrg.name}
-                            {currentWorkspace && <span className="text-gray-400">/ {currentWorkspace.name}</span>}
+                            {currentWorkspace && (
+                                <span className="flex items-center gap-2">
+                                    <span className="text-gray-400">/</span>
+                                    {currentWorkspace.logo && <img src={currentWorkspace.logo} className="w-3 h-3 object-contain" alt="" />}
+                                    <span className="text-gray-400">{currentWorkspace.name}</span>
+                                </span>
+                            )}
                         </p>
                     </div>
                 </div>
@@ -187,7 +223,7 @@ export const AdminConsole: React.FC<AdminConsoleProps> = ({ currentOrg, currentW
                 </div>
             </div>
 
-            {/* Content */}
+            {/* Content Area */}
             <div className="flex-1 p-6 overflow-hidden flex flex-col">
 
                 {/* Toolbar */}
@@ -207,7 +243,7 @@ export const AdminConsole: React.FC<AdminConsoleProps> = ({ currentOrg, currentW
                                     unstyled
                                     classNames={{
                                         control: (state) => `pl-2 py-1 bg-white dark:bg-black/20 border rounded-md text-sm transition-all cursor-pointer flex items-center justify-between ${state.isFocused
-                                                ? 'border-blue-500 ring-2 ring-blue-500/50'
+                                                ? 'border-blue-500 ring-2 border-blue-500/50'
                                                 : 'border-gray-300 dark:border-gray-600 hover:border-gray-400'
                                             }`,
                                         menu: () => "bg-white dark:bg-[#2d2d2d] border border-gray-200 dark:border-gray-700 rounded-md shadow-lg mt-1 overflow-hidden z-50",
@@ -244,11 +280,10 @@ export const AdminConsole: React.FC<AdminConsoleProps> = ({ currentOrg, currentW
                 {/* Table */}
                 <div className="bg-white dark:bg-[#2d2d2d] rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm flex-1 overflow-hidden flex flex-col">
                     <div className="grid grid-cols-12 gap-4 p-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-white/5 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider shrink-0">
-                        <div className="col-span-4">User</div>
-                        <div className="col-span-3">Email</div>
+                        <div className="col-span-5">User</div>
                         <div className="col-span-2">Organization Role</div>
                         <div className="col-span-2">Workspaces</div>
-                        <div className="col-span-1 text-right">Access</div>
+                        <div className="col-span-3 text-right">Access</div>
                     </div>
 
                     <div className="overflow-y-auto flex-1">
@@ -267,17 +302,18 @@ export const AdminConsole: React.FC<AdminConsoleProps> = ({ currentOrg, currentW
                                 const roleInOrg = user?.role || 'No Access';
                                 return (
                                     <div key={user.id} className="grid grid-cols-12 gap-4 p-4 border-b border-gray-100 dark:border-gray-700/50 items-center hover:bg-blue-50/50 dark:hover:bg-white/5 transition-colors">
-                                        <div className="col-span-4 flex items-center gap-3">
-                                            <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-600 overflow-hidden shrink-0">
-                                                <img src={user.avatar} alt="" className="w-full h-full object-cover" />
+                                        <div className="col-span-5 flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-600 overflow-hidden shrink-0 flex items-center justify-center">
+                                                {user.avatar ? (
+                                                    <img src={user.avatar} alt="" className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <UserIcon size={16} className="text-gray-400" />
+                                                )}
                                             </div>
                                             <div className="min-w-0">
                                                 <div className="font-medium text-sm text-gray-900 dark:text-gray-100 truncate">{user.name}</div>
-                                                <div className="text-xs text-gray-500">ID: {user.id}</div>
+                                                <div className="text-xs text-gray-500">{user.email}</div>
                                             </div>
-                                        </div>
-                                        <div className="col-span-3 text-sm text-gray-600 dark:text-gray-300 truncate">
-                                            {user.email}
                                         </div>
                                         <div className="col-span-2">
                                             <span className={`px-2 py-1 rounded-full text-xs font-medium border ${roleInOrg === 'admin'
@@ -298,7 +334,7 @@ export const AdminConsole: React.FC<AdminConsoleProps> = ({ currentOrg, currentW
                                                 ))}
                                             </div>
                                         </div>
-                                        <div className="col-span-1 flex justify-end gap-2">
+                                        <div className="col-span-3 flex justify-end gap-2">
                                             <button
                                                 onClick={() => handleOpenEdit(user)}
                                                 className="text-xs font-medium text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 px-3 py-1.5 rounded transition-colors border border-blue-200 dark:border-blue-800"
@@ -345,69 +381,106 @@ export const AdminConsole: React.FC<AdminConsoleProps> = ({ currentOrg, currentW
                             {/* SCROLLABLE FORM AREA */}
                             <div className="p-6 space-y-6 flex-1 overflow-y-auto custom-scrollbar">
 
-                                <div className="space-y-1.5">
-                                    <label className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
-                                        <UserIcon size={14} /> Name
-                                    </label>
-                                    <input
-                                        type="text"
-                                        required
-                                        value={formData.username}
-                                        onChange={e => setFormData({ ...formData, username: e.target.value })}
-                                        placeholder="e.g. John Doe"
-                                        className="w-full px-3 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-black/20 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-                                    />
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
+                                            <UserIcon size={14} /> Name
+                                        </label>
+                                        <input
+                                            type="text"
+                                            required
+                                            value={formData.username}
+                                            onChange={e => setFormData({ ...formData, username: e.target.value })}
+                                            placeholder="e.g. John Doe"
+                                            className="w-full px-3 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-black/20 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                                        />
+                                    </div>
+
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
+                                            <Mail size={14} /> Email Address
+                                        </label>
+                                        <input
+                                            type="email"
+                                            required
+                                            disabled={modalMode === 'edit'}
+                                            value={formData.email}
+                                            onChange={e => setFormData({ ...formData, email: e.target.value })}
+                                            placeholder="e.g. john@company.com"
+                                            className={`w-full px-3 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-black/20 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 ${modalMode === 'edit' ? 'opacity-60 cursor-not-allowed' : ''}`}
+                                        />
+                                    </div>
                                 </div>
 
+                                {/* Organization Role Section */}
                                 <div className="space-y-1.5">
                                     <label className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
-                                        <Mail size={14} /> Email Address
+                                        <ShieldUser size={14} /> Organization Role
                                     </label>
-                                    <input
-                                        type="email"
-                                        required
-                                        value={formData.email}
-                                        onChange={e => setFormData({ ...formData, email: e.target.value })}
-                                        placeholder="e.g. john@company.com"
-                                        className="w-full px-3 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-black/20 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                                    <Select
+                                        value={orgRoleOptions.find(opt => opt.value === formData.orgRole)}
+                                        onChange={(option: any) => setFormData({ ...formData, orgRole: option?.value })}
+                                        options={orgRoleOptions}
+                                        unstyled
+                                        classNames={selectClassNames}
+                                        menuPortalTarget={document.body}
+                                        styles={{
+                                            menuPortal: (base) => ({ ...base, zIndex: 9999 })
+                                        }}
                                     />
+                                    <p className="text-[10px] text-gray-400 font-medium">This is the user's primary permission level for the entire organization.</p>
                                 </div>
 
                                 <div className="space-y-3">
-                                    <label className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
-                                        <Building size={14} /> Workspace Access & Roles
-                                    </label>
+                                    <div className="flex items-center justify-between">
+                                        <label className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
+                                            <Building size={14} /> Workspace Access & Roles
+                                        </label>
+                                        {isOrgAdmin && (
+                                            <div className="flex items-center gap-1.5 text-[10px] font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 px-2 py-0.5 rounded border border-blue-200 dark:border-blue-800">
+                                                <span className="shrink-0"><Info size={10} /></span>
+                                                Locked to Admin
+                                            </div>
+                                        )}
+                                    </div>
                                     <div className="border border-gray-200 dark:border-gray-600 rounded-lg overflow-hidden divide-y divide-gray-100 dark:divide-gray-700">
                                         {availableWorkspaces.length === 0 ? (
                                             <div className="p-3 text-sm text-gray-400 italic">No workspaces available in this organization.</div>
                                         ) : (
                                             availableWorkspaces.map(wk => {
                                                 const userWorkspace = formData.workspaces.find(w => w.id === wk.id);
-                                                const currentRole = userWorkspace ? userWorkspace.role : 'none';
-                                                const currentRoleOption = roleOptions.find(opt => opt.value === currentRole);
+                                                // If Org Admin, lock to admin role
+                                                const currentRole = isOrgAdmin ? 'admin' : (userWorkspace ? userWorkspace.role : 'none');
+                                                const currentRoleOption = workspaceRoleOptions.find(opt => opt.value === currentRole);
 
                                                 return (
                                                     <div
                                                         key={wk.id}
                                                         className={`flex items-center justify-between p-3 transition-colors ${currentRole !== 'none' ? 'bg-blue-50/30 dark:bg-blue-900/10' : ''}`}
                                                     >
-                                                        <div className="flex flex-col min-w-0 mr-4">
+                                                        <div className="flex items-center gap-3 min-w-0 mr-4">
+                                                            {wk.logo ? (
+                                                                <img src={wk.logo} className="w-4 h-4 object-contain shrink-0" alt="" />
+                                                            ) : (
+                                                                <Layers size={14} className="text-gray-400 shrink-0" />
+                                                            )}
                                                             <span className={`text-sm font-bold truncate ${currentRole !== 'none' ? 'text-blue-700 dark:text-blue-300' : 'text-gray-700 dark:text-gray-300'}`}>
                                                                 {wk.name}
                                                             </span>
                                                         </div>
                                                         <div className="w-[140px] shrink-0">
                                                             <Select
+                                                                isDisabled={isOrgAdmin}
                                                                 value={currentRoleOption}
                                                                 onChange={(option: any) => handleWorkspaceRoleChange(wk.id, option?.value)}
-                                                                options={roleOptions}
+                                                                options={workspaceRoleOptions}
                                                                 unstyled
                                                                 classNames={{
                                                                     control: (state) => `pl-3 pr-1 py-1 rounded-md text-xs font-bold transition-all cursor-pointer flex items-center justify-between border ${
                                                                         currentRole === 'none'
                                                                         ? 'bg-white dark:bg-black/20 border-gray-300 dark:border-gray-600 text-gray-500'
                                                                         : 'bg-blue-600 border-blue-600 text-white shadow-sm'
-                                                                    } ${state.isFocused ? 'ring-2 ring-blue-500/50' : ''}`,
+                                                                    } ${state.isFocused ? 'ring-2 ring-blue-500/50' : ''} ${state.isDisabled ? 'opacity-70 cursor-not-allowed' : ''}`,
                                                                     menu: () => "bg-white dark:bg-[#2d2d2d] border border-gray-200 dark:border-gray-700 rounded-md shadow-xl mt-1 overflow-hidden z-50",
                                                                     option: (state) => `px-3 py-2 text-xs font-semibold cursor-pointer ${
                                                                         state.isSelected
@@ -430,7 +503,11 @@ export const AdminConsole: React.FC<AdminConsoleProps> = ({ currentOrg, currentW
                                             })
                                         )}
                                     </div>
-                                    <p className="text-[10px] text-gray-400 font-medium">Grant specific permissions per workspace. "No Access" removes the user from that workspace.</p>
+                                    <p className="text-[10px] text-gray-400 font-medium">
+                                        {isOrgAdmin 
+                                            ? "Workspace access is locked to Admin because the user is an Organization Admin." 
+                                            : "Grant specific permissions per workspace. \"No Access\" removes the user from that workspace."}
+                                    </p>
                                 </div>
                             </div>
 
@@ -458,7 +535,7 @@ export const AdminConsole: React.FC<AdminConsoleProps> = ({ currentOrg, currentW
             {isWorkspaceModalOpen && (
                 <div className="absolute inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-200 p-4">
                     <div
-                        className="bg-white dark:bg-[#2d2d2d] rounded-2xl shadow-2xl w-full max-w-sm border border-gray-200 dark:border-gray-600 overflow-hidden"
+                        className="bg-white dark:bg-[#2d2d2d] rounded-2xl shadow-2xl w-full max-sm border border-gray-200 dark:border-gray-600 overflow-hidden"
                         onClick={e => e.stopPropagation()}
                     >
                         <form onSubmit={handleCreateWorkspace}>

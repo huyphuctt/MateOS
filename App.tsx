@@ -348,6 +348,7 @@ const App: React.FC = () => {
         <LoginScreen 
             mode={authMode === 'login_full' ? 'full' : 'partial'}
             savedName={user?.name}
+            savedEmail={user?.email}
             onLogin={login}
             onSwitchAccount={logout}
             onForgotPassword={() => alert("Recovery link sent.")}

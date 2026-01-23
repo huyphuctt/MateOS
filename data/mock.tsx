@@ -29,14 +29,23 @@ export const MOCK_USERS = [
             {
                 id: 1,
                 name: 'Solar System',
+                logo: 'https://cdn-icons-png.flaticon.com/512/2530/2530877.png',
                 role: 'admin' as const,
-                workspaces: [{ id: 1, name: 'Earth' }, { id: 2, name: 'Mars' }, { id: 3, name: 'Venus' }]
+                workspaces: [
+                    { id: 1, name: 'Earth', logo: 'https://cdn-icons-png.flaticon.com/512/2853/2853965.png' }, 
+                    { id: 2, name: 'Mars', logo: 'https://cdn-icons-png.flaticon.com/512/2530/2530863.png' }, 
+                    { id: 3, name: 'Venus', logo: 'https://cdn-icons-png.flaticon.com/512/2530/2530871.png' }
+                ]
             },
             {
                 id: 2,
                 name: 'Milky Way',
+                logo: 'https://cdn-icons-png.flaticon.com/512/3241/3241219.png',
                 role: 'user' as const,
-                workspaces: [{ id: 4, name: 'Core' }, { id: 5, name: 'Spiral Arm' }]
+                workspaces: [
+                    { id: 4, name: 'Core', logo: 'https://cdn-icons-png.flaticon.com/512/3241/3241219.png' }, 
+                    { id: 5, name: 'Spiral Arm', logo: 'https://cdn-icons-png.flaticon.com/512/2928/2928509.png' }
+                ]
             }
         ],
         role: 'admin'
@@ -58,8 +67,9 @@ export const MOCK_USERS = [
             {
                 id: 1,
                 name: 'Solar System',
+                logo: 'https://cdn-icons-png.flaticon.com/512/2530/2530877.png',
                 role: 'user' as const,
-                workspaces: [{ id: 1, name: 'Earth' }]
+                workspaces: [{ id: 1, name: 'Earth', logo: 'https://cdn-icons-png.flaticon.com/512/2853/2853965.png' }]
             }
         ],
         role: 'user'
@@ -152,7 +162,11 @@ export const MOCK_FILES: FileItem[] = [
 ];
 
 export const MOCK_ADMIN_CONSOLE = {
-    workspaces: [{ id: 1, name: 'Earth'}, { id: 2, name: 'Mars'}, { id: 3, name: 'Venus'}],
+    workspaces: [
+      { id: 1, name: 'Earth', logo: 'https://cdn-icons-png.flaticon.com/512/2853/2853965.png' }, 
+      { id: 2, name: 'Mars', logo: 'https://cdn-icons-png.flaticon.com/512/2530/2530863.png' }, 
+      { id: 3, name: 'Venus', logo: 'https://cdn-icons-png.flaticon.com/512/2530/2530871.png' }
+    ],
     users:[{
         id: '1',
         name:'Admin',
