@@ -34,9 +34,9 @@ import { NotificationCenter } from './components/os/NotificationCenter';
 import { BootScreen } from './components/os/BootScreen';
 import { LoginScreen } from './components/os/LoginScreen';
 import { AppSwitcher } from './components/os/AppSwitcher';
-import { Modal } from './components/os/Modal';
 import { AppId, WindowState, Theme, AuthMode, User, Organization, Workspace, FileItem, ColorMode } from './types';
 import { useAuth } from './contexts/AuthContext';
+import { useModal } from './contexts/ModalContext';
 import { RECENT_ITEMS, WALLPAPERS } from './data/mock';
 
 // Placeholder apps
@@ -61,6 +61,8 @@ const App: React.FC = () => {
     switchWorkspace, 
     setAuthMode 
   } = useAuth();
+  
+  const { openModal } = useModal();
 
   // --- OS UI State ---
   const [theme, setTheme] = useState<Theme>(() => {
@@ -91,9 +93,6 @@ const App: React.FC = () => {
 
   // Track context to close apps on switch
   const lastContextId = useRef<string>("");
-
-  // Modal State
-  const [showRecoveryModal, setShowRecoveryModal] = useState(false);
 
   // Appearance Sync (Dark Mode Implementation)
   useEffect(() => {
@@ -380,7 +379,11 @@ const App: React.FC = () => {
             savedEmail={user?.email}
             onLogin={login}
             onSwitchAccount={logout}
-            onForgotPassword={() => setShowRecoveryModal(true)}
+            onForgotPassword={() => openModal({
+                title: "Recovery Email Sent",
+                message: "We have sent a password recovery link to your email address. Please check your inbox.",
+                type: "success"
+            })}
             userAvatar={userAvatar}
         />
       )}
@@ -444,15 +447,6 @@ const App: React.FC = () => {
             <Taskbar openApps={windows.map(w => w.id)} activeApp={activeWindowId} onAppClick={(id) => { const win = windows.find(w => w.id === id); if (!win) openApp(id); else if (win.isMinimized) { focusWindow(id); setWindows(prev => prev.map(w => w.id === id ? { ...w, isMinimized: false } : w)); } else if (activeWindowId === id) minimizeWindow(id); else focusWindow(id); }} onStartClick={toggleStartMenu} startMenuOpen={startMenuOpen} appIcons={appIcons} theme={theme} hideTaskbar={hideTaskbar} organizations={user?.organizations || []} currentOrg={activeOrg} currentWorkspace={activeWorkspace} onSwitchOrg={switchOrg} onSwitchWorkspace={switchWorkspace} notificationPanelOpen={notificationPanelOpen} onToggleNotificationPanel={() => setNotificationPanelOpen(!notificationPanelOpen)} recentItems={RECENT_ITEMS} isFullscreen={isFullscreen} onToggleFullscreen={toggleFullscreen} />
         </div>
       )}
-
-      {/* Global Modals */}
-      <Modal
-        isOpen={showRecoveryModal}
-        onClose={() => setShowRecoveryModal(false)}
-        title="Recovery Email Sent"
-        message="We have sent a password recovery link to your email address. Please check your inbox."
-        type="success"
-      />
     </div>
   );
 };

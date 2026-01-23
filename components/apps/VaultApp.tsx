@@ -8,6 +8,7 @@ import {
 import { apiService } from '../../services/api';
 import { FileItem } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
+import { useModal } from '../../contexts/ModalContext';
 
 interface VaultAppProps {
     onOpenFile: (file: FileItem) => void;
@@ -17,6 +18,7 @@ type Category = 'All' | 'Images' | 'Videos' | 'Docs' | 'Spreadsheets' | 'PDF' | 
 
 export const VaultApp: React.FC<VaultAppProps> = ({ onOpenFile }) => {
     const { token, activeWorkspace } = useAuth();
+    const { openModal } = useModal();
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
     const [selectedCategory, setSelectedCategory] = useState<Category>('All');
     const [selectedTag, setSelectedTag] = useState<string | null>(null);
@@ -99,7 +101,11 @@ export const VaultApp: React.FC<VaultAppProps> = ({ onOpenFile }) => {
                 setFiles(prev => [newFile, ...prev]);
             }
         } catch (err) {
-            alert('Upload failed');
+            openModal({
+                title: "Error",
+                message: "Upload failed. Please check your connection and try again.",
+                type: "error"
+            });
         } finally {
             setUploading(false);
         }
@@ -185,7 +191,7 @@ export const VaultApp: React.FC<VaultAppProps> = ({ onOpenFile }) => {
     };
 
     return (
-        <div className="flex h-full bg-[#f9f9f9] dark:bg-[#202020] text-gray-800 dark:text-gray-100 font-sans">
+        <div className="flex h-full bg-[#f9f9f9] dark:bg-[#202020] text-gray-800 dark:text-gray-100 font-sans relative">
             <div className="w-56 flex flex-col border-r border-gray-200 dark:border-gray-700 bg-[#f3f3f3] dark:bg-[#1a1a1a] pt-4">
                 <div className="px-4 mb-6">
                     <button 
