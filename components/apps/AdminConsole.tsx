@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Users, ShieldUser, Search, Building, Plus, X, Mail, UserIcon, Layers, Loader2, ChevronDown, Info } from 'lucide-react';
+import { Users, ShieldUser, Search, Building, Plus, X, Mail, UserIcon, Layers, Loader2, ChevronDown, Info, Camera, Image as ImageIcon } from 'lucide-react';
 import Select from 'react-select';
 import { AdminConsoleData, Organization, Workspace } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
@@ -35,7 +35,9 @@ export const AdminConsole: React.FC<AdminConsoleProps> = ({ currentOrg, currentW
     
     // Workspace Creation Form State
     const [newWorkspaceName, setNewWorkspaceName] = useState('');
+    const [newWorkspaceLogo, setNewWorkspaceLogo] = useState<string | null>(null);
     const [isCreatingWorkspace, setIsCreatingWorkspace] = useState(false);
+    const workspaceLogoInputRef = useRef<HTMLInputElement>(null);
 
     const isInitialMount = useRef(true);
     const lastFetchedToken = useRef<string | undefined>(undefined);
@@ -104,19 +106,35 @@ export const AdminConsole: React.FC<AdminConsoleProps> = ({ currentOrg, currentW
 
         setIsCreatingWorkspace(true);
         try {
+            // Note: In production, the logo would be uploaded or sent as part of this request
             const newWorkspace = await apiService.createWorkspace(token || '', activeOrg.id, newWorkspaceName);
             if (newWorkspace) {
+                const workspaceWithLogo = { ...newWorkspace, logo: newWorkspaceLogo || undefined };
                 setData(prev => ({
                     ...prev,
-                    workspaces: [...prev.workspaces, newWorkspace]
+                    workspaces: [...prev.workspaces, workspaceWithLogo]
                 }));
                 setIsWorkspaceModalOpen(false);
                 setNewWorkspaceName('');
+                setNewWorkspaceLogo(null);
             }
         } catch (error) {
             console.error('Failed to create workspace', error);
         } finally {
             setIsCreatingWorkspace(false);
+        }
+    };
+
+    const handleWorkspaceLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                if (e.target?.result && typeof e.target.result === 'string') {
+                    setNewWorkspaceLogo(e.target.result);
+                }
+            };
+            reader.readAsDataURL(file);
         }
     };
 
@@ -535,7 +553,7 @@ export const AdminConsole: React.FC<AdminConsoleProps> = ({ currentOrg, currentW
             {isWorkspaceModalOpen && (
                 <div className="absolute inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-200 p-4">
                     <div
-                        className="bg-white dark:bg-[#2d2d2d] rounded-2xl shadow-2xl w-full max-sm border border-gray-200 dark:border-gray-600 overflow-hidden"
+                        className="bg-white dark:bg-[#2d2d2d] rounded-2xl shadow-2xl w-full max-w-md border border-gray-200 dark:border-gray-600 overflow-hidden"
                         onClick={e => e.stopPropagation()}
                     >
                         <form onSubmit={handleCreateWorkspace}>
@@ -552,7 +570,38 @@ export const AdminConsole: React.FC<AdminConsoleProps> = ({ currentOrg, currentW
                                 </button>
                             </div>
                             
-                            <div className="p-6">
+                            <div className="p-6 space-y-6">
+                                {/* Logo Upload */}
+                                <div className="flex flex-col items-center gap-4">
+                                    <div className="relative group">
+                                        <div className="w-24 h-24 rounded-2xl bg-gray-100 dark:bg-black/20 border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center overflow-hidden transition-all group-hover:border-blue-500/50">
+                                            {newWorkspaceLogo ? (
+                                                <img src={newWorkspaceLogo} className="w-full h-full object-contain p-2" alt="Preview" />
+                                            ) : (
+                                                <div className="flex flex-col items-center gap-1 text-gray-400">
+                                                    <ImageIcon size={24} />
+                                                    <span className="text-[10px] font-bold uppercase tracking-wider">Logo</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => workspaceLogoInputRef.current?.click()}
+                                            className="absolute -bottom-2 -right-2 bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-xl shadow-lg transition-transform active:scale-90"
+                                        >
+                                            <Camera size={14} />
+                                        </button>
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            ref={workspaceLogoInputRef}
+                                            className="hidden"
+                                            onChange={handleWorkspaceLogoUpload}
+                                        />
+                                    </div>
+                                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Workspace Brand</p>
+                                </div>
+
                                 <div className="space-y-1.5">
                                     <label className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
                                         <Layers size={14} /> Workspace Name
@@ -572,7 +621,10 @@ export const AdminConsole: React.FC<AdminConsoleProps> = ({ currentOrg, currentW
                             <div className="p-4 bg-gray-50 dark:bg-black/20 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-3">
                                 <button
                                     type="button"
-                                    onClick={() => setIsWorkspaceModalOpen(false)}
+                                    onClick={() => {
+                                        setIsWorkspaceModalOpen(false);
+                                        setNewWorkspaceLogo(null);
+                                    }}
                                     className="px-4 py-2 text-sm font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/10 rounded-lg transition-colors"
                                     disabled={isCreatingWorkspace}
                                 >
@@ -584,7 +636,7 @@ export const AdminConsole: React.FC<AdminConsoleProps> = ({ currentOrg, currentW
                                     className="px-6 py-2 text-sm font-bold bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg shadow-sm transition-colors flex items-center gap-2"
                                 >
                                     {isCreatingWorkspace && <Loader2 size={14} className="animate-spin" />}
-                                    Create
+                                    Create Workspace
                                 </button>
                             </div>
                         </form>
