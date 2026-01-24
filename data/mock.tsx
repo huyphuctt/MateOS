@@ -7,9 +7,9 @@ import { FileItem, RecentItem, Theme, Message, Conversation } from '../types';
 export const MOCK_USERS = [
     {
         id: '1',
-        name: 'Admin',
-        password: 'password',
-        email: 'admin@mateos.com',
+        name: 'Solar System Admin',
+        password: '1',
+        email: 'solar_admin@example.com',
         avatar: null,
         preferences: {
             themes: [
@@ -32,9 +32,14 @@ export const MOCK_USERS = [
                 logo: 'https://cdn-icons-png.flaticon.com/512/2530/2530877.png',
                 role: 'admin' as const,
                 workspaces: [
-                    { id: 1, name: 'Earth', logo: 'https://cdn-icons-png.flaticon.com/512/2853/2853965.png' }, 
-                    { id: 2, name: 'Mars', logo: 'https://cdn-icons-png.flaticon.com/512/2530/2530863.png' }, 
-                    { id: 3, name: 'Venus', logo: 'https://cdn-icons-png.flaticon.com/512/2530/2530871.png' }
+                    { id: 1, name: 'Earth', logo: 'https://cdn-icons-png.flaticon.com/512/2853/2853965.png' ,
+                        role:'admin' as const}, 
+                    { id: 2, name: 'Mars', logo: 'https://cdn-icons-png.flaticon.com/512/2530/2530863.png' ,
+                        role:'admin' as const
+                    }, 
+                    { id: 3, name: 'Venus', logo: 'https://cdn-icons-png.flaticon.com/512/2530/2530871.png' ,
+                        role:'admin' as const
+                    }
                 ]
             },
             {
@@ -43,8 +48,8 @@ export const MOCK_USERS = [
                 logo: 'https://cdn-icons-png.flaticon.com/512/3241/3241219.png',
                 role: 'user' as const,
                 workspaces: [
-                    { id: 4, name: 'Core', logo: 'https://cdn-icons-png.flaticon.com/512/3241/3241219.png' }, 
-                    { id: 5, name: 'Spiral Arm', logo: 'https://cdn-icons-png.flaticon.com/512/2928/2928509.png' }
+                    { id: 4, name: 'Core', logo: 'https://cdn-icons-png.flaticon.com/512/3241/3241219.png' , role:'admin' as const},
+                    { id: 5, name: 'Spiral Arm', logo: 'https://cdn-icons-png.flaticon.com/512/2928/2928509.png' , role:'admin' as const}
                 ]
             }
         ],
@@ -52,9 +57,9 @@ export const MOCK_USERS = [
     },
     {
         id: '2',
-        name: 'Mateo',
-        password: '123',
-        email: 'mateo@mateos.com',
+        name: 'Solar System Member',
+        password: '1',
+        email: 'solar_member@example.com',
         avatar: null,
         preferences: {
             themes: [{
@@ -69,19 +74,23 @@ export const MOCK_USERS = [
                 name: 'Solar System',
                 logo: 'https://cdn-icons-png.flaticon.com/512/2530/2530877.png',
                 role: 'user' as const,
-                workspaces: [{ id: 1, name: 'Earth', logo: 'https://cdn-icons-png.flaticon.com/512/2853/2853965.png' }]
+                workspaces: [{ id: 1, name: 'Earth', logo: 'https://cdn-icons-png.flaticon.com/512/2853/2853965.png' , role:'user' as const},
+                    {
+                    id: 2, name: 'Mars', logo: 'https://cdn-icons-png.flaticon.com/512/2530/2530863.png' , role:'user' as const
+                    }
+                ]
             }
         ],
         role: 'user'
     },
     {
         id: '3',
-        name: 'Sarah',
-        password: '123',
-        email: 'sarah@mateos.com',
+        name: 'Solar System Viewer',
+        password: '1',
+        email: 'solar_viewer@example.com',
         avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=150',
         preferences: { themes: [], active_theme: 'aqua' as Theme },
-        organizations: [{ id: 1, name: 'Solar System', logo: '', workspaces: [] }],
+        organizations: [{ id: 1, name: 'Solar System', logo: '', workspaces: [{ id: 1, name: 'Earth', logo: 'https://cdn-icons-png.flaticon.com/512/2853/2853965.png' , role:'viewer' as const}] }],
         role: 'user'
     }
 ];

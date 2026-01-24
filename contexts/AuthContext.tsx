@@ -164,12 +164,21 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     const logout = useCallback(async () => {
         await apiService.logout(token);
+        
+        // Session & Auth
         localStorage.removeItem('mateos_user');
         localStorage.removeItem('mateos_last_login');
         localStorage.removeItem('mateos_token');
         localStorage.removeItem('mateos_is_locked');
+        localStorage.removeItem('mateos_active_context');
+        
+        // OS State / UI Preferences / Temporary Settings
         localStorage.removeItem('mateos_windows');
         localStorage.removeItem('mateos_window_meta');
+        localStorage.removeItem('mateos_theme');
+        localStorage.removeItem('mateos_wallpaper');
+        localStorage.removeItem('mateos_avatar');
+
         setName('');
         setToken(undefined);
         setActiveOrgId(null);

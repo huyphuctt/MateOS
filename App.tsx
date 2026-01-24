@@ -101,6 +101,26 @@ const App: React.FC = () => {
   // Track context to close apps on switch
   const lastContextId = useRef<string>("");
 
+  // Reset OS state on logout
+  useEffect(() => {
+      if (authMode === 'login_full') {
+          // Reset UI preferences to defaults
+          setTheme('aqua');
+          setWallpaper(WALLPAPERS[0].src);
+          setUserAvatar(null);
+          
+          // Clear OS state
+          setWindows([]);
+          setActiveWindowId(null);
+          setRecentItems([]);
+          setStartMenuOpen(false);
+          setNotificationPanelOpen(false);
+          
+          // Reset restoration flag
+          setHasRestored(false);
+      }
+  }, [authMode]);
+
   // Appearance Sync (Dark Mode Implementation)
   useEffect(() => {
     const root = window.document.documentElement;

@@ -64,6 +64,7 @@ export interface Workspace {
   id: number;
   name: string;
   logo?: string;
+  role?: 'admin' | 'user' | 'viewer';
 }
 
 export interface Organization {

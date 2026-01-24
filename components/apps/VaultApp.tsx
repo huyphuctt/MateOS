@@ -31,6 +31,9 @@ export const VaultApp: React.FC<VaultAppProps> = ({ onOpenFile }) => {
     const isInitialMount = useRef(true);
     const lastFetchedToken = useRef<string | undefined>(undefined);
 
+    // Check permissions
+    const isViewer = activeWorkspace?.role === 'viewer';
+
     const loadFiles = useCallback(async (force = false) => {
         // Prevent duplicate calls if token hasn't changed, unless forced
         if (!force && token === lastFetchedToken.current && files.length > 0) {
@@ -193,21 +196,23 @@ export const VaultApp: React.FC<VaultAppProps> = ({ onOpenFile }) => {
     return (
         <div className="flex h-full bg-[#f9f9f9] dark:bg-[#202020] text-gray-800 dark:text-gray-100 font-sans relative">
             <div className="w-56 flex flex-col border-r border-gray-200 dark:border-gray-700 bg-[#f3f3f3] dark:bg-[#1a1a1a] pt-4">
-                <div className="px-4 mb-6">
-                    <button 
-                        onClick={handleUploadClick}
-                        disabled={uploading}
-                        className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-2 px-4 flex items-center justify-center gap-2 shadow-sm transition-colors text-sm font-medium disabled:opacity-50"
-                    >
-                        {uploading ? (
-                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                        ) : (
-                            <Plus size={16} />
-                        )}
-                        <span>New Upload</span>
-                    </button>
-                    <input type="file" accept="*/*" ref={fileInputRef} className="hidden" onChange={handleFileChange} />
-                </div>
+                {!isViewer && (
+                    <div className="px-4 mb-6">
+                        <button 
+                            onClick={handleUploadClick}
+                            disabled={uploading}
+                            className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-2 px-4 flex items-center justify-center gap-2 shadow-sm transition-colors text-sm font-medium disabled:opacity-50"
+                        >
+                            {uploading ? (
+                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                            ) : (
+                                <Plus size={16} />
+                            )}
+                            <span>New Upload</span>
+                        </button>
+                        <input type="file" accept="*/*" ref={fileInputRef} className="hidden" onChange={handleFileChange} />
+                    </div>
+                )}
 
                 <div className="flex-1 overflow-y-auto px-2 space-y-1">
                     <h3 className="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Categories</h3>
@@ -291,7 +296,7 @@ export const VaultApp: React.FC<VaultAppProps> = ({ onOpenFile }) => {
                         <div className="relative group mr-2">
                             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500" size={14} />
                             <input 
-                                type="text"
+                                type="text" 
                                 placeholder="Search Vault"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -325,7 +330,9 @@ export const VaultApp: React.FC<VaultAppProps> = ({ onOpenFile }) => {
                         <div className="h-full flex flex-col items-center justify-center text-gray-400 gap-2">
                             <FolderClosed size={48} className="opacity-20" />
                             <p>No files found.</p>
-                            <button onClick={handleUploadClick} className="text-blue-500 text-sm hover:underline">Upload a file</button>
+                            {!isViewer && (
+                                <button onClick={handleUploadClick} className="text-blue-500 text-sm hover:underline">Upload a file</button>
+                            )}
                         </div>
                     ) : viewMode === 'grid' ? (
                         <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-4">
