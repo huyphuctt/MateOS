@@ -1,28 +1,13 @@
 
-import React, { useState, useEffect } from 'react';
-import { Bell, Search, Filter, Trash2, Clock, Calendar, Info, XCircle } from 'lucide-react';
-import { RecentItem } from '../../types';
+import React, { useState } from 'react';
+import { Bell, Trash2, Clock, Info, XCircle } from 'lucide-react';
+import { useGlobal } from '../../contexts/GlobalContext';
 
-interface NotificationsAppProps {
-    items?: RecentItem[];
-}
-
-export const NotificationsApp: React.FC<NotificationsAppProps> = ({ items: initialItems = [] }) => {
+export const NotificationsApp: React.FC = () => {
+  const { notifications, removeNotification, clearNotifications } = useGlobal();
   const [filter, setFilter] = useState('all');
-  const [items, setItems] = useState<RecentItem[]>(initialItems);
 
-  // Sync state with props when they change (e.g. fresh fetch)
-  useEffect(() => {
-      setItems(initialItems);
-  }, [initialItems]);
-
-  const handleDelete = (id: number | string) => {
-      setItems(prev => prev.filter(i => i.id !== id));
-  };
-
-  const clearAll = () => setItems([]);
-
-  const filteredItems = filter === 'all' ? items : items.filter(i => i.type === filter);
+  const filteredItems = filter === 'all' ? notifications : notifications.filter(i => i.type === filter);
 
   return (
     <div className="flex flex-col h-full bg-[#f3f3f3] dark:bg-[#202020] text-gray-900 dark:text-gray-100">
@@ -33,13 +18,14 @@ export const NotificationsApp: React.FC<NotificationsAppProps> = ({ items: initi
                 <Bell className="text-blue-500" size={20} />
                 <h2 className="font-semibold text-lg">Notifications</h2>
                 <span className="bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 text-xs px-2 py-0.5 rounded-full font-medium">
-                    {items.length}
+                    {notifications.length}
                 </span>
             </div>
             <div className="flex items-center gap-2">
                 <button 
-                    onClick={clearAll}
+                    onClick={clearNotifications}
                     className="flex items-center gap-1 text-xs text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 px-3 py-1.5 rounded transition-colors"
+                    disabled={notifications.length === 0}
                 >
                     <Trash2 size={14} />
                     Clear All
@@ -69,7 +55,7 @@ export const NotificationsApp: React.FC<NotificationsAppProps> = ({ items: initi
             {filteredItems.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-gray-400">
                     <Bell size={48} className="mb-4 opacity-20" />
-                    <p className="text-sm">No notifications found</p>
+                    <p className="text-sm">No {filter !== 'all' ? filter : ''} notifications found</p>
                 </div>
             ) : (
                 filteredItems.map(item => (
@@ -86,11 +72,11 @@ export const NotificationsApp: React.FC<NotificationsAppProps> = ({ items: initi
                             </div>
                             <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">{item.description}</p>
                             <div className="mt-2 flex gap-2">
-                                <span className="text-[10px] uppercase tracking-wider font-bold text-gray-400">{item.type}</span>
+                                <span className="text-[10px] uppercase tracking-wider font-bold text-gray-400 bg-gray-100 dark:bg-black/20 px-2 py-0.5 rounded">{item.type}</span>
                             </div>
                         </div>
                         <button 
-                            onClick={() => handleDelete(item.id)}
+                            onClick={() => removeNotification(item.id)}
                             className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-all self-start p-1"
                         >
                             <XCircle size={16} />

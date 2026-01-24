@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Calendar, FileText, Image as ImageIcon, Command } from 'lucide-react';
-import { FileItem, RecentItem, Theme, Message, Conversation } from '../types';
+import { FileItem, NotificationItem, Theme, Message, Conversation, AppId } from '../types';
 
 // Mock Data for "Database"
 export const MOCK_USERS = [
@@ -172,14 +172,22 @@ export const WALLPAPERS = [
 ];
 
 // Global Data
-export const RECENT_ITEMS: RecentItem[] = [
+export const RECENT_ITEMS: NotificationItem[] = [
     {
         id: 1,
         title: 'Team Meeting',
         description: '10:00 AM - 11:00 AM',
         type: 'calendar',
         timestamp: 'Now',
+        target: {
+            app: AppId.VAULT,
+            params: {
+                id: 12,
+                title: "Strategy Module"
+            }
+        },
         icon: <Calendar size={18} className="text-red-500" />
+        
     },
     {
         id: 2,
@@ -204,6 +212,7 @@ export const RECENT_ITEMS: RecentItem[] = [
         type: 'system',
         timestamp: 'Yesterday',
         icon: <Command size={18} className="text-gray-500" />
+        
     },
 ];
 
@@ -248,16 +257,50 @@ export const MOCK_FILES: FileItem[] = [
 ];
 
 export const MOCK_ADMIN_CONSOLE = {
-    workspaces: [
-      { id: 1, name: 'Earth', logo: 'https://cdn-icons-png.flaticon.com/512/2853/2853965.png' }, 
-      { id: 2, name: 'Mars', logo: 'https://cdn-icons-png.flaticon.com/512/2530/2530863.png' }, 
-      { id: 3, name: 'Venus', logo: 'https://cdn-icons-png.flaticon.com/512/2530/2530871.png' }
+    "users": [
+        {
+            "id": "2",
+            "name": "Solar System Admin",
+            "email": "solar_admin@example.com",
+            "role": "admin",
+            "workspaces": [
+                { "id": 1, "role": "admin" },
+                { "id": 2, "role": "admin" },
+                { "id": 3, "role": "admin" }
+            ]
+        },
+        {
+            "id": "3",
+            "name": "Solar System Member",
+            "email": "solar_member@example.com",
+            "role": "user",
+            "workspaces": [
+                { "id": 1, "role": "user" },
+                { "id": 2, "role": "user" }
+            ]
+        },
+        {
+            "id": "4",
+            "name": "Solar System Viewer",
+            "email": "solar_viewer@example.com",
+            "role": "user",
+            "workspaces": [
+                { "id": 1, "role": "viewer" }
+            ]
+        }
     ],
-    users:[{
-        id: '1',
-        name:'Admin',
-        email:'admin@mateos.com',
-        role: 'admin' as const,
-        workspaces: [{ id: 1, role: 'admin'}, { id: 2, role: 'admin'}, { id: 3, role: 'admin'}],
-    }]
+    "workspaces": [
+        {
+            "id": 1,
+            "name": "Earth"
+        },
+        {
+            "id": 2,
+            "name": "Mars"
+        },
+        {
+            "id": 3,
+            "name": "Venus"
+        }
+    ]
 };

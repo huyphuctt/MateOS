@@ -1,7 +1,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { LayoutGrid, Search, Rocket, ChevronUp, Wifi, Volume2, Battery, Building, Layers, Check, Bell, Maximize, Minimize } from 'lucide-react';
-import { AppId, Theme, Organization, Workspace, RecentItem } from '../../types';
+import { LayoutGrid, Rocket, ChevronUp, Building, Layers, Check, Bell, Maximize, Minimize } from 'lucide-react';
+import { AppId, Theme, Organization, Workspace } from '../../types';
+import { useGlobal } from '../../contexts/GlobalContext';
 
 interface TaskbarProps {
   openApps: AppId[];
@@ -21,7 +22,6 @@ interface TaskbarProps {
   // Notification Props
   notificationPanelOpen: boolean;
   onToggleNotificationPanel: () => void;
-  recentItems: RecentItem[];
   // Fullscreen Props
   isFullscreen?: boolean;
   onToggleFullscreen?: () => void;
@@ -48,10 +48,10 @@ export const Taskbar: React.FC<TaskbarProps> = ({
   onSwitchWorkspace,
   notificationPanelOpen,
   onToggleNotificationPanel,
-  recentItems,
   isFullscreen,
   onToggleFullscreen
 }) => {
+  const { notifications } = useGlobal();
   const [time, setTime] = useState(new Date());
   const [orgMenuOpen, setOrgMenuOpen] = useState(false);
   const orgMenuRef = useRef<HTMLDivElement>(null);
@@ -290,9 +290,9 @@ export const Taskbar: React.FC<TaskbarProps> = ({
                 className={`relative transition-colors rounded-sm flex items-center justify-center ${notificationPanelOpen ? 'text-blue-700 dark:text-sky-400' : 'text-gray-900 dark:text-gray-100'}`}
             >
                 <Bell size={16} fill={notificationPanelOpen ? "currentColor" : "none"} />
-                {recentItems.length > 0 && (
+                {notifications.length > 0 && (
                     <span className="absolute -top-1.5 -right-1.5 h-3.5 min-w-[14px] flex items-center justify-center rounded-full bg-red-600 text-[9px] font-bold text-white border border-white dark:border-gray-900 shadow-sm leading-none px-0.5">
-                        {recentItems.length > 9 ? '9+' : recentItems.length}
+                        {notifications.length > 9 ? '9+' : notifications.length}
                     </span>
                 )}
             </button>

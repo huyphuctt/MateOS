@@ -1,14 +1,14 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Battery, Search, Command, User, ChevronDown, Building, Layers, Check, Bell, Maximize, Minimize } from 'lucide-react';
-import { RecentItem, Organization, Workspace } from '../../types';
+import { Command, User, ChevronDown, Building, Layers, Check, Bell, Maximize, Minimize } from 'lucide-react';
+import { Organization, Workspace } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
+import { useGlobal } from '../../contexts/GlobalContext';
 
 interface TopBarProps {
   activeAppTitle?: string;
   onOpenSettings: () => void;
   onLogout: () => void;
-  recentItems: RecentItem[];
   name: string;
   onOpenUserProfile: () => void;
   userAvatar?: string | null;
@@ -26,7 +26,6 @@ interface TopBarProps {
 
 export const TopBar: React.FC<TopBarProps> = ({ 
     activeAppTitle = 'MateOS', 
-    recentItems, 
     userAvatar,
     onOpenUserProfile,
     notificationPanelOpen,
@@ -34,8 +33,8 @@ export const TopBar: React.FC<TopBarProps> = ({
     isFullscreen,
     onToggleFullscreen
 }) => {
-  // Access auth context directly to show it's available everywhere
   const { user, activeOrg, activeWorkspace, logout, lock, switchOrg, switchWorkspace } = useAuth();
+  const { notifications } = useGlobal();
   
   const [time, setTime] = useState(new Date());
   const [menuOpen, setMenuOpen] = useState(false);
@@ -152,7 +151,7 @@ export const TopBar: React.FC<TopBarProps> = ({
                  {onToggleFullscreen && <button onClick={onToggleFullscreen} className="p-1 rounded hover:bg-white/20 transition-colors text-white" title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}>{isFullscreen ? <Minimize size={14} className="drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]" /> : <Maximize size={14} className="drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]" />}</button>}
                 <button onClick={onToggleNotificationPanel} data-panel-trigger="true" className={`flex items-center gap-1.5 p-1 rounded hover:bg-white/20 transition-colors ${notificationPanelOpen ? 'text-blue-300' : 'text-white'}`}>
                     <Bell size={16} fill={notificationPanelOpen ? "currentColor" : "none"} className="drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]" />
-                    {recentItems.length > 0 && <span className="flex h-3.5 min-w-[14px] items-center justify-center rounded-full bg-red-600 text-[9px] font-bold leading-none px-1 border border-white/40 text-white shadow-sm">{recentItems.length > 9 ? '9+' : recentItems.length}</span>}
+                    {notifications.length > 0 && <span className="flex h-3.5 min-w-[14px] items-center justify-center rounded-full bg-red-600 text-[9px] font-bold leading-none px-1 border border-white/40 text-white shadow-sm">{notifications.length > 9 ? '9+' : notifications.length}</span>}
                 </button>
             </div>
             <div data-panel-trigger="true" className="flex items-center gap-2 px-3 py-0.5 rounded transition-colors cursor-pointer select-none hover:bg-white/20 desktop-text-shadow">

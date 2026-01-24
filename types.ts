@@ -51,13 +51,14 @@ export interface AppConfig {
   preferredPosition?: { x: number; y: number };
 }
 
-export interface RecentItem {
+export interface NotificationItem {
   id: number | string;
   title: string;
   description: string;
   timestamp: string;
-  type: 'calendar' | 'file' | 'image' | 'system';
+  type: 'calendar' | 'file' | 'image' | 'system' | 'message';
   icon?: ReactNode;
+  target?: { app: AppId; params?: any };
 }
 
 export interface Workspace {

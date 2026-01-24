@@ -36,9 +36,10 @@ import { NotificationCenter } from './components/os/NotificationCenter';
 import { BootScreen } from './components/os/BootScreen';
 import { LoginScreen } from './components/os/LoginScreen';
 import { AppSwitcher } from './components/os/AppSwitcher';
-import { AppId, WindowState, Theme, AuthMode, User, Organization, Workspace, FileItem, ColorMode, RecentItem } from './types';
+import { AppId, WindowState, Theme, AuthMode, User, Organization, Workspace, FileItem, ColorMode, NotificationItem } from './types';
 import { useAuth } from './contexts/AuthContext';
 import { useModal } from './contexts/ModalContext';
+import { useGlobal } from './contexts/GlobalContext';
 import { WALLPAPERS } from './data/mock';
 import { apiService } from './services/api';
 
@@ -67,6 +68,9 @@ const App: React.FC = () => {
   } = useAuth();
   
   const { openModal } = useModal();
+  // We don't need to destructure notifications/recents here, the components will consume them via useGlobal
+  // But we can trigger a refresh if needed
+  const { refreshData, removeNotification } = useGlobal();
 
   // --- OS UI State ---
   const [theme, setTheme] = useState<Theme>(() => {
@@ -95,9 +99,6 @@ const App: React.FC = () => {
   const [isSwitcherOpen, setIsSwitcherOpen] = useState(false);
   const [switcherSelectedIndex, setSwitcherSelectedIndex] = useState(0);
 
-  // Dynamic Data State
-  const [recentItems, setRecentItems] = useState<RecentItem[]>([]);
-
   // Track context to close apps on switch
   const lastContextId = useRef<string>("");
 
@@ -112,7 +113,6 @@ const App: React.FC = () => {
           // Clear OS state
           setWindows([]);
           setActiveWindowId(null);
-          setRecentItems([]);
           setStartMenuOpen(false);
           setNotificationPanelOpen(false);
           
@@ -168,25 +168,6 @@ const App: React.FC = () => {
     document.addEventListener('fullscreenchange', handleFullscreenChange);
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
-
-  // Fetch Notifications and Recent Items
-  useEffect(() => {
-    if (authMode === 'desktop' && token) {
-        const fetchSystemData = async () => {
-            try {
-                const [notifs, recents] = await Promise.all([
-                    apiService.getNotifications(token),
-                    apiService.getRecentItems(token)
-                ]);
-                // Merge notifications and recent items for the unified list used by the OS
-                setRecentItems([...notifs, ...recents]);
-            } catch (e) {
-                console.error("Failed to fetch system data", e);
-            }
-        };
-        fetchSystemData();
-    }
-  }, [authMode, token]);
 
   const toggleFullscreen = useCallback(() => {
     if (!document.fullscreenElement) {
@@ -244,6 +225,26 @@ const App: React.FC = () => {
     setActiveWindowId(id);
     setNextZIndex(prev => prev + 1);
   }, [nextZIndex, theme]);
+
+  // Handle launching apps from notifications or recent items
+  const handleAppLaunch = useCallback((item: NotificationItem, isNotification: boolean) => {
+      // 1. Open the target app with params
+      if (item.target) {
+          openApp(item.target.app, item.target.params);
+      }
+
+      // 2. Handle specific item logic
+      if (isNotification) {
+          // If it's a notification (like Pigeon message), remove it from the list
+          removeNotification(item.id);
+      } else {
+          // If it's a recent item (like a file), verify with API
+          // "Not move it to the top" -> API handles the timestamp update, 
+          // UI will reflect changes on next full refresh or if we implement optimistic update logic.
+          // For now, we assume the API call happens but the list order locally is preserved until next fetch.
+          if (token) apiService.updateRecentItem(token, item.id);
+      }
+  }, [openApp, removeNotification, token]);
 
   const handleOpenFile = useCallback((file: FileItem) => {
       openApp(AppId.PREVIEW, { file });
@@ -304,13 +305,10 @@ const App: React.FC = () => {
     
     const currentContextId = `${activeOrg?.id}-${activeWorkspace?.id}`;
     
-    // We only clear if the user has already restored their session and manually switches.
-    // Restoration phase is when authMode is 'desktop' but hasRestored is false.
     if (hasRestored) {
         if (lastContextId.current && lastContextId.current !== currentContextId) {
             setWindows([]);
             setActiveWindowId(null);
-            // Optional: Close start menu/notification panel on context switch
             setStartMenuOpen(false);
             setNotificationPanelOpen(false);
         }
@@ -415,8 +413,9 @@ const App: React.FC = () => {
       if (window.id === AppId.ADMIN && activeOrg) return <AdminConsole currentOrg={activeOrg} currentWorkspace={activeWorkspace} />;
       if (window.id === AppId.VAULT) return <VaultApp onOpenFile={handleOpenFile} />;
       if (window.id === AppId.PREVIEW) return <PreviewApp tabs={window.data?.tabs || []} activeTabId={window.data?.activeTabId} onUpdate={(newData) => updateWindowData(AppId.PREVIEW, newData)} />;
-      if (window.id === AppId.NOTIFICATIONS) return <NotificationsApp items={recentItems} />;
-      if (window.id === AppId.PIGEON) return <PigeonApp />;
+      if (window.id === AppId.NOTIFICATIONS) return <NotificationsApp />;
+      // Pass the window.data to PigeonApp to support Deep Linking (opening specific chat from notification)
+      if (window.id === AppId.PIGEON) return <PigeonApp data={window.data} />;
       return window.component;
   };
 
@@ -452,7 +451,6 @@ const App: React.FC = () => {
                     activeAppTitle={activeAppTitle} 
                     onOpenSettings={() => openApp(AppId.SETTINGS)}
                     onLogout={logout}
-                    recentItems={recentItems}
                     name={user?.name || ''}
                     onOpenUserProfile={() => openApp(AppId.SETTINGS)}
                     userAvatar={userAvatar}
@@ -495,14 +493,20 @@ const App: React.FC = () => {
             <AppSwitcher isOpen={isSwitcherOpen} windows={sortedWindows} selectedIndex={switcherSelectedIndex} onClose={() => setIsSwitcherOpen(false)} onSelect={(idx) => { setSwitcherSelectedIndex(idx); if (sortedWindows[idx]) focusWindow(sortedWindows[idx].id); setIsSwitcherOpen(false); }} />
 
             {theme === 'aero' ? (
-                <StartMenu isOpen={startMenuOpen} onAppClick={openApp} appIcons={appIcons} onClose={() => setStartMenuOpen(false)} onLogout={logout} recentItems={recentItems} name={user?.name || ''} onOpenUserProfile={() => openApp(AppId.SETTINGS)} userAvatar={userAvatar} onLock={lock} isAdmin={activeOrg?.role === 'admin'} />
+                <StartMenu isOpen={startMenuOpen} onAppClick={openApp} appIcons={appIcons} onClose={() => setStartMenuOpen(false)} onLogout={logout} name={user?.name || ''} onOpenUserProfile={() => openApp(AppId.SETTINGS)} userAvatar={userAvatar} onLock={lock} isAdmin={activeOrg?.role === 'admin'} />
             ) : (
                 <Launchpad isOpen={startMenuOpen} onAppClick={openApp} appIcons={appIcons} onClose={() => setStartMenuOpen(false)} isAdmin={activeOrg?.role === 'admin'} />
             )}
             
-            <NotificationCenter isOpen={notificationPanelOpen} onClose={() => setNotificationPanelOpen(false)} recentItems={recentItems} onOpenNotificationsApp={() => openApp(AppId.NOTIFICATIONS)} theme={theme} />
+            <NotificationCenter 
+                isOpen={notificationPanelOpen} 
+                onClose={() => setNotificationPanelOpen(false)} 
+                onOpenNotificationsApp={() => openApp(AppId.NOTIFICATIONS)} 
+                onItemClick={handleAppLaunch}
+                theme={theme} 
+            />
 
-            <Taskbar openApps={windows.map(w => w.id)} activeApp={activeWindowId} onAppClick={(id) => { const win = windows.find(w => w.id === id); if (!win) openApp(id); else if (win.isMinimized) { focusWindow(id); setWindows(prev => prev.map(w => w.id === id ? { ...w, isMinimized: false } : w)); } else if (activeWindowId === id) minimizeWindow(id); else focusWindow(id); }} onStartClick={toggleStartMenu} startMenuOpen={startMenuOpen} appIcons={appIcons} theme={theme} hideTaskbar={hideTaskbar} organizations={user?.organizations || []} currentOrg={activeOrg} currentWorkspace={activeWorkspace} onSwitchOrg={switchOrg} onSwitchWorkspace={switchWorkspace} notificationPanelOpen={notificationPanelOpen} onToggleNotificationPanel={() => setNotificationPanelOpen(!notificationPanelOpen)} recentItems={recentItems} isFullscreen={isFullscreen} onToggleFullscreen={toggleFullscreen} />
+            <Taskbar openApps={windows.map(w => w.id)} activeApp={activeWindowId} onAppClick={(id) => { const win = windows.find(w => w.id === id); if (!win) openApp(id); else if (win.isMinimized) { focusWindow(id); setWindows(prev => prev.map(w => w.id === id ? { ...w, isMinimized: false } : w)); } else if (activeWindowId === id) minimizeWindow(id); else focusWindow(id); }} onStartClick={toggleStartMenu} startMenuOpen={startMenuOpen} appIcons={appIcons} theme={theme} hideTaskbar={hideTaskbar} organizations={user?.organizations || []} currentOrg={activeOrg} currentWorkspace={activeWorkspace} onSwitchOrg={switchOrg} onSwitchWorkspace={switchWorkspace} notificationPanelOpen={notificationPanelOpen} onToggleNotificationPanel={() => setNotificationPanelOpen(!notificationPanelOpen)} isFullscreen={isFullscreen} onToggleFullscreen={toggleFullscreen} />
         </div>
       )}
     </div>

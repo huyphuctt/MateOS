@@ -9,7 +9,14 @@ import { useAuth } from '../../contexts/AuthContext';
 import { apiService } from '../../services/api';
 import { User, Message, Conversation, FileItem } from '../../types';
 
-export const PigeonApp: React.FC = () => {
+interface PigeonAppProps {
+    data?: {
+        conversationId?: number;
+        messageId?: string;
+    }
+}
+
+export const PigeonApp: React.FC<PigeonAppProps> = ({ data }) => {
     const { user, token } = useAuth();
     const [conversations, setConversations] = useState<Conversation[]>([]);
     const [selectedConvId, setSelectedConvId] = useState<number | null>(null);
@@ -18,6 +25,9 @@ export const PigeonApp: React.FC = () => {
     const [loadingConvs, setLoadingConvs] = useState(true);
     const [loadingMessages, setLoadingMessages] = useState(false);
     const [sending, setSending] = useState(false);
+    
+    // Deep Linking State
+    const [highlightMessageId, setHighlightMessageId] = useState<string | null>(null);
     
     // New Chat / Group Modal
     const [isNewChatOpen, setIsNewChatOpen] = useState(false);
@@ -36,6 +46,17 @@ export const PigeonApp: React.FC = () => {
     const inputRef = useRef<HTMLInputElement>(null);
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const messageRefs = useRef<{[key: string]: HTMLDivElement | null}>({});
+
+    // --- Deep Link Effect ---
+    useEffect(() => {
+        if (data?.conversationId) {
+            setSelectedConvId(data.conversationId);
+        }
+        if (data?.messageId) {
+            setHighlightMessageId(data.messageId);
+        }
+    }, [data]);
 
     // --- Data Fetching ---
 
@@ -67,10 +88,21 @@ export const PigeonApp: React.FC = () => {
         }
     }, [selectedConvId, token]);
 
-    // Scroll to bottom
+    // Scroll Logic
     useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [messages]);
+        if (messages.length > 0) {
+            if (highlightMessageId && messageRefs.current[highlightMessageId]) {
+                // Scroll to specific message if highlighted
+                messageRefs.current[highlightMessageId]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                // Clear highlight after a delay
+                const timer = setTimeout(() => setHighlightMessageId(null), 2000);
+                return () => clearTimeout(timer);
+            } else {
+                // Default: Scroll to bottom
+                messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+    }, [messages, highlightMessageId]);
 
     // --- Search Users for New Chat ---
     useEffect(() => {
@@ -378,17 +410,22 @@ export const PigeonApp: React.FC = () => {
                             messages.map(msg => {
                                 const isMe = msg.sender_id === user?.id;
                                 const sender = activeConv.users.find(u => u.id === msg.sender_id);
+                                const isHighlighted = msg.id === highlightMessageId;
                                 
                                 return (
-                                    <div key={msg.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
+                                    <div 
+                                        key={msg.id} 
+                                        className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} transition-all duration-500`}
+                                        ref={el => { messageRefs.current[msg.id] = el; }}
+                                    >
                                         {!isMe && activeConv.is_group && (
                                             <span className="text-[10px] text-gray-500 ml-2 mb-1">{sender?.name}</span>
                                         )}
-                                        <div className={`max-w-[70%] rounded-2xl p-3 text-sm shadow-sm ${
+                                        <div className={`max-w-[70%] rounded-2xl p-3 text-sm shadow-sm transition-all duration-500 ${
                                             isMe 
                                             ? 'bg-blue-600 text-white rounded-tr-none' 
                                             : 'bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-tl-none border border-gray-100 dark:border-gray-600'
-                                        }`}>
+                                        } ${isHighlighted ? 'ring-4 ring-yellow-400/50 scale-105 shadow-xl' : ''}`}>
                                             {/* Attachments */}
                                             {msg.attachments && msg.attachments.length > 0 && (
                                                 <div className="mb-2 space-y-1">

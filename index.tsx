@@ -4,6 +4,7 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 import { AuthProvider } from './contexts/AuthContext';
 import { ModalProvider } from './contexts/ModalContext';
+import { GlobalProvider } from './contexts/GlobalContext';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
@@ -14,9 +15,11 @@ const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>
     <AuthProvider>
-      <ModalProvider>
-        <App />
-      </ModalProvider>
+      <GlobalProvider>
+        <ModalProvider>
+          <App />
+        </ModalProvider>
+      </GlobalProvider>
     </AuthProvider>
   </React.StrictMode>
 );

@@ -1,7 +1,7 @@
 
 import React, { useRef, useEffect } from 'react';
 import { Search, Power, User, Lock } from 'lucide-react';
-import { AppId, RecentItem } from '../../types';
+import { AppId } from '../../types';
 
 interface StartMenuProps {
   isOpen: boolean;
@@ -9,7 +9,6 @@ interface StartMenuProps {
   appIcons: Record<AppId, React.ReactNode>;
   onClose: () => void;
   onLogout: () => void;
-  recentItems: RecentItem[];
   name: string;
   onOpenUserProfile: () => void;
   userAvatar?: string | null;
@@ -23,7 +22,6 @@ export const StartMenu: React.FC<StartMenuProps> = ({
     appIcons, 
     onClose, 
     onLogout, 
-    recentItems,
     name,
     onOpenUserProfile,
     userAvatar,

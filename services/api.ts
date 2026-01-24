@@ -1,6 +1,6 @@
 
 import { MOCK_USERS, MOCK_FILES, MOCK_ADMIN_CONSOLE, RECENT_ITEMS, MOCK_MESSAGES, MOCK_CONVERSATIONS } from '../data/mock';
-import { User, FileItem, Organization, AdminConsoleData, Workspace, RecentItem, Message, Conversation } from '../types';
+import { User, FileItem, Organization, AdminConsoleData, Workspace, NotificationItem, Message, Conversation, AppId } from '../types';
 import { MessageSquare } from 'lucide-react';
 
 interface AuthResponse {
@@ -191,7 +191,7 @@ class ApiService {
         console.log(`ApiService: adminConsole for org ${organization_id}`);
         if (this.isMock) {
             await this.mockDelay(500);
-            return {...MOCK_ADMIN_CONSOLE} as AdminConsoleData;
+            return {...MOCK_ADMIN_CONSOLE} as unknown as AdminConsoleData;
         }
 
         try {
@@ -336,12 +336,31 @@ class ApiService {
 
     // --- Notifications & Recent Items ---
 
-    public async getNotifications(token: string): Promise<RecentItem[]> {
+    public async getNotifications(token: string): Promise<NotificationItem[]> {
         console.log('ApiService: getNotifications');
         if (this.isMock) {
             await this.mockDelay(500);
+            
+            // Generate a Mock Pigeon Notification
+            const mockPigeonNotif: NotificationItem = {
+                id: 'n-pigeon-1',
+                title: 'Solar System Admin',
+                description: 'Sent you a message: "I uploaded the new specs."',
+                timestamp: '5m ago',
+                type: 'message',
+                // Target Pigeon App and specific conversation/message
+                target: {
+                    app: AppId.PIGEON,
+                    params: {
+                        conversationId: 2,
+                        messageId: 'm5'
+                    }
+                }
+            };
+
             // Return system or calendar events as notifications
-            return RECENT_ITEMS.filter(i => ['system', 'calendar'].includes(i.type));
+            const standardNotifs = RECENT_ITEMS.filter(i => ['system', 'calendar'].includes(i.type));
+            return [mockPigeonNotif, ...standardNotifs];
         }
 
         try {
@@ -356,12 +375,26 @@ class ApiService {
         }
     }
 
-    public async getRecentItems(token: string): Promise<RecentItem[]> {
+    public async getRecentItems(token: string): Promise<NotificationItem[]> {
         console.log('ApiService: getRecentItems');
         if (this.isMock) {
             await this.mockDelay(500);
-            // Return files or images as recent items
-            return RECENT_ITEMS.filter(i => ['file', 'image'].includes(i.type));
+            
+            // Map MOCK_FILES to Recent Items with correct targets
+            const filesAsRecents: NotificationItem[] = MOCK_FILES.slice(0, 5).map(f => ({
+                id: `recent-${f.id}`,
+                title: f.name,
+                description: `Edited ${f.date}`,
+                timestamp: f.date,
+                type: 'file', // Mapped type
+                target: {
+                    app: AppId.PREVIEW,
+                    params: { file: f }
+                }
+            }));
+
+            // Return these file-based recents
+            return filesAsRecents;
         }
 
         try {
@@ -376,11 +409,30 @@ class ApiService {
         }
     }
 
+    public async updateRecentItem(token: string, id: string | number): Promise<boolean> {
+        console.log(`ApiService: updateRecentItem ${id}`);
+        // In a real app, this updates the "last accessed" timestamp
+        if (this.isMock) {
+            // We do nothing in mock to respect the "not move it to the top" constraint visually for now,
+            // but log it to show the API call happened.
+            return true;
+        }
+        
+        try {
+            await fetch(`${this.apiUrl}/recent/update`, {
+                method: 'POST',
+                headers: this.getHeaders(token),
+                body: JSON.stringify({ id })
+            });
+            return true;
+        } catch(e) { return false; }
+    }
+
     // --- Pigeon (Messaging) Full Feature Set ---
 
     // 1. List user conversations
     public async getConversations(token: string, userId: string): Promise<Conversation[]> {
-        console.log('ApiService: getConversations');
+        // console.log('ApiService: getConversations'); // Reduced log noise
         if (this.isMock) {
             await this.mockDelay(500);
             return MOCK_CONVERSATIONS.filter(c => c.users.some(u => u.id === userId));
@@ -427,7 +479,7 @@ class ApiService {
 
     // 6. Fetch messages
     public async getMessages(token: string, conversationId: number): Promise<Message[]> {
-        console.log(`ApiService: getMessages for conv ${conversationId}`);
+        // console.log(`ApiService: getMessages for conv ${conversationId}`); // Reduced log noise
         if (this.isMock) {
             await this.mockDelay(300);
             return MOCK_MESSAGES

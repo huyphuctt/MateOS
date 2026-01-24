@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Building, Layers, ArrowRight, Check } from 'lucide-react';
+import { Building, Layers, ArrowRight, Check, User as UserIcon } from 'lucide-react';
 import Select from 'react-select';
 import { User, Organization, Workspace } from '../../types';
 
@@ -153,7 +153,13 @@ export const ContextSelector: React.FC<ContextSelectorProps> = ({
       
       {/* Footer User Info */}
       <div className="absolute bottom-10 flex items-center gap-3 text-white/50 bg-black/20 px-4 py-2 rounded-full backdrop-blur-sm border border-white/5">
-        <img src={user.avatar} className="w-6 h-6 rounded-full" alt="" />
+        {user.avatar ? (
+            <img src={user.avatar} className="w-6 h-6 rounded-full object-cover" alt="" />
+        ) : (
+            <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center overflow-hidden">
+                <UserIcon size={14} className="text-white" />
+            </div>
+        )}
         <span className="text-xs">Logged in as <span className="text-white font-medium">{user.name}</span></span>
       </div>
     </div>
