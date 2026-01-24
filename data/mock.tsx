@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Calendar, FileText, Image as ImageIcon, Command } from 'lucide-react';
-import { FileItem, RecentItem, Theme } from '../types';
+import { FileItem, RecentItem, Theme, Message, Conversation } from '../types';
 
 // Mock Data for "Database"
 export const MOCK_USERS = [
@@ -73,6 +73,83 @@ export const MOCK_USERS = [
             }
         ],
         role: 'user'
+    },
+    {
+        id: '3',
+        name: 'Sarah',
+        password: '123',
+        email: 'sarah@mateos.com',
+        avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=150',
+        preferences: { themes: [], active_theme: 'aqua' as Theme },
+        organizations: [{ id: 1, name: 'Solar System', logo: '', workspaces: [] }],
+        role: 'user'
+    }
+];
+
+export const MOCK_CONVERSATIONS: Conversation[] = [
+    {
+        id: 1,
+        title: "", // Title is dynamic for 1-1
+        is_group: false,
+        last_message: "Sounds good. Also, the new wallpaper looks great!",
+        unread_count: 1,
+        updated_at: new Date(Date.now() - 3400000).toISOString(),
+        users: [MOCK_USERS[0], MOCK_USERS[1]] // Admin & Mateo
+    },
+    {
+        id: 2,
+        title: "Project Alpha",
+        is_group: true,
+        last_message: "I uploaded the new specs.",
+        unread_count: 0,
+        updated_at: new Date(Date.now() - 86400000).toISOString(),
+        users: [MOCK_USERS[0], MOCK_USERS[1], MOCK_USERS[2]] // All three
+    }
+];
+
+export const MOCK_MESSAGES: Message[] = [
+    {
+        id: 'm1',
+        conversation_id: 1,
+        sender_id: '2', // Mateo
+        content: 'Hey Admin, have you checked the Vault settings?',
+        timestamp: new Date(Date.now() - 3600000).toISOString(),
+        status: 'read'
+    },
+    {
+        id: 'm2',
+        conversation_id: 1,
+        sender_id: '1', // Admin
+        content: 'Not yet, I will look at it after lunch.',
+        timestamp: new Date(Date.now() - 3500000).toISOString(),
+        status: 'read'
+    },
+    {
+        id: 'm3',
+        conversation_id: 1,
+        sender_id: '2', // Mateo
+        content: 'Sounds good. Also, the new wallpaper looks great!',
+        timestamp: new Date(Date.now() - 3400000).toISOString(),
+        status: 'sent'
+    },
+    {
+        id: 'm4',
+        conversation_id: 2,
+        sender_id: '3', // Sarah
+        content: 'Can we review the designs?',
+        timestamp: new Date(Date.now() - 90000000).toISOString(),
+        status: 'read'
+    },
+    {
+        id: 'm5',
+        conversation_id: 2,
+        sender_id: '1', // Admin
+        content: 'I uploaded the new specs.',
+        timestamp: new Date(Date.now() - 86400000).toISOString(),
+        status: 'read',
+        attachments: [
+            { id: '1', name: 'Project_Alpha_Specs.pdf', type: 'pdf', size: '2.4 MB', date: '2024-05-20', url: 'https://pdfobject.com/pdf/sample.pdf', status: 'Ready' }
+        ]
     }
 ];
 

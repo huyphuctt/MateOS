@@ -6,7 +6,8 @@ export enum AppId {
   ADMIN = 'admin',
   NOTIFICATIONS = 'notifications',
   VAULT = 'vault',
-  PREVIEW = 'preview'
+  PREVIEW = 'preview',
+  PIGEON = 'pigeon'
 }
 
 export type Theme = 'aero' | 'aqua';
@@ -106,4 +107,25 @@ export interface AdminConsoleData{
       role: 'admin' | 'user';    
       workspaces?: { id: number; role: string }[];
   }[];
+}
+
+export interface Message {
+  id: string;
+  conversation_id: number;
+  sender_id: string;
+  content: string;
+  timestamp: string; // ISO string
+  status: 'sending' | 'sent' | 'read';
+  attachments?: FileItem[];
+  mentions?: string[]; // user IDs
+}
+
+export interface Conversation {
+    id: number;
+    title: string;
+    is_group: boolean;
+    last_message: string;
+    unread_count: number;
+    updated_at: string;
+    users: User[]; // Full user objects for members
 }

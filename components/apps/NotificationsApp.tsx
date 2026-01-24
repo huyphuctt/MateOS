@@ -1,11 +1,20 @@
-import React, { useState } from 'react';
-import { Bell, Search, Filter, Trash2, Clock, Calendar, Info } from 'lucide-react';
-import { RecentItem } from '../../types';
-import { RECENT_ITEMS } from '../../data/mock';
 
-export const NotificationsApp: React.FC = () => {
+import React, { useState, useEffect } from 'react';
+import { Bell, Search, Filter, Trash2, Clock, Calendar, Info, XCircle } from 'lucide-react';
+import { RecentItem } from '../../types';
+
+interface NotificationsAppProps {
+    items?: RecentItem[];
+}
+
+export const NotificationsApp: React.FC<NotificationsAppProps> = ({ items: initialItems = [] }) => {
   const [filter, setFilter] = useState('all');
-  const [items, setItems] = useState<RecentItem[]>(RECENT_ITEMS);
+  const [items, setItems] = useState<RecentItem[]>(initialItems);
+
+  // Sync state with props when they change (e.g. fresh fetch)
+  useEffect(() => {
+      setItems(initialItems);
+  }, [initialItems]);
 
   const handleDelete = (id: number | string) => {
       setItems(prev => prev.filter(i => i.id !== id));
@@ -84,7 +93,7 @@ export const NotificationsApp: React.FC = () => {
                             onClick={() => handleDelete(item.id)}
                             className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-all self-start p-1"
                         >
-                            <XCircleIcon />
+                            <XCircle size={16} />
                         </button>
                     </div>
                 ))
@@ -93,11 +102,3 @@ export const NotificationsApp: React.FC = () => {
     </div>
   );
 };
-
-const XCircleIcon = () => (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="12" cy="12" r="10"></circle>
-        <line x1="15" y1="9" x2="9" y2="15"></line>
-        <line x1="9" y1="9" x2="15" y2="15"></line>
-    </svg>
-);

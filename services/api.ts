@@ -1,6 +1,7 @@
 
-import { MOCK_USERS, MOCK_FILES, MOCK_ADMIN_CONSOLE } from '../data/mock';
-import { User, FileItem, Organization, AdminConsoleData, Workspace } from '../types';
+import { MOCK_USERS, MOCK_FILES, MOCK_ADMIN_CONSOLE, RECENT_ITEMS, MOCK_MESSAGES, MOCK_CONVERSATIONS } from '../data/mock';
+import { User, FileItem, Organization, AdminConsoleData, Workspace, RecentItem, Message, Conversation } from '../types';
+import { MessageSquare } from 'lucide-react';
 
 interface AuthResponse {
     success: boolean;
@@ -331,6 +332,187 @@ class ApiService {
             console.error('Vault upload error:', error);
             return null;
         }
+    }
+
+    // --- Notifications & Recent Items ---
+
+    public async getNotifications(token: string): Promise<RecentItem[]> {
+        console.log('ApiService: getNotifications');
+        if (this.isMock) {
+            await this.mockDelay(500);
+            // Return system or calendar events as notifications
+            return RECENT_ITEMS.filter(i => ['system', 'calendar'].includes(i.type));
+        }
+
+        try {
+             const response = await fetch(`${this.apiUrl}/notifications/refresh`, {
+                headers: this.getHeaders(token),
+            });
+            const data = await response.json();
+            return data || [];
+        } catch (error) {
+            console.error('getNotifications error:', error);
+            return [];
+        }
+    }
+
+    public async getRecentItems(token: string): Promise<RecentItem[]> {
+        console.log('ApiService: getRecentItems');
+        if (this.isMock) {
+            await this.mockDelay(500);
+            // Return files or images as recent items
+            return RECENT_ITEMS.filter(i => ['file', 'image'].includes(i.type));
+        }
+
+        try {
+             const response = await fetch(`${this.apiUrl}/recently/refresh`, {
+                headers: this.getHeaders(token),
+            });
+            const data = await response.json();
+            return data || [];
+        } catch (error) {
+            console.error('getRecentItems error:', error);
+            return [];
+        }
+    }
+
+    // --- Pigeon (Messaging) Full Feature Set ---
+
+    // 1. List user conversations
+    public async getConversations(token: string, userId: string): Promise<Conversation[]> {
+        console.log('ApiService: getConversations');
+        if (this.isMock) {
+            await this.mockDelay(500);
+            return MOCK_CONVERSATIONS.filter(c => c.users.some(u => u.id === userId));
+        }
+        try {
+            const response = await fetch(`${this.apiUrl}/api/conversations`, { headers: this.getHeaders(token) });
+            return await response.json();
+        } catch(e) { return []; }
+    }
+
+    // 2. Create conversation
+    public async createConversation(token: string, userIds: string[], title?: string): Promise<number | null> {
+         console.log('ApiService: createConversation', userIds, title);
+         if (this.isMock) {
+             await this.mockDelay(600);
+             const newId = Date.now();
+             const users = MOCK_USERS.filter(u => userIds.includes(u.id));
+             
+             // Check if it's a group or 1-1
+             const isGroup = userIds.length > 2; // sender + >1 receiver
+
+             const newConv: Conversation = {
+                 id: newId,
+                 title: title || '',
+                 is_group: isGroup,
+                 last_message: 'Conversation started',
+                 unread_count: 0,
+                 updated_at: new Date().toISOString(),
+                 users: users as any
+             };
+             MOCK_CONVERSATIONS.push(newConv);
+             return newId;
+         }
+         try {
+             const response = await fetch(`${this.apiUrl}/api/conversations`, {
+                 method: 'POST',
+                 headers: this.getHeaders(token),
+                 body: JSON.stringify({ user_ids: userIds, title })
+             });
+             const data = await response.json();
+             return data.conversation_id;
+         } catch(e) { return null; }
+    }
+
+    // 6. Fetch messages
+    public async getMessages(token: string, conversationId: number): Promise<Message[]> {
+        console.log(`ApiService: getMessages for conv ${conversationId}`);
+        if (this.isMock) {
+            await this.mockDelay(300);
+            return MOCK_MESSAGES
+                .filter(m => m.conversation_id === conversationId)
+                .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+        }
+         try {
+            const response = await fetch(`${this.apiUrl}/api/conversations/${conversationId}/messages`, { headers: this.getHeaders(token) });
+            const json = await response.json();
+            return json.data;
+        } catch(e) { return []; }
+    }
+
+    // 7. Send message (with file support)
+    public async sendMessage(token: string, conversationId: number, content: string, senderId: string, file?: File): Promise<Message | null> {
+         console.log(`ApiService: sendMessage to ${conversationId}`);
+         if (this.isMock) {
+             await this.mockDelay(400);
+             
+             let attachments: FileItem[] = [];
+             if (file) {
+                 // Simulate file upload
+                 attachments.push({
+                    id: Date.now().toString() + '-file',
+                    name: file.name,
+                    type: file.type.startsWith('image/') ? 'image' : 'doc',
+                    size: '1.2 MB',
+                    date: new Date().toISOString(),
+                    url: URL.createObjectURL(file),
+                    status: 'Ready'
+                 });
+             }
+
+             const newMessage: Message = {
+                 id: Date.now().toString(),
+                 conversation_id: conversationId,
+                 sender_id: senderId,
+                 content,
+                 timestamp: new Date().toISOString(),
+                 status: 'sent',
+                 attachments: attachments.length > 0 ? attachments : undefined
+             };
+             
+             MOCK_MESSAGES.push(newMessage);
+             
+             // Update conversation last message
+             const conv = MOCK_CONVERSATIONS.find(c => c.id === conversationId);
+             if (conv) {
+                 conv.last_message = file ? `Sent a file: ${file.name}` : content;
+                 conv.updated_at = newMessage.timestamp;
+             }
+
+             return newMessage;
+         }
+         try {
+             const formData = new FormData();
+             formData.append('conversation_id', conversationId.toString());
+             formData.append('message', content); // This mocks the structure in the prompt slightly for FormData compatibility
+             if(file) formData.append('file', file);
+             
+             const response = await fetch(`${this.apiUrl}/api/messages`, {
+                 method: 'POST',
+                 headers: { 'Authorization': `Bearer ${token}` }, // No content-type for FormData
+                 body: formData
+             });
+             const data = await response.json();
+             return data.message;
+         } catch(e) { return null; }
+    }
+    
+    // Search Users for New Chat
+    public async searchUsers(token: string, query: string): Promise<User[]> {
+        console.log(`ApiService: searchUsers ${query}`);
+        if(this.isMock) {
+             await this.mockDelay(300);
+             if(!query) return MOCK_USERS as unknown as User[];
+             return MOCK_USERS.filter(u => 
+                 u.name.toLowerCase().includes(query.toLowerCase()) || 
+                 u.email.toLowerCase().includes(query.toLowerCase())
+             ) as unknown as User[];
+        }
+        try {
+            const response = await fetch(`${this.apiUrl}/api/users?search=${query}`, { headers: this.getHeaders(token) });
+            return await response.json();
+        } catch(e) { return []; }
     }
 }
 
