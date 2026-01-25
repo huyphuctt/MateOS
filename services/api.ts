@@ -1,6 +1,6 @@
 
-import { MOCK_USERS, MOCK_FILES, MOCK_ADMIN_CONSOLE, RECENT_ITEMS, MOCK_MESSAGES, MOCK_CONVERSATIONS } from '../data/mock';
-import { User, FileItem, Organization, AdminConsoleData, Workspace, NotificationItem, Message, Conversation, AppId } from '../types';
+import { MOCK_USERS, MOCK_FILES, MOCK_ADMIN_CONSOLE, RECENT_ITEMS, MOCK_MESSAGES, MOCK_CONVERSATIONS, MOCK_WORKSHOP_MODULES, MOCK_WORKSHOP_PROJECTS } from '../data/mock';
+import { User, FileItem, Organization, AdminConsoleData, Workspace, NotificationItem, Message, Conversation, AppId, WorkshopModule, WorkshopProject } from '../types';
 import { MessageSquare } from 'lucide-react';
 
 interface AuthResponse {
@@ -565,6 +565,71 @@ class ApiService {
             const response = await fetch(`${this.apiUrl}/api/users?search=${query}`, { headers: this.getHeaders(token) });
             return await response.json();
         } catch(e) { return []; }
+    }
+
+    // --- WORKSHOP ---
+
+    public async getWorkshopModules(token: string): Promise<WorkshopModule[]> {
+        console.log('ApiService: getWorkshopModules');
+        if (this.isMock) {
+            await this.mockDelay(300);
+            return MOCK_WORKSHOP_MODULES;
+        }
+        try {
+            const response = await fetch(`${this.apiUrl}/workshop/modules`, { headers: this.getHeaders(token) });
+            return await response.json();
+        } catch (e) { return []; }
+    }
+
+    public async getWorkshopProjects(token: string): Promise<WorkshopProject[]> {
+        console.log('ApiService: getWorkshopProjects');
+        if (this.isMock) {
+            await this.mockDelay(500);
+            return MOCK_WORKSHOP_PROJECTS;
+        }
+        try {
+            const response = await fetch(`${this.apiUrl}/workshop/projects`, { headers: this.getHeaders(token) });
+            return await response.json();
+        } catch (e) { return []; }
+    }
+
+    public async createWorkshopProject(token: string, briefData: { objective: string, audience: string, context: string, selectedFiles: string[] }): Promise<WorkshopProject | null> {
+        console.log('ApiService: createWorkshopProject');
+        if (this.isMock) {
+            await this.mockDelay(800);
+            
+            const rootId = `node-${Date.now()}`;
+            const timestamp = new Date().toISOString();
+            
+            const newProject: WorkshopProject = {
+                id: `proj-${Date.now()}`,
+                title: briefData.objective.split(' ').slice(0, 5).join(' ') || 'Untitled Workshop',
+                status: 'inprogress',
+                updatedAt: timestamp,
+                rootNodeId: rootId,
+                nodes: {
+                    [rootId]: {
+                        id: rootId,
+                        parentId: null,
+                        type: 'brief',
+                        title: 'Creative Brief',
+                        content: `# Objective\n${briefData.objective}\n\n# Audience\n${briefData.audience}\n\n# Context\n${briefData.context}\n\n# Reference Assets\n${briefData.selectedFiles.join(', ')}`,
+                        timestamp,
+                        childrenIds: []
+                    }
+                }
+            };
+            MOCK_WORKSHOP_PROJECTS.push(newProject);
+            return newProject;
+        }
+        try {
+            const response = await fetch(`${this.apiUrl}/workshop/projects`, { 
+                method: 'POST',
+                headers: this.getHeaders(token),
+                body: JSON.stringify(briefData)
+            });
+            return await response.json();
+        } catch (e) { return null; }
     }
 }
 

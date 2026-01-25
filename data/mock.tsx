@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Calendar, FileText, Image as ImageIcon, Command } from 'lucide-react';
-import { FileItem, NotificationItem, Theme, Message, Conversation, AppId } from '../types';
+import { FileItem, NotificationItem, Theme, Message, Conversation, AppId, WorkshopProject, WorkshopModule } from '../types';
 
 // Mock Data for "Database"
 export const MOCK_USERS = [
@@ -304,3 +304,195 @@ export const MOCK_ADMIN_CONSOLE = {
         }
     ]
 };
+
+// --- WORKSHOP MOCK DATA ---
+
+export const MOCK_WORKSHOP_MODULES: WorkshopModule[] = [
+    { id: 'outline', label: 'Structural Outline', description: 'Organize ideas into a hierarchy', iconName: 'Layout' },
+    { id: 'draft', label: 'Content Drafting', description: 'Expand outlines into full prose', iconName: 'FileText' },
+    { id: 'refine', label: 'Refinement & Polish', description: 'Edit for tone and grammar', iconName: 'Sparkles' },
+    { id: 'summary', label: 'Executive Summary', description: 'Create high-level overviews', iconName: 'Layers' },
+];
+
+export const MOCK_WORKSHOP_PROJECTS: WorkshopProject[] = [
+    {
+        id: 'proj-1',
+        title: 'Q3 Marketing Strategy',
+        status: 'completed',
+        updatedAt: new Date(Date.now() - 86400000 * 2).toISOString(),
+        rootNodeId: 'node-1',
+        nodes: {
+            'node-1': {
+                id: 'node-1',
+                parentId: null,
+                type: 'brief',
+                title: 'Brief: Q3 Marketing',
+                content: '# Objective\nIncrease brand awareness for the new "Solar" product line.\n\n# Audience\nTech-savvy millennials.\n\n# Context\nUse a bold, futuristic tone.',
+                timestamp: new Date(Date.now() - 86400000 * 5).toISOString(),
+                childrenIds: ['node-2']
+            },
+            'node-2': {
+                id: 'node-2',
+                parentId: 'node-1',
+                type: 'outline',
+                title: 'Outline V1',
+                content: '# Campaign Outline\n1. Teaser Phase\n2. Launch Event\n3. Sustaining Phase',
+                timestamp: new Date(Date.now() - 86400000 * 4).toISOString(),
+                childrenIds: ['node-3']
+            },
+            'node-3': {
+                id: 'node-3',
+                parentId: 'node-2',
+                type: 'draft',
+                title: 'Draft V1',
+                content: '## Teaser Phase\nWe start by releasing cryptic images on social media...',
+                timestamp: new Date(Date.now() - 86400000 * 3).toISOString(),
+                childrenIds: ['node-4']
+            },
+            'node-4': {
+                id: 'node-4',
+                parentId: 'node-3',
+                type: 'refine',
+                title: 'Polished Draft',
+                content: '## Teaser Phase\nInitiate the campaign with a series of enigmatic visuals across social platforms to generate intrigue.',
+                timestamp: new Date(Date.now() - 86400000 * 2).toISOString(),
+                childrenIds: []
+            }
+        }
+    },
+    {
+        id: 'proj-2',
+        title: 'Product Alpha User Guide',
+        status: 'inprogress',
+        updatedAt: new Date(Date.now() - 3600000).toISOString(),
+        rootNodeId: 'node-10',
+        nodes: {
+            'node-10': {
+                id: 'node-10',
+                parentId: null,
+                type: 'brief',
+                title: 'Brief: User Guide',
+                content: '# Objective\nExplain how to use the dashboard.\n\n# Audience\nNew users.',
+                timestamp: new Date(Date.now() - 3600000 * 2).toISOString(),
+                childrenIds: ['node-11', 'node-12']
+            },
+            'node-11': {
+                id: 'node-11',
+                parentId: 'node-10',
+                type: 'outline',
+                title: 'Outline Option A',
+                content: '1. Login\n2. Dashboard Overview\n3. Settings',
+                timestamp: new Date(Date.now() - 3600000).toISOString(),
+                childrenIds: []
+            },
+            'node-12': {
+                id: 'node-12',
+                parentId: 'node-10',
+                type: 'outline',
+                title: 'Outline Option B',
+                content: '1. Getting Started\n2. Advanced Features\n3. Troubleshooting',
+                timestamp: new Date(Date.now() - 3600000).toISOString(),
+                childrenIds: []
+            }
+        }
+    },
+    {
+        id: 'proj-3',
+        title: 'Sci-Fi Novel Concept: "Echoes of Void"',
+        status: 'inprogress',
+        updatedAt: new Date(Date.now() - 1200000).toISOString(),
+        rootNodeId: 'node-c-1',
+        nodes: {
+            'node-c-1': {
+                id: 'node-c-1',
+                parentId: null,
+                type: 'brief',
+                title: 'Brief: Sci-Fi Novel',
+                content: '# Objective\nCreate a compelling opening chapter for a science fiction novel.\n\n# Audience\nYoung Adult (YA) Sci-Fi readers.\n\n# Context\nThemes of isolation, artificial intelligence, and discovery.',
+                timestamp: new Date(Date.now() - 86400000 * 3).toISOString(),
+                childrenIds: ['node-c-2', 'node-c-3', 'node-c-4']
+            },
+            'node-c-2': {
+                id: 'node-c-2',
+                parentId: 'node-c-1',
+                type: 'outline',
+                title: 'Direction A: Space Opera',
+                content: '# Outline: Space Opera\n1. Introduction of Captain Vance.\n2. Discovery of the derelict ship.\n3. The AI "Echo" wakes up.',
+                timestamp: new Date(Date.now() - 86400000 * 2.5).toISOString(),
+                childrenIds: ['node-c-5', 'node-c-6']
+            },
+            'node-c-3': {
+                id: 'node-c-3',
+                parentId: 'node-c-1',
+                type: 'outline',
+                title: 'Direction B: Cyberpunk Noir',
+                content: '# Outline: Cyberpunk Noir\n1. Rain-slicked streets of Neo-Tokyo.\n2. Detective Kael receives a mysterious chip.\n3. The chip contains a sentient virus.',
+                timestamp: new Date(Date.now() - 86400000 * 2.5).toISOString(),
+                childrenIds: ['node-c-9']
+            },
+            'node-c-4': {
+                id: 'node-c-4',
+                parentId: 'node-c-1',
+                type: 'outline',
+                title: 'Direction C: Solarpunk Utopian',
+                content: '# Outline: Solarpunk\n1. The Vertical Gardens of New Gaia.\n2. Elara tends to the bio-drones.\n3. A glitch in the weather control system.',
+                timestamp: new Date(Date.now() - 86400000 * 2.5).toISOString(),
+                childrenIds: []
+            },
+            'node-c-5': {
+                id: 'node-c-5',
+                parentId: 'node-c-2',
+                type: 'draft',
+                title: 'Draft: The Ambush',
+                content: 'Captain Vance gripped the console. "Shields up!" he roared, but the silence of the void was his only reply. The derelict ship loomed ahead, a ghost in the machine.',
+                timestamp: new Date(Date.now() - 86400000 * 2).toISOString(),
+                childrenIds: ['node-c-7', 'node-c-8']
+            },
+            'node-c-6': {
+                id: 'node-c-6',
+                parentId: 'node-c-2',
+                type: 'draft',
+                title: 'Draft: The Treaty',
+                content: 'Vance adjusted his collar. "We come in peace," he broadcasted on all frequencies. The alien vessel hummed, a low vibration that rattled his teeth.',
+                timestamp: new Date(Date.now() - 86400000 * 2).toISOString(),
+                childrenIds: []
+            },
+            'node-c-7': {
+                id: 'node-c-7',
+                parentId: 'node-c-5',
+                type: 'refine',
+                title: 'Polish: Gritty Tone',
+                content: 'Vance\'s knuckles turned white against the cold steel of the console. "Shields!" he barked, his voice cracking against the oppressive silence. The ghost ship drifted closer, a metallic corpse in the endless dark.',
+                timestamp: new Date(Date.now() - 86400000 * 1).toISOString(),
+                childrenIds: []
+            },
+            'node-c-8': {
+                id: 'node-c-8',
+                parentId: 'node-c-5',
+                type: 'refine',
+                title: 'Polish: High Adventure',
+                content: 'With a daring grin, Vance slammed the throttle. "Hold onto your hats, folks!" The Star-Jumper surged forward, dancing between the debris of the ancient vessel.',
+                timestamp: new Date(Date.now() - 86400000 * 1).toISOString(),
+                childrenIds: []
+            },
+            'node-c-9': {
+                id: 'node-c-9',
+                parentId: 'node-c-3',
+                type: 'draft',
+                title: 'Draft: Neon Rain',
+                content: 'The neon lights reflected in the puddles like spilled chemical waste. Kael pulled his collar up. The chip burned a hole in his pocket.',
+                timestamp: new Date(Date.now() - 86400000 * 2).toISOString(),
+                childrenIds: ['node-c-10']
+            },
+            'node-c-10': {
+                id: 'node-c-10',
+                parentId: 'node-c-9',
+                type: 'summary',
+                title: 'Exec Summary',
+                content: '**Logline:** A burnt-out detective discovers a sentient virus that could rewrite reality.\n\n**Tone:** Dark, atmospheric, philosophical.',
+                timestamp: new Date(Date.now() - 86400000 * 0.5).toISOString(),
+                childrenIds: []
+            }
+        }
+    }
+];

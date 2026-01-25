@@ -7,7 +7,8 @@ export enum AppId {
   NOTIFICATIONS = 'notifications',
   VAULT = 'vault',
   PREVIEW = 'preview',
-  PIGEON = 'pigeon'
+  PIGEON = 'pigeon',
+  WORKSHOP = 'workshop'
 }
 
 export type Theme = 'aero' | 'aqua';
@@ -130,4 +131,34 @@ export interface Conversation {
     unread_count: number;
     updated_at: string;
     users: User[]; // Full user objects for members
+}
+
+// --- Workshop Types ---
+
+export type WorkshopNodeType = 'brief' | 'outline' | 'draft' | 'refine' | 'summary';
+
+export interface WorkshopNode {
+    id: string;
+    parentId: string | null;
+    type: WorkshopNodeType;
+    title: string;
+    content: string;
+    timestamp: string;
+    childrenIds: string[];
+}
+
+export interface WorkshopProject {
+    id: string;
+    title: string;
+    status: 'inprogress' | 'completed';
+    updatedAt: string;
+    nodes: Record<string, WorkshopNode>; // Flat map for easy graph lookup
+    rootNodeId: string;
+}
+
+export interface WorkshopModule {
+    id: WorkshopNodeType;
+    label: string;
+    description: string;
+    iconName: 'Layout' | 'FileText' | 'Sparkles' | 'Layers'; // Map to Lucide icons in component
 }

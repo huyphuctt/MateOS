@@ -16,7 +16,8 @@ import {
   Vault,
   File,
   Eye,
-  Send
+  Send,
+  Hammer
 } from 'lucide-react';
 
 import { Taskbar } from './components/os/Taskbar';
@@ -29,6 +30,7 @@ import { NotificationsApp } from './components/apps/NotificationsApp';
 import { VaultApp } from './components/apps/VaultApp'; 
 import { PreviewApp } from './components/apps/DocViewerApp'; 
 import { PigeonApp } from './components/apps/PigeonApp';
+import { WorkshopApp } from './components/apps/WorkshopApp';
 import { ContextSelector } from './components/os/ContextSelector';
 import { TopBar } from './components/os/TopBar';
 import { Launchpad } from './components/os/Launchpad';
@@ -239,9 +241,6 @@ const App: React.FC = () => {
           removeNotification(item.id);
       } else {
           // If it's a recent item (like a file), verify with API
-          // "Not move it to the top" -> API handles the timestamp update, 
-          // UI will reflect changes on next full refresh or if we implement optimistic update logic.
-          // For now, we assume the API call happens but the list order locally is preserved until next fetch.
           if (token) apiService.updateRecentItem(token, item.id);
       }
   }, [openApp, removeNotification, token]);
@@ -356,6 +355,12 @@ const App: React.FC = () => {
         component: null,
         defaultSize: { width: 850, height: 600 }
     },
+    [AppId.WORKSHOP]: {
+        title: 'Workshop',
+        icon: <Hammer className="text-indigo-500" size={20} />,
+        component: null,
+        defaultSize: { width: 1000, height: 700 }
+    },
   }), []);
 
   // Session Persistence
@@ -416,6 +421,7 @@ const App: React.FC = () => {
       if (window.id === AppId.NOTIFICATIONS) return <NotificationsApp />;
       // Pass the window.data to PigeonApp to support Deep Linking (opening specific chat from notification)
       if (window.id === AppId.PIGEON) return <PigeonApp data={window.data} />;
+      if (window.id === AppId.WORKSHOP) return <WorkshopApp />;
       return window.component;
   };
 
@@ -475,6 +481,10 @@ const App: React.FC = () => {
                 <button onDoubleClick={() => openApp(AppId.PIGEON)} className="w-20 flex flex-col items-center gap-1.5 group text-white hover:bg-white/10 rounded-xl p-2 transition-all active:scale-95">
                     <Send className="w-10 h-10 text-sky-400 desktop-icon-shadow" />
                     <span className="text-xs text-center line-clamp-2 desktop-text-shadow font-bold">Pigeon</span>
+                </button>
+                <button onDoubleClick={() => openApp(AppId.WORKSHOP)} className="w-20 flex flex-col items-center gap-1.5 group text-white hover:bg-white/10 rounded-xl p-2 transition-all active:scale-95">
+                    <Hammer className="w-10 h-10 text-indigo-400 desktop-icon-shadow" />
+                    <span className="text-xs text-center line-clamp-2 desktop-text-shadow font-bold">Workshop</span>
                 </button>
                 {activeOrg?.role === 'admin' && (
                     <button onDoubleClick={() => openApp(AppId.ADMIN)} className="w-20 flex flex-col items-center gap-1.5 group text-white hover:bg-white/10 rounded-xl p-2 transition-all active:scale-95">
