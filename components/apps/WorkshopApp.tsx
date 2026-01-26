@@ -13,7 +13,7 @@ import {
     Handle,
     Position
 } from '@xyflow/react';
-import '@xyflow/react/dist/style.css';
+// import '@xyflow/react/dist/style.css'; // Removed: CSS is loaded via index.html link to prevent ESM loader errors
 import { 
     PenTool, Layers, FileText, Sparkles, Layout, 
     ChevronRight, ChevronLeft, Plus, History, 
@@ -111,6 +111,116 @@ const nodeTypes = { custom: CustomNode };
 
 // --- SUB-COMPONENTS ---
 
+// 0. Export Preview Modal
+const ExportPreviewModal = ({ 
+    isOpen, 
+    onClose, 
+    content, 
+    onConfirm, 
+    isExporting 
+}: { 
+    isOpen: boolean, 
+    onClose: () => void, 
+    content: string, 
+    onConfirm: (finalContent: string, format: 'md' | 'doc' | 'pdf') => void,
+    isExporting: boolean
+}) => {
+    const [editableContent, setEditableContent] = useState(content);
+    const [format, setFormat] = useState<'md' | 'doc' | 'pdf'>('doc');
+
+    useEffect(() => {
+        setEditableContent(content);
+    }, [content]);
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="absolute inset-0 z-50 bg-white/95 dark:bg-[#1e1e1e]/95 backdrop-blur-sm flex flex-col animate-in fade-in duration-200">
+            {/* Header */}
+            <div className="h-14 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between px-6 bg-white dark:bg-[#252525] shrink-0">
+                <h3 className="font-bold text-lg flex items-center gap-2 text-gray-900 dark:text-white">
+                    <Eye className="text-indigo-500" size={20}/>
+                    Review & Export
+                </h3>
+                <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-white/10 rounded-full transition-colors text-gray-500">
+                    <X size={20} />
+                </button>
+            </div>
+
+            {/* Split View */}
+            <div className="flex-1 flex overflow-hidden">
+                {/* Editor */}
+                <div className="flex-1 flex flex-col border-r border-gray-200 dark:border-gray-700 min-w-0">
+                    <div className="bg-gray-50 dark:bg-[#1a1a1a] px-4 py-2 text-xs font-bold text-gray-500 uppercase tracking-wider border-b border-gray-200 dark:border-gray-700 flex justify-between">
+                        <span>Markdown Source</span>
+                        <span className="text-[10px] opacity-70">Editable</span>
+                    </div>
+                    <textarea 
+                        className="flex-1 resize-none p-6 bg-white dark:bg-[#1e1e1e] text-gray-800 dark:text-gray-200 font-mono text-sm focus:outline-none"
+                        value={editableContent}
+                        onChange={(e) => setEditableContent(e.target.value)}
+                        spellCheck={false}
+                    />
+                </div>
+
+                {/* Preview */}
+                <div className="flex-1 flex flex-col min-w-0 bg-white dark:bg-[#1e1e1e]">
+                    <div className="bg-gray-50 dark:bg-[#1a1a1a] px-4 py-2 text-xs font-bold text-gray-500 uppercase tracking-wider border-b border-gray-200 dark:border-gray-700">
+                        <span>Live Preview</span>
+                    </div>
+                    <div className="flex-1 overflow-y-auto p-8 bg-white dark:bg-[#1e1e1e]">
+                        {/* Overriding prose headers to prevent H1 from being too massive in the preview */}
+                        <article className="prose prose-sm prose-slate dark:prose-invert max-w-none prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg">
+                            <ReactMarkdown>{editableContent}</ReactMarkdown>
+                        </article>
+                    </div>
+                </div>
+            </div>
+
+            {/* Footer */}
+            <div className="h-16 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#252525] flex items-center justify-between px-6 gap-4 shrink-0">
+                
+                {/* Format Selector */}
+                <div className="flex items-center gap-3">
+                    <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Format:</span>
+                    <div className="flex bg-gray-200 dark:bg-black/40 rounded-lg p-1">
+                        {['doc', 'pdf', 'md'].map((f) => (
+                            <button
+                                key={f}
+                                onClick={() => setFormat(f as any)}
+                                className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all uppercase ${
+                                    format === f 
+                                    ? 'bg-white dark:bg-[#3d3d3d] shadow-sm text-indigo-600 dark:text-indigo-400' 
+                                    : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'
+                                }`}
+                            >
+                                {f === 'doc' ? 'Word' : f}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                    <button 
+                        onClick={onClose}
+                        className="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/10 rounded-lg transition-colors"
+                    >
+                        Cancel
+                    </button>
+                    <button 
+                        onClick={() => onConfirm(editableContent, format)}
+                        disabled={isExporting}
+                        className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-lg shadow-md flex items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        {isExporting ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
+                        Export
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 // 1. Dashboard View
 const DashboardView = ({ 
     projects, 
@@ -204,7 +314,7 @@ const SetupView = ({
     vaultFiles 
 }: { 
     briefData: NonNullable<WorkshopTab['briefData']>, 
-    onUpdateBrief: (data: WorkshopTab['briefData']) => void,
+    onUpdateBrief: (data: WorkshopTab['briefData']) => void, 
     onCreateProject: () => void,
     vaultFiles: FileItem[]
 }) => {
@@ -316,8 +426,11 @@ const WorkspaceView = ({
     const [showFocusContext, setShowFocusContext] = useState(true);
     const [isGenerating, setIsGenerating] = useState(false);
     const [generationCount, setGenerationCount] = useState(1);
-    const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
+    
+    // Export State
     const [isExporting, setIsExporting] = useState(false);
+    const [previewContent, setPreviewContent] = useState('');
+    const [isPreviewOpen, setIsPreviewOpen] = useState(false);
     
     // Tab Persistence State
     const [activeNodeId, setActiveNodeId] = useState<string | null>(initialActiveNodeId || project.rootNodeId);
@@ -451,24 +564,31 @@ const WorkspaceView = ({
     };
 
     const compileDocument = (): string => {
-        if (!activeNodeId) return '';
-        const ancestors = getAncestors(activeNodeId, project);
-        // Clean markdown: Remove --- HEADER --- separator artifacts if present in logic, 
-        // but here we just join raw content.
-        // We might want to add headers for each section automatically.
-        return ancestors.map(n => `\n\n# ${n.type.toUpperCase()}: ${n.title}\n\n${n.content}`).join('');
+        // Use currentLeafId to get the full path of the current branch, 
+        // ensuring export includes all modules regardless of which specific node is focused.
+        const exportNodeId = currentLeafId || activeNodeId;
+        if (!exportNodeId) return '';
+        
+        const ancestors = getAncestors(exportNodeId, project);
+        // Clean markdown: Using ## instead of # to reduce heading size
+        return ancestors.map(n => `\n\n## ${n.type.toUpperCase()}: ${n.title}\n\n${n.content}`).join('');
     };
 
-    const handleExport = async (format: 'md' | 'doc' | 'pdf') => {
-        setIsExportMenuOpen(false);
+    // Stage 1: Prepare for Export (Open Modal)
+    const handleExportClick = () => {
         const content = compileDocument();
         if (!content) return;
 
-        setIsExporting(true);
+        setPreviewContent(content);
+        setIsPreviewOpen(true);
+    };
 
+    // Stage 2: Confirm Export (Trigger Download from Edited Content)
+    const confirmExport = async (finalContent: string, format: 'md' | 'doc' | 'pdf') => {
+        setIsExporting(true);
         try {
             if (format === 'md') {
-                const blob = new Blob([content], { type: 'text/markdown' });
+                const blob = new Blob([finalContent], { type: 'text/markdown' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
@@ -476,7 +596,7 @@ const WorkspaceView = ({
                 a.click();
             } else if (format === 'doc') {
                 // Use Gemini to format HTML
-                const htmlContent = await geminiService.convertToDocumentHtml(content);
+                const htmlContent = await geminiService.convertToDocumentHtml(finalContent);
                 const fullHtml = `
                     <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
                     <head><meta charset="utf-8"><title>${project.title}</title></head>
@@ -493,7 +613,7 @@ const WorkspaceView = ({
                 // Open new window for printing
                 const printWindow = window.open('', '_blank');
                 if (printWindow) {
-                    const htmlContent = await geminiService.convertToDocumentHtml(content); // Use AI for better PDF formatting too
+                    const htmlContent = await geminiService.convertToDocumentHtml(finalContent); // Use AI for better PDF formatting too
                     printWindow.document.write(`
                         <html>
                         <head>
@@ -516,6 +636,7 @@ const WorkspaceView = ({
                     printWindow.document.close();
                 }
             }
+            setIsPreviewOpen(false); // Close modal on success
         } catch (e) {
             console.error("Export failed", e);
         } finally {
@@ -646,7 +767,17 @@ const WorkspaceView = ({
     const activeAncestors = (project && activeNodeId) ? getAncestors(activeNodeId, project) : [];
 
     return (
-        <div className="h-full flex flex-col bg-white dark:bg-[#1e1e1e] text-gray-900 dark:text-gray-100 overflow-hidden">
+        <div className="h-full flex flex-col bg-white dark:bg-[#1e1e1e] text-gray-900 dark:text-gray-100 overflow-hidden relative">
+            
+            {/* Export Preview Modal Overlay */}
+            <ExportPreviewModal 
+                isOpen={isPreviewOpen}
+                onClose={() => setIsPreviewOpen(false)}
+                content={previewContent}
+                onConfirm={confirmExport}
+                isExporting={isExporting}
+            />
+
             {/* Workspace Toolbar */}
             <div className="h-10 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between px-4 bg-gray-50 dark:bg-[#252525]">
                 <div className="flex bg-gray-200 dark:bg-black/30 p-0.5 rounded-lg">
@@ -667,26 +798,13 @@ const WorkspaceView = ({
                 <div className="flex items-center gap-2">
                     <div className="relative">
                         <button 
-                            onClick={() => setIsExportMenuOpen(!isExportMenuOpen)}
+                            onClick={handleExportClick}
                             className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded-md text-xs font-bold shadow-sm transition-all"
                             disabled={isExporting}
                         >
                             {isExporting ? <Loader2 size={12} className="animate-spin" /> : <Download size={12} />}
                             Export
                         </button>
-                        {isExportMenuOpen && (
-                            <div className="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-[#2d2d2d] rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
-                                <button onClick={() => handleExport('md')} className="w-full text-left px-4 py-2.5 text-xs font-medium hover:bg-gray-100 dark:hover:bg-white/10 flex items-center gap-2">
-                                    <FileText size={14} className="text-gray-500" /> Markdown (.md)
-                                </button>
-                                <button onClick={() => handleExport('doc')} className="w-full text-left px-4 py-2.5 text-xs font-medium hover:bg-gray-100 dark:hover:bg-white/10 flex items-center gap-2">
-                                    <FileDown size={14} className="text-blue-500" /> Word Document (.doc)
-                                </button>
-                                <button onClick={() => handleExport('pdf')} className="w-full text-left px-4 py-2.5 text-xs font-medium hover:bg-gray-100 dark:hover:bg-white/10 flex items-center gap-2">
-                                    <Printer size={14} className="text-gray-500" /> Print / PDF
-                                </button>
-                            </div>
-                        )}
                     </div>
                     <button onClick={() => setShowContext(!showContext)} className={`p-1.5 rounded-lg transition-colors ${showContext ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400' : 'text-gray-500 hover:bg-gray-200 dark:hover:bg-white/10'}`}>
                         <History size={16} />
