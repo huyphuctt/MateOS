@@ -70,6 +70,27 @@ class GeminiService {
           return "Error generating workshop content. Please check API Key.";
       }
   }
+
+  public async convertToDocumentHtml(markdown: string): Promise<string> {
+      const prompt = `Convert the following Markdown content into a semantic, clean HTML string suitable for a Word Document. 
+      Do not include <html>, <head>, or <body> tags, just the inner content.
+      Use inline styles only if absolutely necessary for critical formatting (like alignment).
+      Ensure headers (h1, h2, etc.) and lists are properly formatted HTML tags.
+      
+      MARKDOWN CONTENT:
+      ${markdown}`;
+
+      try {
+          const response = await this.ai.models.generateContent({
+              model: 'gemini-3-flash-preview',
+              contents: prompt
+          });
+          return response.text || "<p>Error converting document.</p>";
+      } catch (error) {
+          console.error("HTML Conversion Error:", error);
+          return "<p>Error converting document.</p>";
+      }
+  }
 }
 
 export const geminiService = new GeminiService();

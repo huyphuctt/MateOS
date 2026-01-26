@@ -13,11 +13,12 @@ import {
     Handle,
     Position
 } from '@xyflow/react';
+import '@xyflow/react/dist/style.css';
 import { 
     PenTool, Layers, FileText, Sparkles, Layout, 
     ChevronRight, ChevronLeft, Plus, History, 
     Maximize2, GitBranch, ArrowRight, Save, X, File as FileIcon, Loader2, LayoutGrid, CheckCircle2, Clock, Eye,
-    PanelLeftClose, PanelLeft, Home
+    PanelLeftClose, PanelLeft, Home, Download, Printer, FileDown
 } from 'lucide-react';
 import { WorkshopProject, WorkshopNode, WorkshopNodeType, FileItem, WorkshopModule } from '../../types';
 import { geminiService } from '../../services/geminiService';
@@ -44,7 +45,7 @@ interface WorkshopTab {
 }
 
 // Helper to map icon names string to components
-const IconMap = {
+const IconMap: Record<string, any> = {
     'Layout': Layout,
     'FileText': FileText,
     'Sparkles': Sparkles,
@@ -315,6 +316,8 @@ const WorkspaceView = ({
     const [showFocusContext, setShowFocusContext] = useState(true);
     const [isGenerating, setIsGenerating] = useState(false);
     const [generationCount, setGenerationCount] = useState(1);
+    const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
+    const [isExporting, setIsExporting] = useState(false);
     
     // Tab Persistence State
     const [activeNodeId, setActiveNodeId] = useState<string | null>(initialActiveNodeId || project.rootNodeId);
@@ -444,6 +447,79 @@ const WorkspaceView = ({
             console.error("Generation failed", e);
         } finally {
             setIsGenerating(false);
+        }
+    };
+
+    const compileDocument = (): string => {
+        if (!activeNodeId) return '';
+        const ancestors = getAncestors(activeNodeId, project);
+        // Clean markdown: Remove --- HEADER --- separator artifacts if present in logic, 
+        // but here we just join raw content.
+        // We might want to add headers for each section automatically.
+        return ancestors.map(n => `\n\n# ${n.type.toUpperCase()}: ${n.title}\n\n${n.content}`).join('');
+    };
+
+    const handleExport = async (format: 'md' | 'doc' | 'pdf') => {
+        setIsExportMenuOpen(false);
+        const content = compileDocument();
+        if (!content) return;
+
+        setIsExporting(true);
+
+        try {
+            if (format === 'md') {
+                const blob = new Blob([content], { type: 'text/markdown' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${project.title.replace(/\s+/g, '_')}_export.md`;
+                a.click();
+            } else if (format === 'doc') {
+                // Use Gemini to format HTML
+                const htmlContent = await geminiService.convertToDocumentHtml(content);
+                const fullHtml = `
+                    <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+                    <head><meta charset="utf-8"><title>${project.title}</title></head>
+                    <body>${htmlContent}</body>
+                    </html>
+                `;
+                const blob = new Blob([fullHtml], { type: 'application/vnd.ms-word' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${project.title.replace(/\s+/g, '_')}_export.doc`;
+                a.click();
+            } else if (format === 'pdf') {
+                // Open new window for printing
+                const printWindow = window.open('', '_blank');
+                if (printWindow) {
+                    const htmlContent = await geminiService.convertToDocumentHtml(content); // Use AI for better PDF formatting too
+                    printWindow.document.write(`
+                        <html>
+                        <head>
+                            <title>${project.title}</title>
+                            <style>
+                                body { font-family: sans-serif; padding: 40px; max-width: 800px; mx-auto; line-height: 1.6; }
+                                h1, h2, h3 { color: #333; }
+                                p { margin-bottom: 1em; }
+                            </style>
+                        </head>
+                        <body>
+                            <h1>${project.title}</h1>
+                            ${htmlContent}
+                            <script>
+                                window.onload = function() { window.print(); }
+                            </script>
+                        </body>
+                        </html>
+                    `);
+                    printWindow.document.close();
+                }
+            }
+        } catch (e) {
+            console.error("Export failed", e);
+        } finally {
+            setIsExporting(false);
         }
     };
 
@@ -588,9 +664,34 @@ const WorkspaceView = ({
                     </button>
                 </div>
 
-                <button onClick={() => setShowContext(!showContext)} className={`p-1.5 rounded-lg transition-colors ${showContext ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400' : 'text-gray-500 hover:bg-gray-200 dark:hover:bg-white/10'}`}>
-                    <History size={16} />
-                </button>
+                <div className="flex items-center gap-2">
+                    <div className="relative">
+                        <button 
+                            onClick={() => setIsExportMenuOpen(!isExportMenuOpen)}
+                            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded-md text-xs font-bold shadow-sm transition-all"
+                            disabled={isExporting}
+                        >
+                            {isExporting ? <Loader2 size={12} className="animate-spin" /> : <Download size={12} />}
+                            Export
+                        </button>
+                        {isExportMenuOpen && (
+                            <div className="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-[#2d2d2d] rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
+                                <button onClick={() => handleExport('md')} className="w-full text-left px-4 py-2.5 text-xs font-medium hover:bg-gray-100 dark:hover:bg-white/10 flex items-center gap-2">
+                                    <FileText size={14} className="text-gray-500" /> Markdown (.md)
+                                </button>
+                                <button onClick={() => handleExport('doc')} className="w-full text-left px-4 py-2.5 text-xs font-medium hover:bg-gray-100 dark:hover:bg-white/10 flex items-center gap-2">
+                                    <FileDown size={14} className="text-blue-500" /> Word Document (.doc)
+                                </button>
+                                <button onClick={() => handleExport('pdf')} className="w-full text-left px-4 py-2.5 text-xs font-medium hover:bg-gray-100 dark:hover:bg-white/10 flex items-center gap-2">
+                                    <Printer size={14} className="text-gray-500" /> Print / PDF
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                    <button onClick={() => setShowContext(!showContext)} className={`p-1.5 rounded-lg transition-colors ${showContext ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400' : 'text-gray-500 hover:bg-gray-200 dark:hover:bg-white/10'}`}>
+                        <History size={16} />
+                    </button>
+                </div>
             </div>
 
             <div className="flex-1 flex overflow-hidden">
@@ -762,185 +863,147 @@ const WorkspaceView = ({
     );
 };
 
-// --- MAIN APP ---
-
 export const WorkshopApp: React.FC = () => {
     const { token, activeWorkspace } = useAuth();
-    
-    // Global State
+    const [view, setView] = useState<'dashboard' | 'setup' | 'workspace'>('dashboard');
     const [projects, setProjects] = useState<WorkshopProject[]>([]);
     const [modules, setModules] = useState<WorkshopModule[]>([]);
     const [vaultFiles, setVaultFiles] = useState<FileItem[]>([]);
+    
+    // Active Project State
+    const [activeProject, setActiveProject] = useState<WorkshopProject | null>(null);
+    const [activeNodeId, setActiveNodeId] = useState<string | null>(null);
+    const [currentLeafId, setCurrentLeafId] = useState<string | null>(null);
 
-    // Tab Management
-    const [tabs, setTabs] = useState<WorkshopTab[]>([{ id: 'dashboard', type: 'dashboard', title: 'Dashboard' }]);
-    const [activeTabId, setActiveTabId] = useState('dashboard');
+    // Setup State
+    const [briefData, setBriefData] = useState<NonNullable<WorkshopTab['briefData']>>({
+        objective: '',
+        audience: '',
+        context: '',
+        selectedFiles: []
+    });
 
-    // Initial Fetch
+    const [loading, setLoading] = useState(true);
+
+    // Initial Load
     useEffect(() => {
-        if (token) {
-            apiService.getWorkshopModules(token).then(setModules);
-            apiService.getWorkshopProjects(token).then(setProjects);
-            if (activeWorkspace) {
-                apiService.vaultContents(token, activeWorkspace.id).then(setVaultFiles);
+        if (!token) return;
+        const init = async () => {
+            setLoading(true);
+            try {
+                const [projs, mods] = await Promise.all([
+                    apiService.getWorkshopProjects(token),
+                    apiService.getWorkshopModules(token)
+                ]);
+                setProjects(projs);
+                setModules(mods);
+            } catch (e) {
+                console.error("Failed to load workshop data", e);
+            } finally {
+                setLoading(false);
             }
+        };
+        init();
+    }, [token]);
+
+    // Load Vault for Setup
+    useEffect(() => {
+        if (view === 'setup' && token && activeWorkspace) {
+            apiService.vaultContents(token, activeWorkspace.id).then(setVaultFiles);
         }
-    }, [token, activeWorkspace]);
+    }, [view, token, activeWorkspace]);
 
-    // Tab Handlers
-    const addTab = (tab: WorkshopTab) => {
-        setTabs(prev => [...prev, tab]);
-        setActiveTabId(tab.id);
+    const handleOpenProject = (project: WorkshopProject) => {
+        setActiveProject(project);
+        setActiveNodeId(project.rootNodeId);
+        setCurrentLeafId(project.rootNodeId); 
+        setView('workspace');
     };
 
-    const closeTab = (e: React.MouseEvent, id: string) => {
-        e.stopPropagation();
-        const newTabs = tabs.filter(t => t.id !== id);
-        setTabs(newTabs);
-        
-        if (activeTabId === id) {
-            const index = tabs.findIndex(t => t.id === id);
-            const nextTab = newTabs[Math.max(0, index - 1)];
-            setActiveTabId(nextTab.id);
-        }
-    };
-
-    const updateTab = (id: string, updates: Partial<WorkshopTab>) => {
-        setTabs(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t));
-    };
-
-    // Action Handlers
-    const handleOpenProject = (proj: WorkshopProject) => {
-        // Check if already open
-        const existingTab = tabs.find(t => t.projectId === proj.id);
-        if (existingTab) {
-            setActiveTabId(existingTab.id);
-            return;
-        }
-
-        addTab({
-            id: `proj-${proj.id}`,
-            type: 'workspace',
-            title: proj.title,
-            projectId: proj.id,
-            activeNodeId: proj.rootNodeId,
-            currentLeafId: proj.rootNodeId
-        });
-    };
-
-    const handleNewWorkshop = () => {
-        const id = `setup-${Date.now()}`;
-        addTab({
-            id,
-            type: 'setup',
-            title: 'New Workshop',
-            briefData: { objective: '', audience: '', context: '', selectedFiles: [] }
-        });
-    };
-
-    const handleCreateProject = async (tabId: string, briefData: any) => {
+    const handleCreateProject = async () => {
         if (!token) return;
         const newProject = await apiService.createWorkshopProject(token, briefData);
         if (newProject) {
             setProjects(prev => [newProject, ...prev]);
-            // Replace Setup tab with Workspace tab
-            setTabs(prev => prev.map(t => t.id === tabId ? {
-                id: `proj-${newProject.id}`,
-                type: 'workspace',
-                title: newProject.title,
-                projectId: newProject.id,
-                activeNodeId: newProject.rootNodeId,
-                currentLeafId: newProject.rootNodeId,
-                briefData: undefined // clear Setup data
-            } : t));
-            setActiveTabId(`proj-${newProject.id}`);
+            handleOpenProject(newProject);
+            // Reset brief
+            setBriefData({ objective: '', audience: '', context: '', selectedFiles: [] });
         }
     };
 
     const handleProjectUpdate = (updatedProject: WorkshopProject) => {
+        setActiveProject(updatedProject);
         setProjects(prev => prev.map(p => p.id === updatedProject.id ? updatedProject : p));
     };
 
-    const activeTab = tabs.find(t => t.id === activeTabId) || tabs[0];
-
     return (
-        <div className="flex flex-col h-full bg-white dark:bg-[#1e1e1e] text-gray-900 dark:text-gray-100 overflow-hidden">
-            {/* Tab Bar */}
-            <div className="h-9 flex items-center px-2 pt-1 gap-1 bg-[#f3f3f3] dark:bg-[#202020] border-b border-gray-200 dark:border-gray-700 overflow-x-auto no-scrollbar shrink-0">
-                 {tabs.map(tab => {
-                     const isActive = tab.id === activeTabId;
-                     const isDashboard = tab.type === 'dashboard';
-                     return (
-                         <div 
-                            key={tab.id}
-                            onClick={() => setActiveTabId(tab.id)}
-                            className={`
-                                group relative flex items-center gap-2 pl-3 pr-2 h-8 min-w-[120px] max-w-[200px] rounded-t-lg text-xs cursor-default select-none transition-colors
-                                ${isActive 
-                                    ? 'bg-white dark:bg-[#1e1e1e] text-gray-900 dark:text-gray-100 shadow-sm z-10' 
-                                    : 'bg-transparent text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/5'
-                                }
-                            `}
-                         >
-                             {/* Icon */}
-                             <div className="shrink-0 opacity-70">
-                                 {isDashboard ? <Home size={12} /> : (tab.type === 'setup' ? <Plus size={12} /> : <FileIcon size={12} />)}
-                             </div>
-                             
-                             {/* Title */}
-                             <span className="truncate flex-1 font-medium">{tab.title}</span>
+        <div className="h-full w-full bg-white dark:bg-[#1e1e1e] flex flex-col overflow-hidden relative">
+            {/* Header / Navigation */}
+            {view !== 'dashboard' && (
+                <div className="h-12 border-b border-gray-200 dark:border-gray-700 flex items-center px-4 bg-white dark:bg-[#1e1e1e] shrink-0">
+                    <button 
+                        onClick={() => setView('dashboard')}
+                        className="p-2 hover:bg-gray-100 dark:hover:bg-white/10 rounded-lg text-gray-500 mr-2 transition-colors"
+                        title="Back to Dashboard"
+                    >
+                        <Home size={18} />
+                    </button>
+                    <div className="h-6 w-[1px] bg-gray-200 dark:bg-gray-700 mx-2"></div>
+                    {view === 'setup' && <span className="font-bold text-sm ml-2 text-gray-900 dark:text-gray-100">New Workshop Setup</span>}
+                    {view === 'workspace' && activeProject && (
+                        <span className="font-bold text-sm ml-2 flex items-center gap-2 text-gray-900 dark:text-gray-100">
+                            {activeProject.title}
+                            <span className={`text-[10px] px-2 py-0.5 rounded-full ${
+                                activeProject.status === 'completed' 
+                                ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' 
+                                : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
+                            }`}>
+                                {activeProject.status}
+                            </span>
+                        </span>
+                    )}
+                </div>
+            )}
 
-                             {/* Close Button (Not for Dashboard) */}
-                             {!isDashboard && (
-                                 <button 
-                                    onClick={(e) => closeTab(e, tab.id)}
-                                    className={`
-                                        p-0.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 transition-opacity
-                                        ${isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}
-                                    `}
-                                 >
-                                     <X size={12} />
-                                 </button>
-                             )}
-                             
-                             {/* Divider */}
-                             {!isActive && (
-                                 <div className="absolute right-0 top-2 bottom-2 w-[1px] bg-gray-300 dark:bg-gray-700 group-hover:hidden" />
-                             )}
-                         </div>
-                     );
-                 })}
-            </div>
+            <div className="flex-1 overflow-hidden relative">
+                {loading ? (
+                    <div className="h-full flex items-center justify-center text-gray-400 gap-3">
+                         <Loader2 size={32} className="animate-spin" />
+                         <span className="text-sm font-medium">Loading Workshop...</span>
+                    </div>
+                ) : (
+                    <>
+                        {view === 'dashboard' && (
+                            <DashboardView 
+                                projects={projects} 
+                                onOpenProject={handleOpenProject}
+                                onNewWorkshop={() => setView('setup')}
+                            />
+                        )}
 
-            {/* Content Area */}
-            <div className="flex-1 relative overflow-hidden">
-                {activeTab.type === 'dashboard' && (
-                    <DashboardView 
-                        projects={projects}
-                        onOpenProject={handleOpenProject}
-                        onNewWorkshop={handleNewWorkshop}
-                    />
-                )}
+                        {view === 'setup' && (
+                            <SetupView 
+                                briefData={briefData}
+                                onUpdateBrief={setBriefData}
+                                onCreateProject={handleCreateProject}
+                                vaultFiles={vaultFiles}
+                            />
+                        )}
 
-                {activeTab.type === 'setup' && activeTab.briefData && (
-                    <SetupView 
-                        briefData={activeTab.briefData}
-                        onUpdateBrief={(data) => updateTab(activeTab.id, { briefData: data })}
-                        onCreateProject={() => handleCreateProject(activeTab.id, activeTab.briefData)}
-                        vaultFiles={vaultFiles}
-                    />
-                )}
-
-                {activeTab.type === 'workspace' && activeTab.projectId && (
-                    <WorkspaceView 
-                        key={activeTab.id} // Force remount on tab switch to ensure clean graph state
-                        project={projects.find(p => p.id === activeTab.projectId)!}
-                        modules={modules}
-                        initialActiveNodeId={activeTab.activeNodeId}
-                        initialCurrentLeafId={activeTab.currentLeafId}
-                        onStateChange={(active, leaf) => updateTab(activeTab.id, { activeNodeId: active, currentLeafId: leaf })}
-                        onProjectUpdate={handleProjectUpdate}
-                    />
+                        {view === 'workspace' && activeProject && (
+                            <WorkspaceView 
+                                project={activeProject}
+                                modules={modules}
+                                initialActiveNodeId={activeNodeId}
+                                initialCurrentLeafId={currentLeafId}
+                                onStateChange={(active, leaf) => {
+                                    if (active) setActiveNodeId(active);
+                                    if (leaf) setCurrentLeafId(leaf);
+                                }}
+                                onProjectUpdate={handleProjectUpdate}
+                            />
+                        )}
+                    </>
                 )}
             </div>
         </div>
