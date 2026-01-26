@@ -17,17 +17,31 @@ import {
     PenTool, Layers, FileText, Sparkles, Layout, 
     ChevronRight, ChevronLeft, Plus, History, 
     Maximize2, GitBranch, ArrowRight, Save, X, File as FileIcon, Loader2, LayoutGrid, CheckCircle2, Clock, Eye,
-    PanelLeftClose, PanelLeft
+    PanelLeftClose, PanelLeft, Home
 } from 'lucide-react';
 import { WorkshopProject, WorkshopNode, WorkshopNodeType, FileItem, WorkshopModule } from '../../types';
 import { geminiService } from '../../services/geminiService';
 import { apiService } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 
-// --- Types & Constants ---
+// --- Types ---
 
-type ViewMode = 'dashboard' | 'setup' | 'workspace';
-type WorkspaceView = 'focus' | 'branches';
+interface WorkshopTab {
+    id: string;
+    type: 'dashboard' | 'setup' | 'workspace';
+    title: string;
+    // Workspace State
+    projectId?: string;
+    activeNodeId?: string | null;
+    currentLeafId?: string | null;
+    // Setup State
+    briefData?: {
+        objective: string;
+        audience: string;
+        context: string;
+        selectedFiles: string[];
+    };
+}
 
 // Helper to map icon names string to components
 const IconMap = {
@@ -94,48 +108,228 @@ const CustomNode = ({ data }: { data: { label: string, type: WorkshopNodeType, i
 
 const nodeTypes = { custom: CustomNode };
 
-export const WorkshopApp: React.FC = () => {
-    const { token, activeWorkspace } = useAuth();
-    
-    // App State
-    const [viewMode, setViewMode] = useState<ViewMode>('dashboard');
-    const [project, setProject] = useState<WorkshopProject | null>(null);
-    const [projects, setProjects] = useState<WorkshopProject[]>([]);
-    const [activeNodeId, setActiveNodeId] = useState<string | null>(null);
-    const [currentLeafId, setCurrentLeafId] = useState<string | null>(null); // New state to track the "tip" of the current branch
-    
-    const [workspaceView, setWorkspaceView] = useState<WorkspaceView>('focus');
-    const [showContext, setShowContext] = useState(true); // Navigation Lineage Sidebar
-    const [showFocusContext, setShowFocusContext] = useState(true); // Focus Mode Side-by-Side Context
-    const [vaultFiles, setVaultFiles] = useState<FileItem[]>([]);
-    const [modules, setModules] = useState<WorkshopModule[]>([]);
-    
-    // Generation State
+// --- SUB-COMPONENTS ---
+
+// 1. Dashboard View
+const DashboardView = ({ 
+    projects, 
+    onOpenProject, 
+    onNewWorkshop 
+}: { 
+    projects: WorkshopProject[], 
+    onOpenProject: (p: WorkshopProject) => void,
+    onNewWorkshop: () => void
+}) => {
+    return (
+        <div className="h-full bg-gray-50 dark:bg-[#1e1e1e] p-8 overflow-y-auto">
+            <div className="max-w-5xl mx-auto space-y-8">
+                {/* Header */}
+                <div className="flex flex-col items-center gap-4 py-8">
+                    <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg text-white">
+                        <PenTool size={32} />
+                    </div>
+                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Workshop</h1>
+                    <p className="text-gray-500 dark:text-gray-400 text-base max-w-md mx-auto text-center">
+                        Transform raw ideas into polished content with AI-powered branching pipelines.
+                    </p>
+                </div>
+
+                {/* Actions */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <button 
+                        onClick={onNewWorkshop}
+                        className="group p-6 bg-white dark:bg-[#2d2d2d] rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md hover:border-indigo-500 transition-all text-left flex flex-col h-full"
+                    >
+                        <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg flex items-center justify-center text-indigo-600 dark:text-indigo-400 mb-4 group-hover:scale-110 transition-transform">
+                            <Plus size={20} />
+                        </div>
+                        <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1">New Workshop</h3>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Start from a blank brief</p>
+                    </button>
+
+                    {/* Recent Projects List */}
+                    <div className="md:col-span-2 bg-white dark:bg-[#2d2d2d] rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
+                        <div className="p-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-white/5">
+                            <h3 className="font-bold text-gray-700 dark:text-gray-200 text-sm">Recent Projects</h3>
+                        </div>
+                        <div className="divide-y divide-gray-100 dark:divide-gray-700 max-h-[300px] overflow-y-auto">
+                            {projects.length === 0 ? (
+                                <div className="p-8 text-center text-gray-400">
+                                    <History size={24} className="mb-2 opacity-50 mx-auto" />
+                                    <span className="text-sm font-medium">No recent projects</span>
+                                </div>
+                            ) : (
+                                projects.map(proj => (
+                                    <button 
+                                        key={proj.id}
+                                        onClick={() => onOpenProject(proj)}
+                                        className="w-full p-4 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors flex items-center justify-between group text-left"
+                                    >
+                                        <div className="flex items-center gap-4">
+                                            <div className={`w-2 h-2 rounded-full ${proj.status === 'completed' ? 'bg-green-500' : 'bg-amber-500'}`} />
+                                            <div>
+                                                <h4 className="font-semibold text-sm text-gray-900 dark:text-gray-100">{proj.title}</h4>
+                                                <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-0.5">
+                                                    <Clock size={10} /> Updated {new Date(proj.updatedAt).toLocaleDateString()}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-full ${
+                                                proj.status === 'completed' 
+                                                ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' 
+                                                : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
+                                            }`}>
+                                                {proj.status}
+                                            </span>
+                                            <ChevronRight size={16} className="text-gray-400 group-hover:text-indigo-500 transition-colors" />
+                                        </div>
+                                    </button>
+                                ))
+                            )}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// 2. Setup View
+const SetupView = ({ 
+    briefData, 
+    onUpdateBrief, 
+    onCreateProject, 
+    vaultFiles 
+}: { 
+    briefData: NonNullable<WorkshopTab['briefData']>, 
+    onUpdateBrief: (data: WorkshopTab['briefData']) => void,
+    onCreateProject: () => void,
+    vaultFiles: FileItem[]
+}) => {
+    return (
+        <div className="h-full bg-white dark:bg-[#1e1e1e] flex flex-col">
+            <div className="flex-1 overflow-y-auto p-8">
+                <div className="max-w-3xl mx-auto space-y-8">
+                    <div className="space-y-2">
+                        <label className="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wide">Objective</label>
+                        <input 
+                            type="text" 
+                            placeholder="What are we building today?"
+                            className="w-full p-4 text-lg bg-gray-50 dark:bg-black/20 text-black dark:text-white border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none placeholder-gray-400"
+                            value={briefData.objective}
+                            onChange={e => onUpdateBrief({...briefData, objective: e.target.value})}
+                        />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                            <label className="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wide">Target Audience</label>
+                            <textarea 
+                                className="w-full p-4 h-32 bg-gray-50 dark:bg-black/20 text-black dark:text-white border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none resize-none placeholder-gray-400"
+                                placeholder="Who is this for?"
+                                value={briefData.audience}
+                                onChange={e => onUpdateBrief({...briefData, audience: e.target.value})}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wide">Context & Constraints</label>
+                            <textarea 
+                                className="w-full p-4 h-32 bg-gray-50 dark:bg-black/20 text-black dark:text-white border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none resize-none placeholder-gray-400"
+                                placeholder="Tone, style, required elements..."
+                                value={briefData.context}
+                                onChange={e => onUpdateBrief({...briefData, context: e.target.value})}
+                            />
+                        </div>
+                    </div>
+
+                    <div className="space-y-2">
+                        <label className="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wide">Select Assets from Vault</label>
+                        <div className="grid grid-cols-3 gap-3">
+                            {vaultFiles.length === 0 ? (
+                                <div className="col-span-3 p-4 text-center text-gray-400 bg-gray-50 dark:bg-black/10 rounded-lg border border-dashed border-gray-300 dark:border-gray-700">
+                                    Vault is empty
+                                </div>
+                            ) : (
+                                vaultFiles.map(file => {
+                                    const isSelected = briefData.selectedFiles.includes(file.name);
+                                    return (
+                                        <div 
+                                            key={file.id}
+                                            onClick={() => {
+                                                const newSelection = isSelected 
+                                                    ? briefData.selectedFiles.filter(f => f !== file.name)
+                                                    : [...briefData.selectedFiles, file.name];
+                                                onUpdateBrief({...briefData, selectedFiles: newSelection});
+                                            }}
+                                            className={`p-3 rounded-lg border cursor-pointer flex items-center gap-2 transition-all ${
+                                                isSelected 
+                                                ? 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-500 shadow-sm' 
+                                                : 'bg-white dark:bg-[#2d2d2d] border-gray-200 dark:border-gray-700 hover:border-gray-400'
+                                            }`}
+                                        >
+                                            <FileIcon size={16} className={isSelected ? 'text-indigo-500' : 'text-gray-400'} />
+                                            <span className="text-sm font-medium truncate text-gray-700 dark:text-gray-300">{file.name}</span>
+                                        </div>
+                                    )
+                                })
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="pt-4 flex justify-end">
+                        <button 
+                            onClick={onCreateProject}
+                            disabled={!briefData.objective}
+                            className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white px-8 py-3 rounded-full font-bold shadow-lg flex items-center gap-2 transition-all"
+                        >
+                            Start Workshop
+                            <ArrowRight size={18} />
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    )
+};
+
+// 3. Workspace View
+const WorkspaceView = ({
+    project,
+    modules,
+    initialActiveNodeId,
+    initialCurrentLeafId,
+    onStateChange,
+    onProjectUpdate
+}: {
+    project: WorkshopProject,
+    modules: WorkshopModule[],
+    initialActiveNodeId?: string | null,
+    initialCurrentLeafId?: string | null,
+    onStateChange: (active: string | null, leaf: string | null) => void,
+    onProjectUpdate: (p: WorkshopProject) => void
+}) => {
+    // Local State
+    const [workspaceView, setWorkspaceView] = useState<'focus' | 'branches'>('focus');
+    const [showContext, setShowContext] = useState(true);
+    const [showFocusContext, setShowFocusContext] = useState(true);
     const [isGenerating, setIsGenerating] = useState(false);
     const [generationCount, setGenerationCount] = useState(1);
-
-    // Setup Form State
-    const [briefData, setBriefData] = useState({
-        objective: '',
-        audience: '',
-        context: '',
-        selectedFiles: [] as string[]
-    });
+    
+    // Tab Persistence State
+    const [activeNodeId, setActiveNodeId] = useState<string | null>(initialActiveNodeId || project.rootNodeId);
+    const [currentLeafId, setCurrentLeafId] = useState<string | null>(initialCurrentLeafId || project.rootNodeId);
 
     // Graph State
     const [nodes, setNodes, onNodesChange] = useNodesState([]);
     const [edges, setEdges, onEdgesChange] = useEdgesState([]);
 
-    // --- Initial Fetch ---
+    // Sync state up to parent tab
     useEffect(() => {
-        if (token) {
-            apiService.getWorkshopModules(token).then(setModules);
-            apiService.getWorkshopProjects(token).then(setProjects);
-        }
-    }, [token]);
+        onStateChange(activeNodeId, currentLeafId);
+    }, [activeNodeId, currentLeafId, onStateChange]);
 
-    // --- Helpers ---
-
+    // Helpers
     const getAncestors = (nodeId: string, proj: WorkshopProject): WorkshopNode[] => {
         if (!proj.nodes[nodeId]) return [];
         const path: WorkshopNode[] = [];
@@ -160,7 +354,6 @@ export const WorkshopApp: React.FC = () => {
         return path;
     };
 
-    // Check if `descendantId` is truly a descendant of `ancestorId` (or the same node)
     const isDescendant = (descendantId: string, ancestorId: string, proj: WorkshopProject): boolean => {
         if (descendantId === ancestorId) return true;
         let current = proj.nodes[descendantId];
@@ -172,9 +365,6 @@ export const WorkshopApp: React.FC = () => {
         return false;
     };
 
-    // Find the furthest smart leaf node starting from a given node.
-    // It traverses down ONLY if there is a single, unambiguous path.
-    // If it hits a branching point (>1 child), it stops, treating that node as the end of the context.
     const findSmartLeaf = (startNodeId: string, proj: WorkshopProject): string => {
         let currentId = startNodeId;
         while (true) {
@@ -182,46 +372,20 @@ export const WorkshopApp: React.FC = () => {
             if (!node || node.childrenIds.length === 0) {
                 return currentId;
             }
-            // If branching (multiple children), we stop here to avoid ambiguity in Lineage.
             if (node.childrenIds.length > 1) {
                 return currentId; 
             }
-            // Prefer the single child
             currentId = node.childrenIds[0];
         }
     };
 
-    const getActiveNode = () => project && activeNodeId ? project.nodes[activeNodeId] : null;
-
-    // --- Actions ---
-
-    const startNewProject = () => {
-        setBriefData({ objective: '', audience: '', context: '', selectedFiles: [] });
-        setViewMode('setup');
-        // Fetch vault files for selection
-        if (token && activeWorkspace) {
-            apiService.vaultContents(token, activeWorkspace.id).then(setVaultFiles);
-        }
-    };
-
-    const openProject = (proj: WorkshopProject) => {
-        setProject(proj);
-        // Ensure we open to the absolute latest tip of the project
-        const latestLeaf = findSmartLeaf(proj.rootNodeId, proj);
-        setActiveNodeId(latestLeaf);
-        setCurrentLeafId(latestLeaf);
-        setViewMode('workspace');
-    };
-
-    const createProject = async () => {
-        if (!token) return;
-        const newProject = await apiService.createWorkshopProject(token, briefData);
-        if (newProject) {
-            setProject(newProject);
-            setActiveNodeId(newProject.rootNodeId);
-            setCurrentLeafId(newProject.rootNodeId);
-            setProjects(prev => [newProject, ...prev]);
-            setViewMode('workspace');
+    const getModuleIcon = (type: WorkshopNodeType) => {
+        switch(type) {
+            case 'brief': return <FileIcon size={14} />;
+            case 'outline': return <Layout size={14} />;
+            case 'draft': return <FileText size={14} />;
+            case 'refine': return <Sparkles size={14} />;
+            default: return <Layers size={14} />;
         }
     };
 
@@ -231,13 +395,11 @@ export const WorkshopApp: React.FC = () => {
         setIsGenerating(true);
         const parentNode = project.nodes[activeNodeId];
         
-        // Construct Context from Ancestors
         const ancestors = getAncestors(activeNodeId, project);
         const contextStr = ancestors.map(n => `--- ${n.type.toUpperCase()} ---\n${n.content}`).join('\n\n');
-        const briefNode = project.nodes[project.rootNodeId]; // Brief is always root
+        const briefNode = project.nodes[project.rootNodeId];
 
         try {
-            // Generate multiple variations
             const promises = Array(generationCount).fill(0).map(() => 
                 geminiService.generateWorkshopContent(
                     moduleType as any, 
@@ -248,7 +410,6 @@ export const WorkshopApp: React.FC = () => {
 
             const results = await Promise.all(promises);
 
-            // Update Project State
             const newNodes: Record<string, WorkshopNode> = { ...project.nodes };
             const newChildrenIds: string[] = [];
             const moduleLabel = modules.find(m => m.id === moduleType)?.label || 'Generated Content';
@@ -267,16 +428,15 @@ export const WorkshopApp: React.FC = () => {
                 newChildrenIds.push(newId);
             });
 
-            // Update parent
             newNodes[activeNodeId] = {
                 ...parentNode,
                 childrenIds: [...parentNode.childrenIds, ...newChildrenIds]
             };
 
             const updatedProject = { ...project, nodes: newNodes, updatedAt: new Date().toISOString() };
-            setProject(updatedProject);
+            onProjectUpdate(updatedProject);
             
-            // Auto-select the first new node and update leaf to it
+            // Auto-select first new child
             setActiveNodeId(newChildrenIds[0]);
             setCurrentLeafId(newChildrenIds[0]);
             
@@ -287,72 +447,104 @@ export const WorkshopApp: React.FC = () => {
         }
     };
 
-    // Update Graph when Project changes
+    // Graph Layout Effect
     useEffect(() => {
         if (!project) return;
 
-        const gNodes: Node[] = [];
-        const gEdges: Edge[] = [];
-        
         const activePath = activeNodeId ? getPathIds(activeNodeId, project) : new Set<string>();
+        
+        const NODE_WIDTH = 220;
+        const NODE_HEIGHT = 180;
+        const GAP = 20;
 
-        // BFS to layout nodes (simplified tree layout)
-        const levels: Record<number, WorkshopNode[]> = {};
-        const queue: { node: WorkshopNode, level: number }[] = [{ node: project.nodes[project.rootNodeId], level: 0 }];
+        const subtreeWidths = new Map<string, number>();
 
-        while(queue.length > 0) {
-            const { node, level } = queue.shift()!;
-            if(!levels[level]) levels[level] = [];
-            levels[level].push(node);
+        const calculateSubtreeWidth = (nodeId: string): number => {
+            const node = project.nodes[nodeId];
+            if (!node) return 0;
             
+            if (node.childrenIds.length === 0) {
+                const width = NODE_WIDTH;
+                subtreeWidths.set(nodeId, width);
+                return width;
+            }
+
+            let width = 0;
             node.childrenIds.forEach(childId => {
-                queue.push({ node: project.nodes[childId], level: level + 1 });
+                width += calculateSubtreeWidth(childId);
             });
+            width += (node.childrenIds.length - 1) * GAP;
+            
+            width = Math.max(width, NODE_WIDTH);
+            
+            subtreeWidths.set(nodeId, width);
+            return width;
+        };
+
+        const nodePositions = new Map<string, { x: number, y: number }>();
+        
+        const assignPositions = (nodeId: string, x: number, y: number) => {
+            const node = project.nodes[nodeId];
+            if (!node) return;
+
+            const totalWidth = subtreeWidths.get(nodeId) || NODE_WIDTH;
+            const nodeX = x + (totalWidth / 2) - (150 / 2); 
+            
+            nodePositions.set(nodeId, { x: nodeX, y });
+
+            let currentChildX = x;
+            node.childrenIds.forEach(childId => {
+                const childWidth = subtreeWidths.get(childId) || NODE_WIDTH;
+                assignPositions(childId, currentChildX, y + NODE_HEIGHT);
+                currentChildX += childWidth + GAP;
+            });
+        };
+
+        if (project.rootNodeId) {
+            calculateSubtreeWidth(project.rootNodeId);
+            assignPositions(project.rootNodeId, 0, 0);
         }
 
-        // Create React Flow Nodes
-        Object.entries(levels).forEach(([levelStr, nodesInLevel]) => {
-            const level = parseInt(levelStr);
-            const totalWidth = nodesInLevel.length * 200;
-            const startX = -totalWidth / 2;
+        const gNodes: Node[] = [];
+        const gEdges: Edge[] = [];
 
-            nodesInLevel.forEach((node, idx) => {
-                const isInPath = activePath.has(node.id);
-                
-                gNodes.push({
-                    id: node.id,
-                    type: 'custom',
-                    position: { x: startX + (idx * 200), y: level * 150 },
-                    data: { 
-                        label: node.title, 
-                        type: node.type,
-                        isSelected: node.id === activeNodeId,
-                        isInPath: isInPath,
-                        content: node.content // Passing content for Tooltip
-                    }
-                });
-
-                if (node.parentId) {
-                    const isEdgeInPath = isInPath && activePath.has(node.parentId);
-                    
-                    gEdges.push({
-                        id: `e-${node.parentId}-${node.id}`,
-                        source: node.parentId,
-                        target: node.id,
-                        type: 'smoothstep',
-                        markerEnd: { 
-                            type: MarkerType.ArrowClosed,
-                            color: isEdgeInPath ? '#6366f1' : '#94a3b8'
-                        },
-                        style: { 
-                            stroke: isEdgeInPath ? '#6366f1' : '#94a3b8',
-                            strokeWidth: isEdgeInPath ? 3 : 1,
-                            opacity: isEdgeInPath ? 1 : 0.5
-                        },
-                        animated: isEdgeInPath
-                    });
+        Object.values(project.nodes).forEach(node => {
+            const pos = nodePositions.get(node.id) || { x: 0, y: 0 };
+            const isInPath = activePath.has(node.id);
+            
+            gNodes.push({
+                id: node.id,
+                type: 'custom',
+                position: pos,
+                data: { 
+                    label: node.title, 
+                    type: node.type,
+                    isSelected: node.id === activeNodeId,
+                    isInPath: isInPath,
+                    content: node.content
                 }
             });
+
+            if (node.parentId) {
+                const isEdgeInPath = isInPath && activePath.has(node.parentId);
+                
+                gEdges.push({
+                    id: `e-${node.parentId}-${node.id}`,
+                    source: node.parentId,
+                    target: node.id,
+                    type: 'default',
+                    markerEnd: { 
+                        type: MarkerType.ArrowClosed,
+                        color: isEdgeInPath ? '#6366f1' : '#94a3b8'
+                    },
+                    style: { 
+                        stroke: isEdgeInPath ? '#6366f1' : '#94a3b8',
+                        strokeWidth: isEdgeInPath ? 3 : 1,
+                        opacity: isEdgeInPath ? 1 : 0.5
+                    },
+                    animated: isEdgeInPath
+                });
+            }
         });
 
         setNodes(gNodes);
@@ -363,221 +555,25 @@ export const WorkshopApp: React.FC = () => {
     const onNodeClick = (_: React.MouseEvent, node: Node) => {
         if (!project || !currentLeafId) return;
 
-        // Smart Branch Selection Logic:
-        // 1. If clicked node is on current active path (it's an ancestor of current leaf):
-        //    Just move focus back in time. Do not change the leaf (preserve future context).
         if (isDescendant(currentLeafId, node.id, project)) {
             setActiveNodeId(node.id);
         } else {
-            // 2. If clicked node is NOT on current path (switching branches):
-            //    We need to determine the new path.
-            //    - If the node has multiple children ("2 connectors"), we STOP there. 
-            //      This prevents ambiguity in the lineage sidebar.
-            //    - If the node has a single unambiguous path forward, we follow it to the leaf.
             const newLeafId = findSmartLeaf(node.id, project);
             setActiveNodeId(node.id);
             setCurrentLeafId(newLeafId);
         }
     };
 
-    // --- Views ---
-
-    if (viewMode === 'dashboard') {
-        return (
-            <div className="h-full bg-gray-50 dark:bg-[#1e1e1e] p-8 overflow-y-auto">
-                <div className="max-w-5xl mx-auto space-y-8">
-                    {/* Header */}
-                    <div className="flex flex-col items-center gap-4 py-8">
-                        <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg text-white">
-                            <PenTool size={32} />
-                        </div>
-                        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Workshop</h1>
-                        <p className="text-gray-500 dark:text-gray-400 text-base max-w-md mx-auto text-center">
-                            Transform raw ideas into polished content with AI-powered branching pipelines.
-                        </p>
-                    </div>
-
-                    {/* Actions */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <button 
-                            onClick={startNewProject}
-                            className="group p-6 bg-white dark:bg-[#2d2d2d] rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md hover:border-indigo-500 transition-all text-left flex flex-col h-full"
-                        >
-                            <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg flex items-center justify-center text-indigo-600 dark:text-indigo-400 mb-4 group-hover:scale-110 transition-transform">
-                                <Plus size={20} />
-                            </div>
-                            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1">New Workshop</h3>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">Start from a blank brief</p>
-                        </button>
-
-                        {/* Recent Projects List */}
-                        <div className="md:col-span-2 bg-white dark:bg-[#2d2d2d] rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
-                            <div className="p-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-white/5">
-                                <h3 className="font-bold text-gray-700 dark:text-gray-200 text-sm">Recent Projects</h3>
-                            </div>
-                            <div className="divide-y divide-gray-100 dark:divide-gray-700 max-h-[300px] overflow-y-auto">
-                                {projects.length === 0 ? (
-                                    <div className="p-8 text-center text-gray-400">
-                                        <History size={24} className="mb-2 opacity-50 mx-auto" />
-                                        <span className="text-sm font-medium">No recent projects</span>
-                                    </div>
-                                ) : (
-                                    projects.map(proj => (
-                                        <button 
-                                            key={proj.id}
-                                            onClick={() => openProject(proj)}
-                                            className="w-full p-4 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors flex items-center justify-between group text-left"
-                                        >
-                                            <div className="flex items-center gap-4">
-                                                <div className={`w-2 h-2 rounded-full ${proj.status === 'completed' ? 'bg-green-500' : 'bg-amber-500'}`} />
-                                                <div>
-                                                    <h4 className="font-semibold text-sm text-gray-900 dark:text-gray-100">{proj.title}</h4>
-                                                    <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-0.5">
-                                                        <Clock size={10} /> Updated {new Date(proj.updatedAt).toLocaleDateString()}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-full ${
-                                                    proj.status === 'completed' 
-                                                    ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' 
-                                                    : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
-                                                }`}>
-                                                    {proj.status}
-                                                </span>
-                                                <ChevronRight size={16} className="text-gray-400 group-hover:text-indigo-500 transition-colors" />
-                                            </div>
-                                        </button>
-                                    ))
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        );
-    }
-
-    if (viewMode === 'setup') {
-        return (
-            <div className="h-full bg-white dark:bg-[#1e1e1e] flex flex-col">
-                <div className="border-b border-gray-200 dark:border-gray-700 p-4 flex items-center gap-4">
-                    <button onClick={() => setViewMode('dashboard')} className="p-2 hover:bg-gray-100 dark:hover:bg-white/10 rounded-full">
-                        <ChevronLeft size={20} className="text-gray-600 dark:text-gray-300"/>
-                    </button>
-                    <h2 className="text-lg font-bold text-gray-900 dark:text-white">Create New Workshop Brief</h2>
-                </div>
-                <div className="flex-1 overflow-y-auto p-8">
-                    <div className="max-w-3xl mx-auto space-y-8">
-                        <div className="space-y-2">
-                            <label className="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wide">Objective</label>
-                            <input 
-                                type="text" 
-                                placeholder="What are we building today?"
-                                className="w-full p-4 text-lg bg-gray-50 dark:bg-black/20 text-black dark:text-white border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none placeholder-gray-400"
-                                value={briefData.objective}
-                                onChange={e => setBriefData({...briefData, objective: e.target.value})}
-                            />
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-6">
-                            <div className="space-y-2">
-                                <label className="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wide">Target Audience</label>
-                                <textarea 
-                                    className="w-full p-4 h-32 bg-gray-50 dark:bg-black/20 text-black dark:text-white border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none resize-none placeholder-gray-400"
-                                    placeholder="Who is this for?"
-                                    value={briefData.audience}
-                                    onChange={e => setBriefData({...briefData, audience: e.target.value})}
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wide">Context & Constraints</label>
-                                <textarea 
-                                    className="w-full p-4 h-32 bg-gray-50 dark:bg-black/20 text-black dark:text-white border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none resize-none placeholder-gray-400"
-                                    placeholder="Tone, style, required elements..."
-                                    value={briefData.context}
-                                    onChange={e => setBriefData({...briefData, context: e.target.value})}
-                                />
-                            </div>
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wide">Select Assets from Vault</label>
-                            <div className="grid grid-cols-3 gap-3">
-                                {vaultFiles.length === 0 ? (
-                                    <div className="col-span-3 p-4 text-center text-gray-400 bg-gray-50 dark:bg-black/10 rounded-lg border border-dashed border-gray-300 dark:border-gray-700">
-                                        Vault is empty
-                                    </div>
-                                ) : (
-                                    vaultFiles.map(file => {
-                                        const isSelected = briefData.selectedFiles.includes(file.name); // Using name as simplistic ID for prompt
-                                        return (
-                                            <div 
-                                                key={file.id}
-                                                onClick={() => {
-                                                    const newSelection = isSelected 
-                                                        ? briefData.selectedFiles.filter(f => f !== file.name)
-                                                        : [...briefData.selectedFiles, file.name];
-                                                    setBriefData({...briefData, selectedFiles: newSelection});
-                                                }}
-                                                className={`p-3 rounded-lg border cursor-pointer flex items-center gap-2 transition-all ${
-                                                    isSelected 
-                                                    ? 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-500 shadow-sm' 
-                                                    : 'bg-white dark:bg-[#2d2d2d] border-gray-200 dark:border-gray-700 hover:border-gray-400'
-                                                }`}
-                                            >
-                                                <FileIcon size={16} className={isSelected ? 'text-indigo-500' : 'text-gray-400'} />
-                                                <span className="text-sm font-medium truncate text-gray-700 dark:text-gray-300">{file.name}</span>
-                                            </div>
-                                        )
-                                    })
-                                )}
-                            </div>
-                        </div>
-
-                        <div className="pt-4 flex justify-end">
-                            <button 
-                                onClick={createProject}
-                                disabled={!briefData.objective}
-                                className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white px-8 py-3 rounded-full font-bold shadow-lg flex items-center gap-2 transition-all"
-                            >
-                                Start Workshop
-                                <ArrowRight size={18} />
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        )
-    }
-
-    const activeNode = getActiveNode();
-    
-    // --- Lineage Logic ---
-    // We want to show the full path from root to currentLeafId
-    // But we highlight only up to activeNodeId
+    const activeNode = activeNodeId ? project.nodes[activeNodeId] : null;
     const lineagePath = (project && currentLeafId) ? getAncestors(currentLeafId, project) : [];
     const activePathSet = (project && activeNodeId) ? getPathIds(activeNodeId, project) : new Set();
-    
-    // Construct context only from the ACTIVE path (root -> active node)
     const activeAncestors = (project && activeNodeId) ? getAncestors(activeNodeId, project) : [];
-    const previousContext = activeAncestors.slice(0, -1).map(n => {
-        return `### ${n.title} (${n.type})\n${n.content}`;
-    }).join('\n\n---\n\n');
 
     return (
         <div className="h-full flex flex-col bg-white dark:bg-[#1e1e1e] text-gray-900 dark:text-gray-100 overflow-hidden">
-            {/* Top Bar */}
-            <div className="h-14 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between px-4 bg-gray-50 dark:bg-[#252525]">
-                <div className="flex items-center gap-4">
-                    <button onClick={() => setViewMode('dashboard')} className="p-1.5 hover:bg-gray-200 dark:hover:bg-white/10 rounded-lg">
-                        <LayoutGrid size={18} className="text-gray-600 dark:text-gray-400" />
-                    </button>
-                    <div className="h-6 w-[1px] bg-gray-300 dark:bg-gray-600"></div>
-                    <h2 className="font-bold text-sm truncate max-w-[200px]">{project?.title}</h2>
-                </div>
-
-                <div className="flex bg-gray-200 dark:bg-black/30 p-1 rounded-lg">
+            {/* Workspace Toolbar */}
+            <div className="h-10 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between px-4 bg-gray-50 dark:bg-[#252525]">
+                <div className="flex bg-gray-200 dark:bg-black/30 p-0.5 rounded-lg">
                     <button 
                         onClick={() => setWorkspaceView('focus')}
                         className={`px-3 py-1 text-xs font-bold rounded-md transition-all flex items-center gap-2 ${workspaceView === 'focus' ? 'bg-white dark:bg-[#3d3d3d] shadow-sm text-indigo-600 dark:text-indigo-400' : 'text-gray-500'}`}
@@ -592,13 +588,13 @@ export const WorkshopApp: React.FC = () => {
                     </button>
                 </div>
 
-                <button onClick={() => setShowContext(!showContext)} className={`p-2 rounded-lg transition-colors ${showContext ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400' : 'text-gray-500 hover:bg-gray-200 dark:hover:bg-white/10'}`}>
-                    <History size={18} />
+                <button onClick={() => setShowContext(!showContext)} className={`p-1.5 rounded-lg transition-colors ${showContext ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400' : 'text-gray-500 hover:bg-gray-200 dark:hover:bg-white/10'}`}>
+                    <History size={16} />
                 </button>
             </div>
 
             <div className="flex-1 flex overflow-hidden">
-                {/* Context Sidebar (Standard Lineage List) */}
+                {/* Lineage Sidebar */}
                 {showContext && (
                     <div className="w-80 border-r border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-[#1a1a1a] flex flex-col shrink-0">
                         <div className="p-4 font-bold text-xs text-gray-500 uppercase tracking-wider border-b border-gray-200 dark:border-gray-700 flex items-center gap-2">
@@ -628,11 +624,11 @@ export const WorkshopApp: React.FC = () => {
                     </div>
                 )}
 
-                {/* Main Stage */}
+                {/* Main Content Area */}
                 <div className="flex-1 flex flex-col min-w-0 relative">
                     {workspaceView === 'focus' ? (
                         <div className="flex flex-row h-full">
-                            {/* Panel 1: Accumulated Context (ReadOnly) - Left Side */}
+                            {/* Accumulated Context */}
                             {showFocusContext && (
                                 <div className="w-[35%] min-w-[300px] border-r border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#1a1a1a] overflow-y-auto animate-in slide-in-from-left-2 duration-200">
                                     <div className="sticky top-0 z-20 bg-gray-50 dark:bg-[#1a1a1a] px-8 pt-8 pb-4 border-b border-gray-200/50 dark:border-gray-700/50 shadow-sm">
@@ -640,19 +636,36 @@ export const WorkshopApp: React.FC = () => {
                                             <History size={14} /> Previous Context
                                         </h3>
                                     </div>
-                                    <div className="px-8 pt-6 pb-8 max-w-2xl mx-auto">
-                                        {previousContext ? (
-                                            <div className="prose prose-sm prose-slate dark:prose-invert max-w-none opacity-80">
-                                                <ReactMarkdown>{previousContext}</ReactMarkdown>
-                                            </div>
+                                    <div className="px-8 pt-6 pb-8 max-w-2xl mx-auto space-y-6">
+                                        {activeAncestors.slice(0, -1).length > 0 ? (
+                                            activeAncestors.slice(0, -1).map(node => (
+                                                <div key={node.id} className="bg-white dark:bg-[#1e1e1e] border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm overflow-hidden">
+                                                    <div className="bg-gray-50 dark:bg-white/5 border-b border-gray-100 dark:border-gray-700 px-4 py-2 flex items-center gap-2">
+                                                        <span className="text-indigo-500 dark:text-indigo-400">
+                                                            {getModuleIcon(node.type)}
+                                                        </span>
+                                                        <span className="text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">
+                                                            {node.type}
+                                                        </span>
+                                                        <span className="ml-auto text-[10px] text-gray-400">
+                                                            {new Date(node.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                                        </span>
+                                                    </div>
+                                                    <div className="p-4 prose prose-sm prose-slate dark:prose-invert max-w-none">
+                                                        <ReactMarkdown>{node.content}</ReactMarkdown>
+                                                    </div>
+                                                </div>
+                                            ))
                                         ) : (
-                                            <div className="text-sm text-gray-400 italic">This is the root node. No previous context available.</div>
+                                            <div className="text-sm text-gray-400 italic text-center py-8">
+                                                This is the start of the journey.
+                                            </div>
                                         )}
                                     </div>
                                 </div>
                             )}
 
-                            {/* Panel 2: Current Output (Editable/Active) - Right Side */}
+                            {/* Active Editor */}
                             <div className="flex-1 overflow-y-auto bg-white dark:bg-[#1e1e1e] relative transition-all duration-300">
                                 <div className="sticky top-0 z-20 bg-white dark:bg-[#1e1e1e] px-8 pt-8 pb-4 border-b border-gray-100 dark:border-gray-800 shadow-sm">
                                     <div className="max-w-3xl mx-auto flex items-center justify-between">
@@ -704,7 +717,7 @@ export const WorkshopApp: React.FC = () => {
                         </div>
                     )}
 
-                    {/* Bottom Action Bar */}
+                    {/* Generator Bar */}
                     <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-white/90 dark:bg-[#2d2d2d]/90 backdrop-blur-md border border-gray-200 dark:border-gray-600 p-2 rounded-2xl shadow-2xl flex items-center gap-2 animate-in slide-in-from-bottom-4 fade-in duration-300 z-10">
                         {isGenerating ? (
                             <div className="px-6 py-2 flex items-center gap-3 text-indigo-500 font-bold">
@@ -744,6 +757,191 @@ export const WorkshopApp: React.FC = () => {
                         )}
                     </div>
                 </div>
+            </div>
+        </div>
+    );
+};
+
+// --- MAIN APP ---
+
+export const WorkshopApp: React.FC = () => {
+    const { token, activeWorkspace } = useAuth();
+    
+    // Global State
+    const [projects, setProjects] = useState<WorkshopProject[]>([]);
+    const [modules, setModules] = useState<WorkshopModule[]>([]);
+    const [vaultFiles, setVaultFiles] = useState<FileItem[]>([]);
+
+    // Tab Management
+    const [tabs, setTabs] = useState<WorkshopTab[]>([{ id: 'dashboard', type: 'dashboard', title: 'Dashboard' }]);
+    const [activeTabId, setActiveTabId] = useState('dashboard');
+
+    // Initial Fetch
+    useEffect(() => {
+        if (token) {
+            apiService.getWorkshopModules(token).then(setModules);
+            apiService.getWorkshopProjects(token).then(setProjects);
+            if (activeWorkspace) {
+                apiService.vaultContents(token, activeWorkspace.id).then(setVaultFiles);
+            }
+        }
+    }, [token, activeWorkspace]);
+
+    // Tab Handlers
+    const addTab = (tab: WorkshopTab) => {
+        setTabs(prev => [...prev, tab]);
+        setActiveTabId(tab.id);
+    };
+
+    const closeTab = (e: React.MouseEvent, id: string) => {
+        e.stopPropagation();
+        const newTabs = tabs.filter(t => t.id !== id);
+        setTabs(newTabs);
+        
+        if (activeTabId === id) {
+            const index = tabs.findIndex(t => t.id === id);
+            const nextTab = newTabs[Math.max(0, index - 1)];
+            setActiveTabId(nextTab.id);
+        }
+    };
+
+    const updateTab = (id: string, updates: Partial<WorkshopTab>) => {
+        setTabs(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t));
+    };
+
+    // Action Handlers
+    const handleOpenProject = (proj: WorkshopProject) => {
+        // Check if already open
+        const existingTab = tabs.find(t => t.projectId === proj.id);
+        if (existingTab) {
+            setActiveTabId(existingTab.id);
+            return;
+        }
+
+        addTab({
+            id: `proj-${proj.id}`,
+            type: 'workspace',
+            title: proj.title,
+            projectId: proj.id,
+            activeNodeId: proj.rootNodeId,
+            currentLeafId: proj.rootNodeId
+        });
+    };
+
+    const handleNewWorkshop = () => {
+        const id = `setup-${Date.now()}`;
+        addTab({
+            id,
+            type: 'setup',
+            title: 'New Workshop',
+            briefData: { objective: '', audience: '', context: '', selectedFiles: [] }
+        });
+    };
+
+    const handleCreateProject = async (tabId: string, briefData: any) => {
+        if (!token) return;
+        const newProject = await apiService.createWorkshopProject(token, briefData);
+        if (newProject) {
+            setProjects(prev => [newProject, ...prev]);
+            // Replace Setup tab with Workspace tab
+            setTabs(prev => prev.map(t => t.id === tabId ? {
+                id: `proj-${newProject.id}`,
+                type: 'workspace',
+                title: newProject.title,
+                projectId: newProject.id,
+                activeNodeId: newProject.rootNodeId,
+                currentLeafId: newProject.rootNodeId,
+                briefData: undefined // clear Setup data
+            } : t));
+            setActiveTabId(`proj-${newProject.id}`);
+        }
+    };
+
+    const handleProjectUpdate = (updatedProject: WorkshopProject) => {
+        setProjects(prev => prev.map(p => p.id === updatedProject.id ? updatedProject : p));
+    };
+
+    const activeTab = tabs.find(t => t.id === activeTabId) || tabs[0];
+
+    return (
+        <div className="flex flex-col h-full bg-white dark:bg-[#1e1e1e] text-gray-900 dark:text-gray-100 overflow-hidden">
+            {/* Tab Bar */}
+            <div className="h-9 flex items-center px-2 pt-1 gap-1 bg-[#f3f3f3] dark:bg-[#202020] border-b border-gray-200 dark:border-gray-700 overflow-x-auto no-scrollbar shrink-0">
+                 {tabs.map(tab => {
+                     const isActive = tab.id === activeTabId;
+                     const isDashboard = tab.type === 'dashboard';
+                     return (
+                         <div 
+                            key={tab.id}
+                            onClick={() => setActiveTabId(tab.id)}
+                            className={`
+                                group relative flex items-center gap-2 pl-3 pr-2 h-8 min-w-[120px] max-w-[200px] rounded-t-lg text-xs cursor-default select-none transition-colors
+                                ${isActive 
+                                    ? 'bg-white dark:bg-[#1e1e1e] text-gray-900 dark:text-gray-100 shadow-sm z-10' 
+                                    : 'bg-transparent text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/5'
+                                }
+                            `}
+                         >
+                             {/* Icon */}
+                             <div className="shrink-0 opacity-70">
+                                 {isDashboard ? <Home size={12} /> : (tab.type === 'setup' ? <Plus size={12} /> : <FileIcon size={12} />)}
+                             </div>
+                             
+                             {/* Title */}
+                             <span className="truncate flex-1 font-medium">{tab.title}</span>
+
+                             {/* Close Button (Not for Dashboard) */}
+                             {!isDashboard && (
+                                 <button 
+                                    onClick={(e) => closeTab(e, tab.id)}
+                                    className={`
+                                        p-0.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 transition-opacity
+                                        ${isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}
+                                    `}
+                                 >
+                                     <X size={12} />
+                                 </button>
+                             )}
+                             
+                             {/* Divider */}
+                             {!isActive && (
+                                 <div className="absolute right-0 top-2 bottom-2 w-[1px] bg-gray-300 dark:bg-gray-700 group-hover:hidden" />
+                             )}
+                         </div>
+                     );
+                 })}
+            </div>
+
+            {/* Content Area */}
+            <div className="flex-1 relative overflow-hidden">
+                {activeTab.type === 'dashboard' && (
+                    <DashboardView 
+                        projects={projects}
+                        onOpenProject={handleOpenProject}
+                        onNewWorkshop={handleNewWorkshop}
+                    />
+                )}
+
+                {activeTab.type === 'setup' && activeTab.briefData && (
+                    <SetupView 
+                        briefData={activeTab.briefData}
+                        onUpdateBrief={(data) => updateTab(activeTab.id, { briefData: data })}
+                        onCreateProject={() => handleCreateProject(activeTab.id, activeTab.briefData)}
+                        vaultFiles={vaultFiles}
+                    />
+                )}
+
+                {activeTab.type === 'workspace' && activeTab.projectId && (
+                    <WorkspaceView 
+                        key={activeTab.id} // Force remount on tab switch to ensure clean graph state
+                        project={projects.find(p => p.id === activeTab.projectId)!}
+                        modules={modules}
+                        initialActiveNodeId={activeTab.activeNodeId}
+                        initialCurrentLeafId={activeTab.currentLeafId}
+                        onStateChange={(active, leaf) => updateTab(activeTab.id, { activeNodeId: active, currentLeafId: leaf })}
+                        onProjectUpdate={handleProjectUpdate}
+                    />
+                )}
             </div>
         </div>
     );
