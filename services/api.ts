@@ -368,7 +368,7 @@ class ApiService {
                 headers: this.getHeaders(token),
             });
             const data = await response.json();
-            return data || [];
+            return data.notifications || [];
         } catch (error) {
             console.error('getNotifications error:', error);
             return [];
@@ -402,7 +402,7 @@ class ApiService {
                 headers: this.getHeaders(token),
             });
             const data = await response.json();
-            return data || [];
+            return data.recently || [];
         } catch (error) {
             console.error('getRecentItems error:', error);
             return [];

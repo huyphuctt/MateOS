@@ -149,35 +149,8 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
                     </div>
                 )}
             </div>
-
-            {/* WIDGETS SECTION */}
-            <div>
-                <h4 className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">Widgets</h4>
-                <div className="grid grid-cols-2 gap-3">
-                    <div className="aspect-[4/3] bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl p-3 text-white flex flex-col justify-between shadow-lg cursor-pointer hover:brightness-110 transition-all relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 p-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <ExternalLink size={12} />
-                        </div>
-                        <span className="text-xs font-medium opacity-80">Weather</span>
-                        <div>
-                            <span className="text-2xl font-bold">72°</span>
-                            <p className="text-[10px] opacity-90 font-medium">San Francisco, Sunny</p>
-                        </div>
-                    </div>
-                    <div className="aspect-[4/3] bg-white dark:bg-gray-800 rounded-xl p-3 flex flex-col justify-between shadow-md border border-gray-100 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-all group">
-                         <div className="flex justify-between items-start">
-                             <span className="text-xs font-medium text-gray-500">Stocks</span>
-                             <span className="text-[10px] font-bold text-green-500 bg-green-50 dark:bg-green-900/30 px-1.5 py-0.5 rounded">+1.2%</span>
-                         </div>
-                        <div>
-                            <span className="text-lg font-bold text-gray-900 dark:text-white">182.4</span>
-                            <p className="text-[10px] text-gray-400 font-bold">AAPL</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
         </div>
     </div>
   );
 };
+
