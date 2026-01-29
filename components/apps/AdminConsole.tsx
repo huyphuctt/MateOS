@@ -189,6 +189,7 @@ export const AdminConsole: React.FC<AdminConsoleProps> = ({ currentOrg, currentW
     };
 
     const isOrgAdmin = formData.orgRole === 'admin';
+    const isOrgViewer = formData.orgRole === 'viewer';
 
     return (
         <div className="flex flex-col h-full bg-[#f8f9fa] dark:bg-[#1c1c1c] text-gray-900 dark:text-gray-100 relative">
@@ -338,7 +339,9 @@ export const AdminConsole: React.FC<AdminConsoleProps> = ({ currentOrg, currentW
                                                     ? 'bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800'
                                                     : roleInOrg === 'user'
                                                         ? 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800'
-                                                        : 'bg-gray-100 text-gray-600 border-gray-200 dark:bg-gray-800 dark:text-gray-400'
+                                                        : roleInOrg === 'viewer'
+                                                            ? 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-800'
+                                                            : 'bg-gray-100 text-gray-600 border-gray-200 dark:bg-gray-800 dark:text-gray-400'
                                                 }`}>
                                                 {roleInOrg.toUpperCase()}
                                             </span>
@@ -454,10 +457,10 @@ export const AdminConsole: React.FC<AdminConsoleProps> = ({ currentOrg, currentW
                                         <label className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
                                             <Building size={14} /> Workspace Access & Roles
                                         </label>
-                                        {isOrgAdmin && (
+                                        {(isOrgAdmin || isOrgViewer) && (
                                             <div className="flex items-center gap-1.5 text-[10px] font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 px-2 py-0.5 rounded border border-blue-200 dark:border-blue-800">
                                                 <span className="shrink-0"><Info size={10} /></span>
-                                                Locked to Admin
+                                                {isOrgAdmin ? 'Locked to Admin' : 'Limited to Viewer'}
                                             </div>
                                         )}
                                     </div>
@@ -467,9 +470,29 @@ export const AdminConsole: React.FC<AdminConsoleProps> = ({ currentOrg, currentW
                                         ) : (
                                             availableWorkspaces.map(wk => {
                                                 const userWorkspace = formData.workspaces.find(w => w.id === wk.id);
-                                                // If Org Admin, lock to admin role
-                                                const currentRole = isOrgAdmin ? 'admin' : (userWorkspace ? userWorkspace.role : 'none');
+                                                
+                                                // Determine effective display role and logic
+                                                let currentRole = userWorkspace ? userWorkspace.role : 'none';
+
+                                                if (isOrgAdmin) {
+                                                    currentRole = 'admin';
+                                                } else if (isOrgViewer) {
+                                                    // If Organization Viewer, they cannot be Admin or User. 
+                                                    // If they were assigned Admin/User previously, show Viewer.
+                                                    // If they were Viewer or None, keep it.
+                                                    if (currentRole === 'admin' || currentRole === 'user') {
+                                                        currentRole = 'viewer';
+                                                    }
+                                                }
+
                                                 const currentRoleOption = workspaceRoleOptions.find(opt => opt.value === currentRole);
+                                                
+                                                // If Org Viewer, restrict options to None or Viewer. 
+                                                // If Org Admin, options are irrelevant as it is disabled.
+                                                // If Org User, all options available.
+                                                const availableOptions = isOrgViewer 
+                                                    ? workspaceRoleOptions.filter(o => o.value === 'none' || o.value === 'viewer')
+                                                    : workspaceRoleOptions;
 
                                                 return (
                                                     <div
@@ -488,10 +511,10 @@ export const AdminConsole: React.FC<AdminConsoleProps> = ({ currentOrg, currentW
                                                         </div>
                                                         <div className="w-[140px] shrink-0">
                                                             <Select
-                                                                isDisabled={isOrgAdmin}
+                                                                isDisabled={isOrgAdmin} // Only disabled for Admin who is locked everywhere
                                                                 value={currentRoleOption}
                                                                 onChange={(option: any) => handleWorkspaceRoleChange(wk.id, option?.value)}
-                                                                options={workspaceRoleOptions}
+                                                                options={availableOptions}
                                                                 unstyled
                                                                 classNames={{
                                                                     control: (state) => `pl-3 pr-1 py-1 rounded-md text-xs font-bold transition-all cursor-pointer flex items-center justify-between border ${
@@ -524,7 +547,9 @@ export const AdminConsole: React.FC<AdminConsoleProps> = ({ currentOrg, currentW
                                     <p className="text-[10px] text-gray-400 font-medium">
                                         {isOrgAdmin 
                                             ? "Workspace access is locked to Admin because the user is an Organization Admin." 
-                                            : "Grant specific permissions per workspace. \"No Access\" removes the user from that workspace."}
+                                            : isOrgViewer
+                                                ? "Workspace access is limited to Viewer or No Access because the user is an Organization Viewer."
+                                                : "Grant specific permissions per workspace. \"No Access\" removes the user from that workspace."}
                                     </p>
                                 </div>
                             </div>

@@ -75,7 +75,7 @@ export interface Organization {
   logo?: string;
   workspaces: Workspace[];
   // The role of the current user in this organization
-  role?: 'admin' | 'user';
+  role?: 'admin' | 'user' | 'viewer';
 }
 
 export interface ThemePreference {
@@ -107,7 +107,7 @@ export interface AdminConsoleData{
       name: string;
       email: string;
       avatar?: string;
-      role: 'admin' | 'user';    
+      role: 'admin' | 'user' | 'viewer';    
       workspaces?: { id: number; role: string }[];
   }[];
 }
