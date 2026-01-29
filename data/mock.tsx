@@ -23,7 +23,7 @@ export const MOCK_USERS = [
                 },
 
             ],
-            active_theme: 'aqua' as Theme
+            active_theme: 'aero' as Theme
         },
         organizations: [
             {
@@ -42,16 +42,16 @@ export const MOCK_USERS = [
                     }
                 ]
             },
-            {
-                id: 2,
-                name: 'Milky Way',
-                logo: 'https://cdn-icons-png.flaticon.com/512/3241/3241219.png',
-                role: 'user' as const,
-                workspaces: [
-                    { id: 4, name: 'Core', logo: 'https://cdn-icons-png.flaticon.com/512/3241/3241219.png' , role:'admin' as const},
-                    { id: 5, name: 'Spiral Arm', logo: 'https://cdn-icons-png.flaticon.com/512/2928/2928509.png' , role:'admin' as const}
-                ]
-            }
+            // {
+            //     id: 2,
+            //     name: 'Milky Way',
+            //     logo: 'https://cdn-icons-png.flaticon.com/512/3241/3241219.png',
+            //     role: 'user' as const,
+            //     workspaces: [
+            //         { id: 4, name: 'Core', logo: 'https://cdn-icons-png.flaticon.com/512/3241/3241219.png' , role:'admin' as const},
+            //         { id: 5, name: 'Spiral Arm', logo: 'https://cdn-icons-png.flaticon.com/512/2928/2928509.png' , role:'admin' as const}
+            //     ]
+            // }
         ],
         role: 'admin'
     },
@@ -66,7 +66,7 @@ export const MOCK_USERS = [
                 name: 'aqua' as Theme,
                 wallpaper: 'images/wallpaper-2.jpeg',
             }],
-            active_theme: 'aqua' as Theme
+            active_theme: 'aero' as Theme
         },
         organizations: [
             {
@@ -89,7 +89,7 @@ export const MOCK_USERS = [
         password: '1',
         email: 'solar_viewer@example.com',
         avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=150',
-        preferences: { themes: [], active_theme: 'aqua' as Theme },
+        preferences: { themes: [], active_theme: 'aero' as Theme },
         organizations: [{ id: 1, name: 'Solar System', logo: '', workspaces: [{ id: 1, name: 'Earth', logo: 'https://cdn-icons-png.flaticon.com/512/2853/2853965.png' , role:'viewer' as const}] }],
         role: 'user'
     }
