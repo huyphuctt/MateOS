@@ -163,6 +163,39 @@ const App: React.FC = () => {
     else localStorage.removeItem('mateos_avatar');
   }, [userAvatar]);
 
+  // Sync Settings with Backend
+  useEffect(() => {
+      if (authMode === 'desktop' && token) {
+          const timeoutId = setTimeout(() => {
+              // Construct the payload structure as requested
+              const otherThemeName = theme === 'aqua' ? 'aero' : 'aqua';
+              // Try to preserve the other theme's wallpaper from loaded user preferences if available
+              const otherThemeWallpaper = user?.preferences?.themes?.find(t => t.name === otherThemeName)?.wallpaper || wallpaper;
+
+              const preferencesData = {
+                  themes: [
+                      {
+                          name: theme,
+                          wallpaper: wallpaper
+                      },
+                      {
+                          name: otherThemeName as Theme,
+                          wallpaper: otherThemeWallpaper
+                      }
+                  ],
+                  active_theme: theme,
+                  active_style: colorMode
+              };
+
+              apiService.syncUserData(token, { preferences: preferencesData })
+                  .catch(err => console.error("Background sync failed:", err));
+                  
+          }, 2000); // 2 second debounce to prevent rapid API calls
+
+          return () => clearTimeout(timeoutId);
+      }
+  }, [theme, wallpaper, colorMode, authMode, token, user]);
+
   // Fullscreen Change Listener
   useEffect(() => {
     const handleFullscreenChange = () => setIsFullscreen(!!document.fullscreenElement);
