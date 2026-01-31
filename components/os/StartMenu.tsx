@@ -7,6 +7,7 @@ interface StartMenuProps {
   isOpen: boolean;
   onAppClick: (id: AppId) => void;
   appIcons: Record<AppId, React.ReactNode>;
+  appImages?: Record<string, string | undefined>;
   onClose: () => void;
   onLogout: () => void;
   name: string;
@@ -25,7 +26,8 @@ interface StartMenuItem {
 export const StartMenu: React.FC<StartMenuProps> = ({ 
     isOpen, 
     onAppClick, 
-    appIcons, 
+    appIcons,
+    appImages,
     onClose, 
     onLogout, 
     name,
@@ -76,22 +78,25 @@ export const StartMenu: React.FC<StartMenuProps> = ({
         </div>
         
         <div className="grid grid-cols-6 gap-2 mb-8">
-            {pinnedApps.map(app => (
-                <button 
-                    key={app.id} 
-                    onClick={() => onAppClick(app.id)}
-                    className="flex flex-col items-center gap-2 p-3 hover:bg-white/50 dark:hover:bg-white/5 rounded-md transition-colors group"
-                >
-                    <div className="w-10 h-10 bg-stone-400 dark:bg-gray-700 rounded-md shadow-sm flex items-center justify-center text-gray-700 dark:text-gray-200 group-hover:scale-105 transition-transform overflow-hidden relative">
-                        {app.image ? (
-                            <img src={app.image} alt={app.name} className="w-full h-full object-cover" />
-                        ) : (
-                            appIcons[app.id]
-                        )}
-                    </div>
-                    <span className="text-xs text-gray-700 dark:text-gray-200 font-medium truncate w-full text-center">{app.name}</span>
-                </button>
-            ))}
+            {pinnedApps.map(app => {
+                const image = app.image || appImages?.[app.id];
+                return (
+                    <button 
+                        key={app.id} 
+                        onClick={() => onAppClick(app.id)}
+                        className="flex flex-col items-center gap-2 p-3 hover:bg-white/50 dark:hover:bg-white/5 rounded-md transition-colors group"
+                    >
+                        <div className="w-10 h-10 bg-stone-400 dark:bg-gray-700 rounded-md shadow-sm flex items-center justify-center text-gray-700 dark:text-gray-200 group-hover:scale-105 transition-transform overflow-hidden relative">
+                            {image ? (
+                                <img src={image} alt={app.name} className="w-full h-full object-cover" />
+                            ) : (
+                                appIcons[app.id]
+                            )}
+                        </div>
+                        <span className="text-xs text-gray-700 dark:text-gray-200 font-medium truncate w-full text-center">{app.name}</span>
+                    </button>
+                );
+            })}
         </div>
       </div>
 

@@ -7,6 +7,7 @@ interface LaunchpadProps {
   isOpen: boolean;
   onAppClick: (id: AppId) => void;
   appIcons: Record<AppId, React.ReactNode>;
+  appImages?: Record<string, string | undefined>;
   onClose: () => void;
   isAdmin: boolean;
 }
@@ -17,7 +18,14 @@ interface LaunchpadItem {
     image?: string;
 }
 
-export const Launchpad: React.FC<LaunchpadProps> = ({ isOpen, onAppClick, appIcons, onClose, isAdmin }) => {
+export const Launchpad: React.FC<LaunchpadProps> = ({ 
+    isOpen, 
+    onAppClick, 
+    appIcons,
+    appImages,
+    onClose, 
+    isAdmin 
+}) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [show, setShow] = useState(false);
 
@@ -76,22 +84,25 @@ export const Launchpad: React.FC<LaunchpadProps> = ({ isOpen, onAppClick, appIco
             {/* Grid */}
             <div className="container mx-auto px-10 overflow-y-auto max-h-[calc(100vh-200px)] no-scrollbar">
                 <div className="grid grid-cols-4 md:grid-cols-5 lg:grid-cols-7 gap-x-8 gap-y-12 justify-items-center pb-20">
-                    {filteredApps.map((app) => (
-                        <button 
-                            key={app.id}
-                            onClick={(e) => { e.stopPropagation(); onAppClick(app.id); }}
-                            className="flex flex-col items-center gap-4 group w-24"
-                        >
-                            <div className="w-20 h-20 bg-white/10 group-hover:bg-white/20 rounded-[1.6rem] shadow-2xl flex items-center justify-center text-white transition-all duration-200 group-active:scale-95 border border-white/10 backdrop-blur-md group-hover:-translate-y-1 overflow-hidden relative">
-                                {app.image ? (
-                                    <img src={app.image} alt={app.name} className="w-full h-full object-cover" />
-                                ) : (
-                                    appIcons[app.id] && React.cloneElement(appIcons[app.id] as React.ReactElement<any>, { size: 42, className: 'text-white drop-shadow-md' })
-                                )}
-                            </div>
-                            <span className="text-white font-medium text-sm tracking-wide text-shadow-sm text-center line-clamp-2 leading-tight">{app.name}</span>
-                        </button>
-                    ))}
+                    {filteredApps.map((app) => {
+                        const image = app.image || appImages?.[app.id];
+                        return (
+                            <button 
+                                key={app.id}
+                                onClick={(e) => { e.stopPropagation(); onAppClick(app.id); }}
+                                className="flex flex-col items-center gap-4 group w-24"
+                            >
+                                <div className="w-20 h-20 bg-white/10 group-hover:bg-white/20 rounded-[1.6rem] shadow-2xl flex items-center justify-center text-white transition-all duration-200 group-active:scale-95 border border-white/10 backdrop-blur-md group-hover:-translate-y-1 overflow-hidden relative">
+                                    {image ? (
+                                        <img src={image} alt={app.name} className="w-full h-full object-cover" />
+                                    ) : (
+                                        appIcons[app.id] && React.cloneElement(appIcons[app.id] as React.ReactElement<any>, { size: 42, className: 'text-white drop-shadow-md' })
+                                    )}
+                                </div>
+                                <span className="text-white font-medium text-sm tracking-wide text-shadow-sm text-center line-clamp-2 leading-tight">{app.name}</span>
+                            </button>
+                        );
+                    })}
                 </div>
             </div>
         </div>

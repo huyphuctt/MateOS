@@ -47,6 +47,7 @@ export interface AppConfig {
   id: AppId;
   title: string;
   icon: ReactNode;
+  image?: string;
   component: (props: { windowId: AppId }) => ReactNode;
   defaultSize?: { width: number; height: number };
   preferredPosition?: { x: number; y: number };

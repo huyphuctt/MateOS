@@ -369,12 +369,14 @@ const App: React.FC = () => {
     [AppId.SETTINGS]: {
         title: 'Settings',
         icon: <Settings className="text-gray-900 dark:text-gray-100" size={20} />,
+        image: 'https://cdn-icons-png.flaticon.com/512/3524/3524659.png',
         component: null, 
         defaultSize: { width: 600, height: 450 }
     },
     [AppId.ADMIN]: {
         title: 'Admin Console',
         icon: <ShieldUser className="text-red-500" size={20} />,
+        image: 'https://cdn-icons-png.flaticon.com/512/9632/9632009.png',
         component: null, 
         defaultSize: { width: 800, height: 600 },
         requiresAdmin: true
@@ -382,30 +384,35 @@ const App: React.FC = () => {
     [AppId.NOTIFICATIONS]: {
         title: 'Notifications',
         icon: <Bell className="text-blue-500" size={20} />,
+        image: 'https://cdn-icons-png.flaticon.com/512/3239/3239952.png',
         component: <NotificationsApp />,
         defaultSize: { width: 400, height: 600 }
     },
     [AppId.VAULT]: {
         title: 'Vault',
         icon: <Vault className="text-amber-500" size={20} />,
+        image: 'https://cdn-icons-png.flaticon.com/512/3225/3225275.png',
         component: null,
         defaultSize: { width: 900, height: 600 }
     },
     [AppId.PREVIEW]: {
         title: 'Preview',
         icon: <Eye className="text-gray-600 dark:text-gray-300" size={20} />,
+        image: 'https://cdn-icons-png.flaticon.com/512/2857/2857433.png',
         component: null,
         defaultSize: { width: 800, height: 800 }
     },
     [AppId.PIGEON]: {
         title: 'Pigeon',
         icon: <Send className="text-sky-500" size={20} />,
+        image: 'https://cdn-icons-png.flaticon.com/512/2965/2965306.png',
         component: null,
         defaultSize: { width: 850, height: 600 }
     },
     [AppId.WORKSHOP]: {
         title: 'Workshop',
         icon: <Hammer className="text-indigo-500" size={20} />,
+        image: 'https://cdn-icons-png.flaticon.com/512/12175/12175373.png',
         component: null,
         defaultSize: { width: 1000, height: 700 }
     },
@@ -457,6 +464,8 @@ const App: React.FC = () => {
   const toggleStartMenu = () => setStartMenuOpen(!startMenuOpen);
   
   const appIcons = Object.fromEntries(Object.entries(appRegistry).map(([id, app]) => [id, app.icon])) as Record<AppId, React.ReactNode>;
+  const appImages = Object.fromEntries(Object.entries(appRegistry).map(([id, app]) => [id, app.image]));
+  
   const activeAppTitle = windows.find(w => w.id === activeWindowId)?.title || 'MateOS';
 
   const renderWindowContent = (window: WindowState) => {
@@ -523,20 +532,36 @@ const App: React.FC = () => {
 
             <div className={`absolute left-4 flex flex-col gap-6 z-0 ${theme === 'aqua' ? 'top-14 right-4 items-end left-auto' : 'top-6 items-center'}`}>
                 <button onDoubleClick={() => openApp(AppId.VAULT)} className="w-20 flex flex-col items-center gap-1.5 group text-white hover:bg-white/10 rounded-xl p-2 transition-all active:scale-95">
-                    <Vault className="w-10 h-10 text-amber-400 desktop-icon-shadow" />
+                    {appRegistry[AppId.VAULT].image ? (
+                        <img src={appRegistry[AppId.VAULT].image} className="w-10 h-10 object-contain drop-shadow-md desktop-icon-shadow" alt="Vault" />
+                    ) : (
+                        <Vault className="w-10 h-10 text-amber-400 desktop-icon-shadow" />
+                    )}
                     <span className="text-xs text-center line-clamp-2 desktop-text-shadow font-bold">Vault</span>
                 </button>
                 <button onDoubleClick={() => openApp(AppId.PIGEON)} className="w-20 flex flex-col items-center gap-1.5 group text-white hover:bg-white/10 rounded-xl p-2 transition-all active:scale-95">
-                    <Send className="w-10 h-10 text-sky-400 desktop-icon-shadow" />
+                    {appRegistry[AppId.PIGEON].image ? (
+                        <img src={appRegistry[AppId.PIGEON].image} className="w-10 h-10 object-contain drop-shadow-md desktop-icon-shadow" alt="Pigeon" />
+                    ) : (
+                        <Send className="w-10 h-10 text-sky-400 desktop-icon-shadow" />
+                    )}
                     <span className="text-xs text-center line-clamp-2 desktop-text-shadow font-bold">Pigeon</span>
                 </button>
                 <button onDoubleClick={() => openApp(AppId.WORKSHOP)} className="w-20 flex flex-col items-center gap-1.5 group text-white hover:bg-white/10 rounded-xl p-2 transition-all active:scale-95">
-                    <Hammer className="w-10 h-10 text-indigo-400 desktop-icon-shadow" />
+                    {appRegistry[AppId.WORKSHOP].image ? (
+                        <img src={appRegistry[AppId.WORKSHOP].image} className="w-10 h-10 object-contain drop-shadow-md desktop-icon-shadow" alt="Workshop" />
+                    ) : (
+                        <Hammer className="w-10 h-10 text-indigo-400 desktop-icon-shadow" />
+                    )}
                     <span className="text-xs text-center line-clamp-2 desktop-text-shadow font-bold">Workshop</span>
                 </button>
                 {activeOrg?.role === 'admin' && (
                     <button onDoubleClick={() => openApp(AppId.ADMIN)} className="w-20 flex flex-col items-center gap-1.5 group text-white hover:bg-white/10 rounded-xl p-2 transition-all active:scale-95">
-                        <ShieldUser className="w-10 h-10 text-red-500 fill-red-900/30 desktop-icon-shadow" />
+                        {appRegistry[AppId.ADMIN].image ? (
+                            <img src={appRegistry[AppId.ADMIN].image} className="w-10 h-10 object-contain drop-shadow-md desktop-icon-shadow" alt="Admin" />
+                        ) : (
+                            <ShieldUser className="w-10 h-10 text-red-500 fill-red-900/30 desktop-icon-shadow" />
+                        )}
                         <span className="text-xs text-center desktop-text-shadow font-bold">Admin Panel</span>
                     </button>
                 )}
@@ -551,9 +576,28 @@ const App: React.FC = () => {
             <AppSwitcher isOpen={isSwitcherOpen} windows={sortedWindows} selectedIndex={switcherSelectedIndex} onClose={() => setIsSwitcherOpen(false)} onSelect={(idx) => { setSwitcherSelectedIndex(idx); if (sortedWindows[idx]) focusWindow(sortedWindows[idx].id); setIsSwitcherOpen(false); }} />
 
             {theme === 'aero' ? (
-                <StartMenu isOpen={startMenuOpen} onAppClick={openApp} appIcons={appIcons} onClose={() => setStartMenuOpen(false)} onLogout={logout} name={user?.name || ''} onOpenUserProfile={() => openApp(AppId.SETTINGS)} userAvatar={userAvatar} onLock={lock} isAdmin={activeOrg?.role === 'admin'} />
+                <StartMenu 
+                    isOpen={startMenuOpen} 
+                    onAppClick={openApp} 
+                    appIcons={appIcons} 
+                    appImages={appImages}
+                    onClose={() => setStartMenuOpen(false)} 
+                    onLogout={logout} 
+                    name={user?.name || ''} 
+                    onOpenUserProfile={() => openApp(AppId.SETTINGS)} 
+                    userAvatar={userAvatar} 
+                    onLock={lock} 
+                    isAdmin={activeOrg?.role === 'admin'} 
+                />
             ) : (
-                <Launchpad isOpen={startMenuOpen} onAppClick={openApp} appIcons={appIcons} onClose={() => setStartMenuOpen(false)} isAdmin={activeOrg?.role === 'admin'} />
+                <Launchpad 
+                    isOpen={startMenuOpen} 
+                    onAppClick={openApp} 
+                    appIcons={appIcons} 
+                    appImages={appImages}
+                    onClose={() => setStartMenuOpen(false)} 
+                    isAdmin={activeOrg?.role === 'admin'} 
+                />
             )}
             
             <NotificationCenter 
@@ -564,7 +608,26 @@ const App: React.FC = () => {
                 theme={theme} 
             />
 
-            <Taskbar openApps={windows.map(w => w.id)} activeApp={activeWindowId} onAppClick={(id) => { const win = windows.find(w => w.id === id); if (!win) openApp(id); else if (win.isMinimized) { focusWindow(id); setWindows(prev => prev.map(w => w.id === id ? { ...w, isMinimized: false } : w)); } else if (activeWindowId === id) minimizeWindow(id); else focusWindow(id); }} onStartClick={toggleStartMenu} startMenuOpen={startMenuOpen} appIcons={appIcons} theme={theme} hideTaskbar={hideTaskbar} organizations={user?.organizations || []} currentOrg={activeOrg} currentWorkspace={activeWorkspace} onSwitchOrg={switchOrg} onSwitchWorkspace={switchWorkspace} notificationPanelOpen={notificationPanelOpen} onToggleNotificationPanel={() => setNotificationPanelOpen(!notificationPanelOpen)} isFullscreen={isFullscreen} onToggleFullscreen={toggleFullscreen} />
+            <Taskbar 
+                openApps={windows.map(w => w.id)} 
+                activeApp={activeWindowId} 
+                onAppClick={(id) => { const win = windows.find(w => w.id === id); if (!win) openApp(id); else if (win.isMinimized) { focusWindow(id); setWindows(prev => prev.map(w => w.id === id ? { ...w, isMinimized: false } : w)); } else if (activeWindowId === id) minimizeWindow(id); else focusWindow(id); }} 
+                onStartClick={toggleStartMenu} 
+                startMenuOpen={startMenuOpen} 
+                appIcons={appIcons} 
+                appImages={appImages}
+                theme={theme} 
+                hideTaskbar={hideTaskbar} 
+                organizations={user?.organizations || []} 
+                currentOrg={activeOrg} 
+                currentWorkspace={activeWorkspace} 
+                onSwitchOrg={switchOrg} 
+                onSwitchWorkspace={switchWorkspace} 
+                notificationPanelOpen={notificationPanelOpen} 
+                onToggleNotificationPanel={() => setNotificationPanelOpen(!notificationPanelOpen)} 
+                isFullscreen={isFullscreen} 
+                onToggleFullscreen={toggleFullscreen} 
+            />
         </div>
       )}
     </div>

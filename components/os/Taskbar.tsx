@@ -11,6 +11,7 @@ interface TaskbarProps {
   onStartClick: () => void;
   startMenuOpen: boolean;
   appIcons: Record<AppId, React.ReactNode>;
+  appImages?: Record<string, string | undefined>;
   theme: Theme;
   hideTaskbar: boolean;
   // Org Context Props
@@ -39,6 +40,7 @@ export const Taskbar: React.FC<TaskbarProps> = ({
   onStartClick,
   startMenuOpen,
   appIcons,
+  appImages,
   theme,
   hideTaskbar,
   organizations,
@@ -113,6 +115,7 @@ export const Taskbar: React.FC<TaskbarProps> = ({
                  {/* Dock Icons */}
                  {displayedApps.map(appId => {
                     const isOpen = openApps.includes(appId);
+                    const image = appImages?.[appId];
                     
                     return (
                         <button
@@ -121,8 +124,10 @@ export const Taskbar: React.FC<TaskbarProps> = ({
                             className="group/icon relative p-1 transition-all duration-300 hover:-translate-y-3 active:scale-95 active:-translate-y-1"
                         >
                             <div className="w-14 h-14 flex items-center justify-center transition-transform">
-                                <div className="bg-transparent group-hover/icon:bg-black/10 dark:group-hover/icon:bg-white/10 p-2 rounded-2xl transition-colors duration-200">
-                                    {appIcons[appId] ? (
+                                <div className="bg-transparent group-hover/icon:bg-black/10 dark:group-hover/icon:bg-white/10 p-2 rounded-2xl transition-colors duration-200 w-full h-full flex items-center justify-center">
+                                    {image ? (
+                                        <img src={image} alt={appId} className="w-full h-full object-contain drop-shadow-md" />
+                                    ) : appIcons[appId] ? (
                                         React.cloneElement(appIcons[appId] as React.ReactElement<any>, { size: 32 })
                                     ) : (
                                         <div className="w-8 h-8 bg-gray-400 rounded-md" />
@@ -172,6 +177,7 @@ export const Taskbar: React.FC<TaskbarProps> = ({
         {displayedApps.map(appId => {
             const isOpen = openApps.includes(appId);
             const isActive = activeApp === appId;
+            const image = appImages?.[appId];
             
             return (
                 <button
@@ -183,7 +189,11 @@ export const Taskbar: React.FC<TaskbarProps> = ({
                     `}
                 >
                     <div className="w-6 h-6 text-gray-900 dark:text-gray-100 flex items-center justify-center transition-transform group-hover:-translate-y-0.5">
-                        {appIcons[appId]}
+                        {image ? (
+                            <img src={image} alt={appId} className="w-full h-full object-contain" />
+                        ) : (
+                            appIcons[appId]
+                        )}
                     </div>
                     {isOpen && (
                         <div className={`absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1.5 h-1 rounded-full transition-all duration-300 ${isActive ? 'w-4 bg-blue-700 dark:bg-sky-400' : 'bg-gray-500 dark:bg-gray-400'}`} />
