@@ -16,6 +16,12 @@ interface StartMenuProps {
   isAdmin: boolean;
 }
 
+interface StartMenuItem {
+    id: AppId;
+    name: string;
+    image?: string;
+}
+
 export const StartMenu: React.FC<StartMenuProps> = ({ 
     isOpen, 
     onAppClick, 
@@ -45,10 +51,12 @@ export const StartMenu: React.FC<StartMenuProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isOpen, onClose]);
 
-  const pinnedApps = [
+  const pinnedApps: StartMenuItem[] = [
     { id: AppId.VAULT, name: 'Vault' },
     ...(isAdmin ? [{ id: AppId.ADMIN, name: 'Admin' }] : []),
     { id: AppId.SETTINGS, name: 'Settings' },
+    { id: AppId.PIGEON, name: 'Pigeon' },
+    { id: AppId.WORKSHOP, name: 'Workshop' },
   ];
 
   return (
@@ -63,7 +71,7 @@ export const StartMenu: React.FC<StartMenuProps> = ({
       
       <div className="flex-1 overflow-y-auto px-6 py-2">
         {/* Pinned Section */}
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-4 mt-4">
             <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100 ml-2">Pinned</h3>
         </div>
         
@@ -74,8 +82,12 @@ export const StartMenu: React.FC<StartMenuProps> = ({
                     onClick={() => onAppClick(app.id)}
                     className="flex flex-col items-center gap-2 p-3 hover:bg-white/50 dark:hover:bg-white/5 rounded-md transition-colors group"
                 >
-                    <div className="w-10 h-10 bg-stone-400 dark:bg-gray-700 rounded-md shadow-sm flex items-center justify-center text-gray-700 dark:text-gray-200 group-hover:scale-105 transition-transform">
-                        {appIcons[app.id]}
+                    <div className="w-10 h-10 bg-stone-400 dark:bg-gray-700 rounded-md shadow-sm flex items-center justify-center text-gray-700 dark:text-gray-200 group-hover:scale-105 transition-transform overflow-hidden relative">
+                        {app.image ? (
+                            <img src={app.image} alt={app.name} className="w-full h-full object-cover" />
+                        ) : (
+                            appIcons[app.id]
+                        )}
                     </div>
                     <span className="text-xs text-gray-700 dark:text-gray-200 font-medium truncate w-full text-center">{app.name}</span>
                 </button>
