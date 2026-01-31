@@ -7,17 +7,17 @@ import {
   Image as ImageIcon, 
   Settings, 
   Sparkles, 
-  Calculator,
-  Trash2,
-  FolderClosed,
-  Compass,
-  ShieldUser,
-  Bell,
-  Vault,
-  File,
-  Eye,
-  Send,
-  Hammer
+  Calculator, 
+  Trash2, 
+  FolderClosed, 
+  Compass, 
+  ShieldUser, 
+  Bell, 
+  Vault, 
+  File, 
+  Eye, 
+  Send, 
+  Hammer 
 } from 'lucide-react';
 
 import { Taskbar } from './components/os/Taskbar';
@@ -121,6 +121,20 @@ const App: React.FC = () => {
           setHasRestored(false);
       }
   }, [authMode]);
+
+  // Apply User Preferences on Login
+  useEffect(() => {
+      if (user?.preferences) {
+          const { active_theme, themes } = user.preferences;
+          if (active_theme) {
+              setTheme(active_theme);
+              const themePref = themes?.find(t => t.name === active_theme);
+              if (themePref?.wallpaper) {
+                  setWallpaper(themePref.wallpaper);
+              }
+          }
+      }
+  }, [user]);
 
   // Appearance Sync (Dark Mode Implementation)
   useEffect(() => {

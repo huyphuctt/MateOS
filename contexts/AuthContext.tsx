@@ -154,13 +154,52 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         
         setName(userData.name);
 
+        // --- PREFERENCE HANDLING ---
+        let preferredOrgId = null;
+        let preferredWkId = null;
+
+        if (userData.preferences) {
+            // Style
+            if (userData.preferences.active_style) {
+                setColorMode(userData.preferences.active_style);
+            }
+            // Context
+            if (userData.preferences.active_organization) {
+                preferredOrgId = userData.preferences.active_organization;
+            }
+            if (userData.preferences.active_workspace) {
+                preferredWkId = userData.preferences.active_workspace;
+            }
+        }
+
+        // Validate Preferences against available orgs
         const orgs = userData.organizations || [];
-        if (orgs.length > 1 || (orgs[0]?.workspaces.length > 1)) {
+        const validOrg = orgs.find((o: any) => o.id === preferredOrgId);
+        const validWk = validOrg?.workspaces.find((w: any) => w.id === preferredWkId);
+
+        if (validOrg && validWk) {
+            setActiveOrgId(validOrg.id);
+            setActiveWorkspaceId(validWk.id);
+            setAuthMode('desktop');
+            return;
+        }
+
+        const orgCount = orgs.length;
+        const workspaceCount = orgs[0]?.workspaces?.length || 0;
+
+        if (orgCount > 1 || (orgCount === 1 && workspaceCount > 1)) {
             setAuthMode('context_selection');
         } else {
+            // Default single option
+            if (orgCount === 1) {
+                setActiveOrgId(orgs[0].id);
+                if (workspaceCount > 0) {
+                    setActiveWorkspaceId(orgs[0].workspaces[0].id);
+                }
+            }
             setAuthMode('desktop');
         }
-    }, []);
+    }, [setColorMode]);
 
     const logout = useCallback(async () => {
         await apiService.logout(token);

@@ -23,7 +23,10 @@ export const MOCK_USERS = [
                 },
 
             ],
-            active_theme: 'aero' as Theme
+            active_theme: 'aero' as Theme,
+            active_style: 'light' as const,
+            active_organization: 1,
+            active_workspace:1
         },
         organizations: [
             {
