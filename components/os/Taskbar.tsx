@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { LayoutGrid, Rocket, ChevronUp, Building, Layers, Check, Bell, Maximize, Minimize } from 'lucide-react';
+import { ChevronUp, Building, Layers, Check, Bell, Maximize, Minimize } from 'lucide-react';
 import { AppId, Theme, Organization, Workspace } from '../../types';
 import { useGlobal } from '../../contexts/GlobalContext';
 
@@ -105,9 +105,7 @@ export const Taskbar: React.FC<TaskbarProps> = ({
                     onClick={onStartClick}
                     className="group/icon relative p-2 rounded-2xl hover:bg-black/10 dark:hover:bg-white/10 transition-all duration-300 active:scale-95 mb-1"
                 >
-                     <div className="w-12 h-12 bg-gradient-to-b from-gray-400 to-gray-600 rounded-xl flex items-center justify-center shadow-lg">
-                        <Rocket className="w-7 h-7 text-white fill-white" />
-                     </div>
+                     <img src="images/apps.png" alt="Launchpad" className="w-12 h-12 object-contain drop-shadow-lg" />
                 </button>
 
                 <div className="w-[1px] h-12 bg-black/10 dark:bg-white/20 mx-1 mb-1"></div>
@@ -170,7 +168,7 @@ export const Taskbar: React.FC<TaskbarProps> = ({
             data-start-trigger="true"
             className={`p-2 rounded hover:bg-black/10 dark:hover:bg-white/10 transition-all active:scale-95 duration-200 ${startMenuOpen ? 'bg-black/10 dark:bg-white/20 shadow-inner' : ''}`}
         >
-           <LayoutGrid className="w-6 h-6 text-blue-700 dark:text-sky-400 fill-blue-700 dark:fill-sky-400" />
+           <img src="images/apps.png" alt="Start" className="w-6 h-6 object-contain" />
         </button>
 
         {/* Pinned/Open Apps */}
