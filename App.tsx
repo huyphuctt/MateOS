@@ -23,7 +23,6 @@ import {
 import { Taskbar } from './components/os/Taskbar';
 import { StartMenu } from './components/os/StartMenu';
 import { WindowFrame } from './components/os/WindowFrame';
-import { BrowserApp } from './components/apps/Browser';
 import { SettingsApp } from './components/apps/Settings';
 import { AdminConsole } from './components/apps/AdminConsole';
 import { NotificationsApp } from './components/apps/NotificationsApp';

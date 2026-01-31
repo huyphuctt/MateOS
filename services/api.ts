@@ -186,6 +186,29 @@ class ApiService {
         }
     }
 
+    public async syncUserData(token: string, preferences: any): Promise<AuthResponse> {
+        if (this.isMock) {
+            await this.mockDelay();
+            return { success: true, message: 'User data synced successfully' };
+        }
+
+        // Production
+        try {
+            const response = await fetch(`${this.apiUrl}/sync-data`, {
+                method: 'POST',
+                headers: this.getHeaders(token),
+                body: JSON.stringify(preferences),
+            });
+
+            const data = await response.json();
+            if (!response.ok) {
+                return { success: false, message: data.message || 'Failed to sync user data' };
+            }
+            return { success: true, message: 'User data synced successfully' };
+        } catch (error: any) {
+            return { success: false, message: error.message || 'Network error' };
+        }
+    }
     // --- Admin Console ---
     public async adminConsole(token: string, organization_id: number): Promise<AdminConsoleData> {
         console.log(`ApiService: adminConsole for org ${organization_id}`);
