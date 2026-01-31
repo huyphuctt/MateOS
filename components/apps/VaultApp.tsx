@@ -1,9 +1,9 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { 
-    LayoutGrid, List, Search, Plus, File, Image, FileVideo, 
+    LayoutGrid, List, Search, Plus, File, Image as ImageIcon, FileVideo, 
     FileText, FileSpreadsheet, FileCode, FolderClosed, 
-    Home, Tag, CheckCircle2, Loader2, AlertCircle, ChevronRight
+    Home, Tag, CheckCircle2, Loader2, AlertCircle, ChevronRight, Archive
 } from 'lucide-react';
 import { apiService } from '../../services/api';
 import { FileItem } from '../../types';
@@ -15,6 +15,58 @@ interface VaultAppProps {
 }
 
 type Category = 'All' | 'Images' | 'Videos' | 'Docs' | 'Spreadsheets' | 'PDF' | 'Presentation';
+
+// Helper component for File Icons with Image Fallback
+const FileIconDisplay: React.FC<{ file: FileItem; className?: string }> = ({ file, className }) => {
+    const [imgError, setImgError] = useState(false);
+    const ext = file.name.split('.').pop()?.toLowerCase();
+    
+    // Determine Image Path based on extension or type
+    let iconPath = 'images/file.png';
+    if (file.type === 'pdf') iconPath = 'images/pdf.png';
+    else if (file.type === 'doc' || ['doc', 'docx'].includes(ext || '')) iconPath = 'images/doc.png';
+    else if (file.type === 'sheet' || ['xls', 'xlsx', 'csv'].includes(ext || '')) iconPath = 'images/xls.png';
+    else if (file.type === 'presentation' || ['ppt', 'pptx'].includes(ext || '')) iconPath = 'images/ppt.png';
+    else if (file.type === 'video' || ['mp4', 'mov', 'avi', 'mkv'].includes(ext || '')) iconPath = 'images/video.png';
+    else if (file.type === 'code' || ['js', 'ts', 'tsx', 'html', 'css', 'json', 'py', 'java'].includes(ext || '')) iconPath = 'images/code.png';
+    else if (file.type === 'markdown' || ext === 'md' || ext === 'txt') iconPath = 'images/txt.png';
+    else if (['zip', 'rar', '7z', 'tar', 'gz'].includes(ext || '')) iconPath = 'images/zip.png';
+    else if (file.type === 'image') iconPath = 'images/image.png';
+
+    // Lucide Fallback Helper
+    const getLucideFallback = () => {
+        switch (file.type) {
+            case 'image': return <ImageIcon className="text-purple-500 w-full h-full" />;
+            case 'video': return <FileVideo className="text-red-500 w-full h-full" />;
+            case 'doc': return <FileText className="text-blue-500 w-full h-full" />;
+            case 'sheet': return <FileSpreadsheet className="text-green-500 w-full h-full" />;
+            case 'presentation': return <FileSpreadsheet className="text-orange-500 w-full h-full" />; // Fallback
+            case 'pdf': return <FileText className="text-red-400 w-full h-full" />;
+            case 'code': return <FileCode className="text-yellow-500 w-full h-full" />;
+            case 'markdown': return <FileText className="text-gray-500 w-full h-full" />;
+            default: 
+                if (['zip', 'rar', '7z'].includes(ext || '')) return <Archive className="text-orange-400 w-full h-full" />;
+                return <File className="text-gray-400 w-full h-full" />;
+        }
+    };
+
+    if (!imgError) {
+        return (
+            <img 
+                src={iconPath} 
+                alt={file.type} 
+                className={`${className} object-contain drop-shadow-sm`} 
+                onError={() => setImgError(true)} 
+            />
+        );
+    }
+
+    return (
+        <div className={`${className} flex items-center justify-center p-1`}>
+            {getLucideFallback()}
+        </div>
+    );
+};
 
 export const VaultApp: React.FC<VaultAppProps> = ({ onOpenFile }) => {
     const { token, activeWorkspace } = useAuth();
@@ -55,8 +107,6 @@ export const VaultApp: React.FC<VaultAppProps> = ({ onOpenFile }) => {
 
     // Initial Load
     useEffect(() => {
-        // In React 18 Strict Mode, useEffect runs twice in dev. 
-        // This check ensures we only fire the actual fetch once per mount/token change.
         if (isInitialMount.current) {
             isInitialMount.current = false;
             loadFiles();
@@ -71,9 +121,6 @@ export const VaultApp: React.FC<VaultAppProps> = ({ onOpenFile }) => {
         if (nonReadyFiles.length === 0 || !token) return;
 
         const pollInterval = setInterval(async () => {
-            // Re-evaluate list of files that still need refreshing
-            // We use functional update to ensure we don't hold stale 'files'
-            // but for the iterator we need the IDs.
             for (const file of nonReadyFiles) {
                 try {
                     const refreshedItem = await apiService.vaultRefresh(token, file.id);
@@ -84,7 +131,7 @@ export const VaultApp: React.FC<VaultAppProps> = ({ onOpenFile }) => {
                     console.error(`Failed to refresh status for file ${file.id}:`, err);
                 }
             }
-        }, 10000); // 10 seconds interval
+        }, 10000); 
 
         return () => clearInterval(pollInterval);
     }, [files, token]);
@@ -150,19 +197,6 @@ export const VaultApp: React.FC<VaultAppProps> = ({ onOpenFile }) => {
 
     const filteredFiles = getFilteredFiles();
 
-    const getFileIcon = (type: FileItem['type']) => {
-        switch (type) {
-            case 'image': return <Image className="text-purple-500" size={32} />;
-            case 'video': return <FileVideo className="text-red-500" size={32} />;
-            case 'doc': return <FileText className="text-blue-500" size={32} />;
-            case 'sheet': return <FileSpreadsheet className="text-green-500" size={32} />;
-            case 'presentation': return <FileSpreadsheet className="text-green-500" size={32} />;
-            case 'pdf': return <FileText className="text-red-400" size={32} />;
-            case 'code': return <FileCode className="text-yellow-500" size={32} />;
-            default: return <File className="text-gray-400" size={32} />;
-        }
-    };
-
     const getStatusBadge = (status?: string, mode: 'icon' | 'full' = 'icon') => {
         if (!status) return null;
         if (status === 'Indexing') {
@@ -227,7 +261,7 @@ export const VaultApp: React.FC<VaultAppProps> = ({ onOpenFile }) => {
                             }`}
                         >
                             {cat === 'All' && <Home size={16} />}
-                            {cat === 'Images' && <Image size={16} />}
+                            {cat === 'Images' && <ImageIcon size={16} />}
                             {cat === 'Videos' && <FileVideo size={16} />}
                             {cat === 'Docs' && <FileText size={16} />}
                             {cat === 'Spreadsheets' && <FileSpreadsheet size={16} />}
@@ -346,7 +380,7 @@ export const VaultApp: React.FC<VaultAppProps> = ({ onOpenFile }) => {
                                         {file.type === 'image' ? (
                                             <img src={file.url} alt={file.name} className="w-full h-full object-cover" />
                                         ) : (
-                                            getFileIcon(file.type)
+                                            <FileIconDisplay file={file} className="w-12 h-12" />
                                         )}
                                         {file.status && file.status !== 'Ready' && (
                                             <div className="absolute top-1 right-1">
@@ -391,7 +425,7 @@ export const VaultApp: React.FC<VaultAppProps> = ({ onOpenFile }) => {
                                                 <td className="px-6 py-3 whitespace-nowrap">
                                                     <div className="flex items-center">
                                                         <div className="flex-shrink-0 h-8 w-8 flex items-center justify-center">
-                                                            {React.cloneElement(getFileIcon(file.type) as React.ReactElement<any>, { size: 20 })}
+                                                            <FileIconDisplay file={file} className="w-6 h-6" />
                                                         </div>
                                                         <div className="ml-4">
                                                             <div className="text-sm font-medium text-gray-900 dark:text-white">{file.name}</div>

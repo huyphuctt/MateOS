@@ -107,14 +107,14 @@ const App: React.FC = () => {
     [AppId.SETTINGS]: {
         title: 'Settings',
         icon: <Settings className="text-gray-900 dark:text-gray-100" size={20} />,
-        image: 'https://cdn-icons-png.flaticon.com/512/3524/3524659.png',
+        image: 'images/settings.png',
         component: null, 
         defaultSize: { width: 600, height: 450 }
     },
     [AppId.ADMIN]: {
         title: 'Admin Console',
         icon: <ShieldUser className="text-red-500" size={20} />,
-        image: 'https://cdn-icons-png.flaticon.com/512/9632/9632009.png',
+        image: 'images/admin.png',
         component: null, 
         defaultSize: { width: 800, height: 600 },
         requiresAdmin: true
@@ -122,35 +122,35 @@ const App: React.FC = () => {
     [AppId.NOTIFICATIONS]: {
         title: 'Notifications',
         icon: <Bell className="text-blue-500" size={20} />,
-        image: 'https://cdn-icons-png.flaticon.com/512/3239/3239952.png',
+        image: 'images/notifications.png',
         component: <NotificationsApp />,
         defaultSize: { width: 400, height: 600 }
     },
     [AppId.VAULT]: {
         title: 'Vault',
         icon: <Vault className="text-amber-500" size={20} />,
-        image: 'https://cdn-icons-png.flaticon.com/512/3225/3225275.png',
+        image: 'images/vault.png',
         component: null,
         defaultSize: { width: 900, height: 600 }
     },
     [AppId.PREVIEW]: {
         title: 'Preview',
         icon: <Eye className="text-gray-600 dark:text-gray-300" size={20} />,
-        image: 'https://cdn-icons-png.flaticon.com/512/2857/2857433.png',
+        image: 'images/preview.png',
         component: null,
         defaultSize: { width: 800, height: 800 }
     },
     [AppId.PIGEON]: {
         title: 'Pigeon',
         icon: <Send className="text-sky-500" size={20} />,
-        image: 'https://cdn-icons-png.flaticon.com/512/2965/2965306.png',
+        image: 'images/pigeon.png',
         component: null,
         defaultSize: { width: 850, height: 600 }
     },
     [AppId.WORKSHOP]: {
         title: 'Workshop',
         icon: <Hammer className="text-indigo-500" size={20} />,
-        image: 'https://cdn-icons-png.flaticon.com/512/12175/12175373.png',
+        image: 'images/workshop.png',
         component: null,
         defaultSize: { width: 1000, height: 700 }
     },
