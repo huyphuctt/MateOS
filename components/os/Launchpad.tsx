@@ -92,7 +92,7 @@ export const Launchpad: React.FC<LaunchpadProps> = ({
                                 onClick={(e) => { e.stopPropagation(); onAppClick(app.id); }}
                                 className="flex flex-col items-center gap-4 group w-24"
                             >
-                                <div className="w-20 h-20 bg-white/10 group-hover:bg-white/20 rounded-[1.6rem] shadow-2xl flex items-center justify-center text-white transition-all duration-200 group-active:scale-95 border border-white/10 backdrop-blur-md group-hover:-translate-y-1 overflow-hidden relative">
+                                <div className="w-20 h-20  shadow-2xl flex items-center justify-center text-white transition-all duration-200 group-active:scale-95   group-hover:-translate-y-1 overflow-hidden relative">
                                     {image ? (
                                         <img src={image} alt={app.name} className="w-full h-full object-cover" />
                                     ) : (
