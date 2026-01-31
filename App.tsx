@@ -1,7 +1,16 @@
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { 
+  Monitor, 
+  Globe, 
+  FileText, 
+  Image as ImageIcon, 
   Settings, 
+  Sparkles, 
+  Calculator, 
+  Trash2, 
+  FolderClosed, 
+  Compass, 
   ShieldUser, 
   Bell, 
   Vault, 
@@ -60,8 +69,6 @@ const App: React.FC = () => {
   } = useAuth();
   
   const { openModal } = useModal();
-  // We don't need to destructure notifications/recents here, the components will consume them via useGlobal
-  // But we can trigger a refresh if needed
   const { refreshData, removeNotification } = useGlobal();
 
   // --- OS UI State ---
@@ -93,6 +100,64 @@ const App: React.FC = () => {
 
   // Track context to close apps on switch
   const lastContextId = useRef<string>("");
+
+  // --- App Registry ---
+  // Defined early so openApp can access it
+  const appRegistry: Record<AppId, any> = useMemo(() => ({    
+    [AppId.SETTINGS]: {
+        title: 'Settings',
+        icon: <Settings className="text-gray-900 dark:text-gray-100" size={20} />,
+        image: 'https://cdn-icons-png.flaticon.com/512/3524/3524659.png',
+        component: null, 
+        defaultSize: { width: 600, height: 450 }
+    },
+    [AppId.ADMIN]: {
+        title: 'Admin Console',
+        icon: <ShieldUser className="text-red-500" size={20} />,
+        image: 'https://cdn-icons-png.flaticon.com/512/9632/9632009.png',
+        component: null, 
+        defaultSize: { width: 800, height: 600 },
+        requiresAdmin: true
+    },
+    [AppId.NOTIFICATIONS]: {
+        title: 'Notifications',
+        icon: <Bell className="text-blue-500" size={20} />,
+        image: 'https://cdn-icons-png.flaticon.com/512/3239/3239952.png',
+        component: <NotificationsApp />,
+        defaultSize: { width: 400, height: 600 }
+    },
+    [AppId.VAULT]: {
+        title: 'Vault',
+        icon: <Vault className="text-amber-500" size={20} />,
+        image: 'https://cdn-icons-png.flaticon.com/512/3225/3225275.png',
+        component: null,
+        defaultSize: { width: 900, height: 600 }
+    },
+    [AppId.PREVIEW]: {
+        title: 'Preview',
+        icon: <Eye className="text-gray-600 dark:text-gray-300" size={20} />,
+        image: 'https://cdn-icons-png.flaticon.com/512/2857/2857433.png',
+        component: null,
+        defaultSize: { width: 800, height: 800 }
+    },
+    [AppId.PIGEON]: {
+        title: 'Pigeon',
+        icon: <Send className="text-sky-500" size={20} />,
+        image: 'https://cdn-icons-png.flaticon.com/512/2965/2965306.png',
+        component: null,
+        defaultSize: { width: 850, height: 600 }
+    },
+    [AppId.WORKSHOP]: {
+        title: 'Workshop',
+        icon: <Hammer className="text-indigo-500" size={20} />,
+        image: 'https://cdn-icons-png.flaticon.com/512/12175/12175373.png',
+        component: null,
+        defaultSize: { width: 1000, height: 700 }
+    },
+  }), []);
+
+  const appIcons = useMemo(() => Object.fromEntries(Object.entries(appRegistry).map(([id, app]) => [id, app.icon])) as Record<AppId, React.ReactNode>, [appRegistry]);
+  const appImages = useMemo(() => Object.fromEntries(Object.entries(appRegistry).map(([id, app]) => [id, app.image])), [appRegistry]);
 
   // Reset OS state on logout
   useEffect(() => {
@@ -239,7 +304,10 @@ const App: React.FC = () => {
              return prevWindows.map(w => w.id === id ? { ...w, isMinimized: false, data: newData, zIndex: nextZIndex } : w);
         }
 
-        const title = id.charAt(0).toUpperCase() + id.slice(1);
+        const appConfig = appRegistry[id];
+        const title = appConfig?.title || id.charAt(0).toUpperCase() + id.slice(1);
+        const icon = appConfig?.icon || <File size={16} />;
+        const image = appConfig?.image; // Get image from registry
         
         let initialData = payload;
         if (id === AppId.PREVIEW && payload?.file) {
@@ -249,14 +317,15 @@ const App: React.FC = () => {
         const newWindow: WindowState = {
             id,
             title: title,
-            icon: <File size={16} />, 
+            icon: icon, 
+            image: image,
             component: null, 
             isOpen: true,
             isMinimized: false,
             isMaximized: false,
             dockSide: null,
             zIndex: nextZIndex,
-            size: { width: 800, height: 600 },
+            size: appConfig?.defaultSize || { width: 800, height: 600 },
             position: { x: 50 + (prevWindows.length * 30), y: (theme === 'aqua' ? 80 : 50) + (prevWindows.length * 30) },
             data: initialData
         };
@@ -265,7 +334,7 @@ const App: React.FC = () => {
 
     setActiveWindowId(id);
     setNextZIndex(prev => prev + 1);
-  }, [nextZIndex, theme]);
+  }, [nextZIndex, theme, appRegistry]);
 
   // Handle launching apps from notifications or recent items
   const handleAppLaunch = useCallback((item: NotificationItem, isNotification: boolean) => {
@@ -355,60 +424,6 @@ const App: React.FC = () => {
     lastContextId.current = currentContextId;
   }, [activeOrg?.id, activeWorkspace?.id, authMode, hasRestored]);
 
-  // --- App Registry ---
-  const appRegistry: Record<AppId, any> = useMemo(() => ({    
-    [AppId.SETTINGS]: {
-        title: 'Settings',
-        icon: <Settings className="text-gray-900 dark:text-gray-100" size={20} />,
-        image: 'images/settings.png',
-        component: null, 
-        defaultSize: { width: 600, height: 450 }
-    },
-    [AppId.ADMIN]: {
-        title: 'Admin Console',
-        icon: <ShieldUser className="text-red-500" size={20} />,
-        image: 'images/admin.png',
-        component: null, 
-        defaultSize: { width: 800, height: 600 },
-        requiresAdmin: true
-    },
-    [AppId.NOTIFICATIONS]: {
-        title: 'Notifications',
-        icon: <Bell className="text-blue-500" size={20} />,
-        image: 'images/notifications.png',
-        component: <NotificationsApp />,
-        defaultSize: { width: 400, height: 600 }
-    },
-    [AppId.VAULT]: {
-        title: 'Vault',
-        icon: <Vault className="text-amber-500" size={20} />,
-        image: 'images/vault.png',
-        component: null,
-        defaultSize: { width: 900, height: 600 }
-    },
-    [AppId.PREVIEW]: {
-        title: 'Preview',
-        icon: <Eye className="text-gray-600 dark:text-gray-300" size={20} />,
-        image: 'images/preview.png',
-        component: null,
-        defaultSize: { width: 800, height: 800 }
-    },
-    [AppId.PIGEON]: {
-        title: 'Pigeon',
-        icon: <Send className="text-sky-500" size={20} />,
-        image: 'images/pigeon.png',
-        component: null,
-        defaultSize: { width: 850, height: 600 }
-    },
-    [AppId.WORKSHOP]: {
-        title: 'Workshop',
-        icon: <Hammer className="text-indigo-500" size={20} />,
-        image: 'images/workshop.png',
-        component: null,
-        defaultSize: { width: 1000, height: 700 }
-    },
-  }), []);
-
   // Session Persistence
   useEffect(() => {
       if (authMode === 'desktop' && !hasRestored) {
@@ -420,7 +435,12 @@ const App: React.FC = () => {
                   const hydratedWindows = savedWindows.map((w: any) => {
                       const app = appRegistry[w.id as AppId];
                       if (!app) return null;
-                      return { ...w, icon: app.icon, component: app.component };
+                      return { 
+                          ...w, 
+                          icon: app.icon, 
+                          image: app.image, // Restore image from registry
+                          component: app.component 
+                        };
                   }).filter(Boolean);
                   setWindows(hydratedWindows);
                   if (savedMetaStr) {
@@ -454,10 +474,8 @@ const App: React.FC = () => {
   const moveWindow = (id: AppId, x: number, y: number) => setWindows(prev => prev.map(w => w.id === id ? { ...w, position: { x, y } } : w));
   const toggleStartMenu = () => setStartMenuOpen(!startMenuOpen);
   
-  const appIcons = Object.fromEntries(Object.entries(appRegistry).map(([id, app]) => [id, app.icon])) as Record<AppId, React.ReactNode>;
-  const appImages = Object.fromEntries(Object.entries(appRegistry).map(([id, app]) => [id, app.image]));
-  
-  const activeAppTitle = windows.find(w => w.id === activeWindowId)?.title || 'MateOS';
+  const activeWindow = windows.find(w => w.id === activeWindowId);
+  const activeAppTitle = activeWindow?.title || 'MateOS';
 
   const renderWindowContent = (window: WindowState) => {
       if (window.id === AppId.SETTINGS) {
@@ -502,7 +520,9 @@ const App: React.FC = () => {
         <div className="w-full h-full relative dark-transition">
             {theme === 'aqua' && (
                 <TopBar 
-                    activeAppTitle={activeAppTitle} 
+                    activeAppTitle={activeAppTitle}
+                    activeAppIcon={activeWindow?.icon}
+                    activeAppImage={activeWindow?.image}
                     onOpenSettings={() => openApp(AppId.SETTINGS)}
                     onLogout={logout}
                     name={user?.name || ''}

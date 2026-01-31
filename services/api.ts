@@ -461,7 +461,7 @@ class ApiService {
             return MOCK_CONVERSATIONS.filter(c => c.users.some(u => u.id === userId));
         }
         try {
-            const response = await fetch(`${this.apiUrl}/api/conversations`, { headers: this.getHeaders(token) });
+            const response = await fetch(`${this.apiUrl}/conversations`, { headers: this.getHeaders(token) });
             return await response.json();
         } catch(e) { return []; }
     }

@@ -39,6 +39,7 @@ export interface WindowState {
   position: { x: number; y: number };
   size: { width: number; height: number };
   icon: ReactNode;
+  image?: string; // New property for window image
   component: ReactNode;
   data?: any; // To pass file data or initial state
 }

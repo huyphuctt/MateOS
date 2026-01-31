@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Minus, Square, X, Maximize2, LayoutPanelLeft, LayoutPanelTop, RotateCcw } from 'lucide-react';
 import { WindowState, AppId, Theme } from '../../types';
@@ -238,9 +239,13 @@ export const WindowFrame: React.FC<WindowFrameProps> = ({
                     <>
                         <div className="flex items-center gap-2 px-2 flex-1 h-full overflow-hidden">
                             <div className="flex items-center justify-center shrink-0">
-                                {React.isValidElement(windowState.icon) 
-                                    ? React.cloneElement(windowState.icon as React.ReactElement<any>, { size: 16 }) 
-                                    : windowState.icon}
+                                {windowState.image ? (
+                                    <img src={windowState.image} className="w-4 h-4 object-contain" alt="" />
+                                ) : React.isValidElement(windowState.icon) ? (
+                                    React.cloneElement(windowState.icon as React.ReactElement<any>, { size: 16 })
+                                ) : (
+                                    windowState.icon
+                                )}
                             </div>
                             <span className="text-xs font-medium text-gray-700 dark:text-gray-200 truncate leading-none pt-[1px]">{windowState.title}</span>
                         </div>

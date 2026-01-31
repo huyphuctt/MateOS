@@ -7,6 +7,8 @@ import { useGlobal } from '../../contexts/GlobalContext';
 
 interface TopBarProps {
   activeAppTitle?: string;
+  activeAppIcon?: React.ReactNode;
+  activeAppImage?: string;
   onOpenSettings: () => void;
   onLogout: () => void;
   name: string;
@@ -26,6 +28,8 @@ interface TopBarProps {
 
 export const TopBar: React.FC<TopBarProps> = ({ 
     activeAppTitle = 'MateOS', 
+    activeAppIcon,
+    activeAppImage,
     userAvatar,
     onOpenUserProfile,
     notificationPanelOpen,
@@ -64,7 +68,7 @@ export const TopBar: React.FC<TopBarProps> = ({
 
   return (
     <div className="absolute top-0 left-0 right-0 h-7 bg-black/50 backdrop-blur-2xl border-b border-white/10 flex items-center justify-between px-4 z-[9999] text-xs font-bold text-white select-none shadow-md">
-        <div className="flex items-center gap-4 h-full relative" ref={menuRef}>
+        <div className="flex items-center gap-3 h-full relative" ref={menuRef}>
             <div 
                 className={`px-2 py-1 rounded transition-colors cursor-pointer ${menuOpen ? 'bg-white/30' : 'hover:bg-white/20'}`}
                 onClick={() => setMenuOpen(!menuOpen)}
@@ -93,7 +97,19 @@ export const TopBar: React.FC<TopBarProps> = ({
                     <button onClick={() => { logout(); setMenuOpen(false); }} className="text-left px-3 py-1.5 rounded hover:bg-blue-600 hover:text-white text-gray-800 dark:text-gray-100 transition-colors text-sm font-medium">Log Out...</button>
                 </div>
             )}
-            <span className="font-bold cursor-default desktop-text-shadow tracking-tight">{activeAppTitle}</span>
+            
+            <div className="flex items-center gap-2">
+                {activeAppTitle !== 'MateOS' && (
+                    <div className="w-4 h-4 flex items-center justify-center">
+                        {activeAppImage ? (
+                            <img src={activeAppImage} alt="" className="w-full h-full object-contain" />
+                        ) : activeAppIcon ? (
+                            React.cloneElement(activeAppIcon as React.ReactElement<any>, { size: 14 })
+                        ) : null}
+                    </div>
+                )}
+                <span className="font-bold cursor-default desktop-text-shadow tracking-tight">{activeAppTitle}</span>
+            </div>
         </div>
 
         <div className="flex items-center gap-3 h-full">
