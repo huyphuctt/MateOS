@@ -184,7 +184,9 @@ const App: React.FC = () => {
                       }
                   ],
                   active_theme: theme,
-                  active_style: colorMode
+                  active_style: colorMode,
+                  active_organization: activeOrg?.id,
+                  active_workspace: activeWorkspace?.id
               };
 
               apiService.syncUserData(token, { preferences: preferencesData })
@@ -194,7 +196,7 @@ const App: React.FC = () => {
 
           return () => clearTimeout(timeoutId);
       }
-  }, [theme, wallpaper, colorMode, authMode, token, user]);
+  }, [theme, wallpaper, colorMode, authMode, token, user, activeOrg, activeWorkspace]);
 
   // Fullscreen Change Listener
   useEffect(() => {

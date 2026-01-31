@@ -87,6 +87,8 @@ export interface Preferences{
     themes?: ThemePreference[];
     active_theme?: Theme;
     active_style?: ColorMode;
+    active_organization?: number;
+    active_workspace?: number;
 }
 
 export interface User {
