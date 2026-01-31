@@ -24,13 +24,13 @@ const FileIconDisplay: React.FC<{ file: FileItem; className?: string }> = ({ fil
     // Determine Image Path based on extension or type
     let iconPath = 'images/file.png';
     if (file.type === 'pdf') iconPath = 'images/pdf.png';
-    else if (file.type === 'doc' || ['doc', 'docx'].includes(ext || '')) iconPath = 'images/doc.png';
-    else if (file.type === 'sheet' || ['xls', 'xlsx', 'csv'].includes(ext || '')) iconPath = 'images/xls.png';
-    else if (file.type === 'presentation' || ['ppt', 'pptx'].includes(ext || '')) iconPath = 'images/ppt.png';
+    else if (file.type === 'doc' || ['doc', 'docx'].includes(ext || '')) iconPath = 'images/docx.png';
+    else if (file.type === 'sheet' || ['xls', 'xlsx', 'csv'].includes(ext || '')) iconPath = 'images/xlsx.png';
+    else if (file.type === 'presentation' || ['ppt', 'pptx'].includes(ext || '')) iconPath = 'images/presentation.png';
     else if (file.type === 'video' || ['mp4', 'mov', 'avi', 'mkv'].includes(ext || '')) iconPath = 'images/video.png';
     else if (file.type === 'code' || ['js', 'ts', 'tsx', 'html', 'css', 'json', 'py', 'java'].includes(ext || '')) iconPath = 'images/code.png';
-    else if (file.type === 'markdown' || ext === 'md' || ext === 'txt') iconPath = 'images/txt.png';
-    else if (['zip', 'rar', '7z', 'tar', 'gz'].includes(ext || '')) iconPath = 'images/zip.png';
+    else if (file.type === 'markdown' || ext === 'md' || ext === 'txt') iconPath = 'images/text.png';
+    else if (['zip', 'rar', '7z', 'tar', 'gz'].includes(ext || '')) iconPath = 'images/archive.png';
     else if (file.type === 'image') iconPath = 'images/image.png';
 
     // Lucide Fallback Helper

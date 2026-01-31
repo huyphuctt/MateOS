@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { X, FileText, Image as ImageIcon, Video, FileCode, File, FileSpreadsheet, Download } from 'lucide-react';
+import { X, FileText, Image as ImageIcon, Video, FileCode, File, FileSpreadsheet, Download, Archive } from 'lucide-react';
 import { FileItem } from '../../types';
 
 interface PreviewAppProps {
@@ -8,6 +9,49 @@ interface PreviewAppProps {
   activeTabId?: string;
   onUpdate: (newData: { tabs: FileItem[], activeTabId?: string }) => void;
 }
+
+// Helper component for Tab Icons with Image Fallback
+const TabIcon: React.FC<{ file: FileItem; className?: string }> = ({ file, className = "w-4 h-4" }) => {
+    const [imgError, setImgError] = useState(false);
+    const ext = file.name.split('.').pop()?.toLowerCase();
+    
+    // Determine Image Path based on extension or type - Matches VaultApp logic
+    let iconPath = 'images/file.png';
+    if (file.type === 'pdf') iconPath = 'images/pdf.png';
+    else if (file.type === 'doc' || ['doc', 'docx'].includes(ext || '')) iconPath = 'images/docx.png';
+    else if (file.type === 'sheet' || ['xls', 'xlsx', 'csv'].includes(ext || '')) iconPath = 'images/xlsx.png';
+    else if (file.type === 'presentation' || ['ppt', 'pptx'].includes(ext || '')) iconPath = 'images/presentation.png';
+    else if (file.type === 'video' || ['mp4', 'mov', 'avi', 'mkv'].includes(ext || '')) iconPath = 'images/video.png';
+    else if (file.type === 'code' || ['js', 'ts', 'tsx', 'html', 'css', 'json', 'py', 'java'].includes(ext || '')) iconPath = 'images/code.png';
+    else if (file.type === 'markdown' || ext === 'md' || ext === 'txt') iconPath = 'images/text.png';
+    else if (['zip', 'rar', '7z', 'tar', 'gz'].includes(ext || '')) iconPath = 'images/archive.png';
+    else if (file.type === 'image') iconPath = 'images/image.png';
+
+    if (!imgError) {
+        return (
+            <img 
+                src={iconPath} 
+                alt="" 
+                className={`${className} object-contain`} 
+                onError={() => setImgError(true)} 
+            />
+        );
+    }
+
+    // Lucide Fallback
+    switch (file.type) {
+        case 'image': return <ImageIcon size={12} className="text-purple-500" />;
+        case 'video': return <Video size={12} className="text-red-500" />;
+        case 'code': return <FileCode size={12} className="text-yellow-500" />;
+        case 'pdf': return <FileText size={12} className="text-red-400" />;
+        case 'markdown': return <FileText size={12} className="text-blue-400" />;
+        case 'sheet': return <FileSpreadsheet size={12} className="text-green-500" />;
+        case 'doc': return <FileText size={12} className="text-blue-500" />;
+        default: 
+            if (['zip', 'rar', '7z'].includes(ext || '')) return <Archive size={12} className="text-orange-400" />;
+            return <File size={12} className="text-gray-500" />;
+    }
+};
 
 const FileViewerContent: React.FC<{ file: FileItem }> = ({ file }) => {
     const [textContent, setTextContent] = useState<string>('');
@@ -90,11 +134,7 @@ const FileViewerContent: React.FC<{ file: FileItem }> = ({ file }) => {
         return (
             <div className="h-full w-full flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 p-4">
                 <div className="w-24 h-24 bg-white dark:bg-gray-800 rounded-3xl flex items-center justify-center mb-6 shadow-sm border border-gray-100 dark:border-gray-700">
-                    {file.type === 'doc' ? (
-                        <FileText size={48} className="text-blue-500"/>
-                    ) : (
-                        <FileSpreadsheet size={48} className="text-green-500"/>
-                    )} 
+                    <TabIcon file={file} className="w-12 h-12" />
                 </div>
                 <h3 className="text-xl font-semibold mb-2">{file.name}</h3>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-8 max-w-sm text-center">
@@ -156,20 +196,6 @@ export const PreviewApp: React.FC<PreviewAppProps> = ({ tabs, activeTabId, onUpd
         onUpdate({ tabs: newTabs, activeTabId: newActiveId });
     };
 
-    // Helper to get icon for file type
-    const getTabIcon = (type: FileItem['type']) => {
-        switch (type) {
-            case 'image': return <ImageIcon size={12} className="text-purple-500" />;
-            case 'video': return <Video size={12} className="text-red-500" />;
-            case 'code': return <FileCode size={12} className="text-yellow-500" />;
-            case 'pdf': return <FileText size={12} className="text-red-400" />;
-            case 'markdown': return <FileText size={12} className="text-blue-400" />;
-            case 'sheet': return <FileSpreadsheet size={12} className="text-green-500" />;
-            case 'doc': return <FileText size={12} className="text-blue-500" />;
-            default: return <FileText size={12} className="text-gray-500" />;
-        }
-    };
-
     return (
         <div className="flex flex-col h-full bg-[#f3f3f3] dark:bg-[#202020]">
             
@@ -190,8 +216,8 @@ export const PreviewApp: React.FC<PreviewAppProps> = ({ tabs, activeTabId, onUpd
                             `}
                          >
                              {/* Icon */}
-                             <div className="shrink-0 opacity-70">
-                                 {getTabIcon(tab.type)}
+                             <div className="shrink-0 opacity-90 flex items-center">
+                                 <TabIcon file={tab} />
                              </div>
                              
                              {/* Title */}
