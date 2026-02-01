@@ -35,11 +35,10 @@ export const SettingsApp: React.FC<SettingsAppProps> = ({
     email,
     onManageAccount,
     wallpaper,
-    setWallpaper,
-    userAvatar,
-    setUserAvatar
+    setWallpaper
 }) => {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
+  const [ userAvatar, setUserAvatar] = useState<string | null>(user?.avatar || null);
   const [activeSection, setActiveSection] = useState<SettingsSection>('user');
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -75,6 +74,7 @@ export const SettingsApp: React.FC<SettingsAppProps> = ({
       const reader = new FileReader();
       reader.onload = (e) => {
         if (e.target?.result && typeof e.target.result === 'string') {
+          user.avatar = e.target.result;
           setUserAvatar(e.target.result);
         }
       };
@@ -85,6 +85,7 @@ export const SettingsApp: React.FC<SettingsAppProps> = ({
           try {
               const response = await apiService.uploadImage(token, file, 'user.avatar');
               if (response.success && response.imageUrl) {
+                  user.avatar = response.imageUrl;
                   setUserAvatar(response.imageUrl);
               }
           } catch (error) {
@@ -110,10 +111,10 @@ export const SettingsApp: React.FC<SettingsAppProps> = ({
             }`}
         >
              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white text-lg font-bold shadow-sm shrink-0 overflow-hidden">
-                {userAvatar ? (
-                    <img src={userAvatar} className="w-full h-full object-cover" alt="User" />
+                {userAvatar || user?.avatar ? (
+                    <img src={userAvatar || user?.avatar} className="w-full h-full object-cover" alt="User" />
                 ) : (
-                    (name || 'User').charAt(0).toUpperCase()
+                    <img src='/images/profile.png' className="w-full h-full object-cover" alt="User" />
                 )}
             </div>
             <div className="flex flex-col items-start overflow-hidden min-w-0">
@@ -194,10 +195,10 @@ export const SettingsApp: React.FC<SettingsAppProps> = ({
                     <div className="flex items-center gap-6">
                         <label className="relative group cursor-pointer">
                              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white text-3xl font-bold shadow-lg overflow-hidden border-4 border-white dark:border-[#1e1e1e]">
-                                {userAvatar ? (
-                                    <img src={userAvatar} className="w-full h-full object-cover" alt="User" />
+                                {userAvatar || user?.avatar ? (
+                                    <img src={userAvatar || user?.avatar} className="w-full h-full object-cover" alt="User" />
                                 ) : (
-                                    (name || 'User').charAt(0).toUpperCase()
+                                    <img src='images/profile.png' className="w-full h-full object-cover" alt="User" />
                                 )}
                              </div>
                              <div className="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">

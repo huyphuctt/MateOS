@@ -40,9 +40,12 @@ export const GlobalProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         }
     }, [authMode, token]);
 
-    // Initial Fetch
+    // Initial Fetch with Debounce to handle Strict Mode double-mount
     useEffect(() => {
-        refreshData();
+        const timer = setTimeout(() => {
+            refreshData();
+        }, 50);
+        return () => clearTimeout(timer);
     }, [refreshData]);
 
     // Polling (Optional - every 60s)

@@ -326,7 +326,7 @@ export const AdminConsole: React.FC<AdminConsoleProps> = ({ currentOrg, currentW
                                                 {user.avatar ? (
                                                     <img src={user.avatar} alt="" className="w-full h-full object-cover" />
                                                 ) : (
-                                                    <UserIcon size={16} className="text-gray-400" />
+                                                    <img src='/images/profile.png' alt="User" className="w-full h-full object-cover" />
                                                 )}
                                             </div>
                                             <div className="min-w-0">

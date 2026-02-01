@@ -63,8 +63,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     });
 
     const user = useMemo(() => {
-        const mockUser = MOCK_USERS.find(u => u.name.toLowerCase() === name.toLowerCase());
-        if (mockUser) return mockUser as unknown as User;
         const localUser = localStorage.getItem('mateos_user');
         if (localUser) {
             try { return JSON.parse(localUser) as User; } catch (e) { }

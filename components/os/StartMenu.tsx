@@ -2,6 +2,7 @@
 import React, { useRef, useEffect } from 'react';
 import { Search, Power, User, Lock } from 'lucide-react';
 import { AppId } from '../../types';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface StartMenuProps {
   isOpen: boolean;
@@ -36,6 +37,7 @@ export const StartMenu: React.FC<StartMenuProps> = ({
     onLock,
     isAdmin
 }) => {
+  const { user } = useAuth();
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -107,10 +109,10 @@ export const StartMenu: React.FC<StartMenuProps> = ({
             className="flex items-center gap-3 hover:bg-white/50 dark:hover:bg-white/10 px-3 py-1.5 rounded-md transition-colors text-left"
         >
             <div className="w-9 h-9 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center shrink-0 overflow-hidden">
-                {userAvatar ? (
-                    <img src={userAvatar} className="w-full h-full object-cover" alt="User" />
+                {user.avatar ? (
+                    <img src={user.avatar} className="w-full h-full object-cover" alt="User" />
                 ) : (
-                    <User size={18} className="text-gray-600 dark:text-gray-200"/>
+                    <img src='/images/profile.png' alt="User" className="w-full h-full object-cover" />
                 )}
             </div>
             <div className="flex flex-col">
