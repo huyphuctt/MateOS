@@ -106,6 +106,10 @@ export const Taskbar: React.FC<TaskbarProps> = ({
                     className="group/icon relative p-2 rounded-2xl hover:bg-black/10 dark:hover:bg-white/10 transition-all duration-300 active:scale-95 mb-1"
                 >
                      <img src="images/apps.png" alt="Launchpad" className="w-12 h-12 object-contain drop-shadow-lg" />
+                     {/* Tooltip */}
+                     <div className="absolute -top-14 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs px-3 py-1.5 rounded-lg opacity-0 group-hover/icon:opacity-100 transition-opacity pointer-events-none whitespace-nowrap shadow-lg backdrop-blur-sm border border-white/10 z-[10000]">
+                        All Apps
+                     </div>
                 </button>
 
                 <div className="w-[1px] h-12 bg-black/10 dark:bg-white/20 mx-1 mb-1"></div>
@@ -136,7 +140,7 @@ export const Taskbar: React.FC<TaskbarProps> = ({
                                 <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-black/80 dark:bg-white rounded-full" />
                             )}
                             {/* Tooltip */}
-                            <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs px-3 py-1.5 rounded-lg opacity-0 group-hover/icon:opacity-100 transition-opacity pointer-events-none whitespace-nowrap shadow-lg backdrop-blur-sm border border-white/10">
+                            <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs px-3 py-1.5 rounded-lg opacity-0 group-hover/icon:opacity-100 transition-opacity pointer-events-none whitespace-nowrap shadow-lg backdrop-blur-sm border border-white/10 z-[10000]">
                                 {appId.charAt(0).toUpperCase() + appId.slice(1)}
                             </div>
                         </button>
@@ -166,9 +170,13 @@ export const Taskbar: React.FC<TaskbarProps> = ({
         <button 
             onClick={onStartClick}
             data-start-trigger="true"
-            className={`p-2 rounded hover:bg-black/10 dark:hover:bg-white/10 transition-all active:scale-95 duration-200 ${startMenuOpen ? 'bg-black/10 dark:bg-white/20 shadow-inner' : ''}`}
+            className={`group relative p-2 rounded hover:bg-black/10 dark:hover:bg-white/10 transition-all active:scale-95 duration-200 ${startMenuOpen ? 'bg-black/10 dark:bg-white/20 shadow-inner' : ''}`}
         >
            <img src="images/apps.png" alt="Start" className="w-6 h-6 object-contain" />
+           {/* Tooltip */}
+            <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap shadow-lg backdrop-blur-sm border border-white/10 z-[10000]">
+                All Apps
+            </div>
         </button>
 
         {/* Pinned/Open Apps */}
@@ -196,6 +204,10 @@ export const Taskbar: React.FC<TaskbarProps> = ({
                     {isOpen && (
                         <div className={`absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1.5 h-1 rounded-full transition-all duration-300 ${isActive ? 'w-4 bg-blue-700 dark:bg-sky-400' : 'bg-gray-500 dark:bg-gray-400'}`} />
                     )}
+                    {/* Tooltip */}
+                    <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap shadow-lg backdrop-blur-sm border border-white/10 z-[10000]">
+                        {appId.charAt(0).toUpperCase() + appId.slice(1)}
+                    </div>
                 </button>
             );
         })}

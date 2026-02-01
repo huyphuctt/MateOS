@@ -1,7 +1,10 @@
+
 import React, { useState } from 'react';
 import { Monitor, Palette, Check, Search, User, Shield, CreditCard, Image as ImageIcon, Upload, Camera, Sun, Moon, Laptop } from 'lucide-react';
 import { Theme, ColorMode } from '../../types';
 import { WALLPAPERS } from '../../data/mock';
+import { useAuth } from '../../contexts/AuthContext';
+import { apiService } from '../../services/api';
 
 interface SettingsAppProps {
   theme: Theme;
@@ -36,11 +39,13 @@ export const SettingsApp: React.FC<SettingsAppProps> = ({
     userAvatar,
     setUserAvatar
 }) => {
+  const { token } = useAuth();
   const [activeSection, setActiveSection] = useState<SettingsSection>('user');
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
+      // Optimistic update
       const reader = new FileReader();
       reader.onload = (e) => {
         if (e.target?.result && typeof e.target.result === 'string') {
@@ -48,12 +53,25 @@ export const SettingsApp: React.FC<SettingsAppProps> = ({
         }
       };
       reader.readAsDataURL(file);
+
+      // Upload to API
+      if (token) {
+          try {
+              const response = await apiService.uploadImage(token, file, 'wallpaper');
+              if (response.success && response.imageUrl) {
+                  setWallpaper(response.imageUrl);
+              }
+          } catch (error) {
+              console.error("Failed to upload wallpaper:", error);
+          }
+      }
     }
   };
 
-  const handleAvatarUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
+      // Optimistic update
       const reader = new FileReader();
       reader.onload = (e) => {
         if (e.target?.result && typeof e.target.result === 'string') {
@@ -61,6 +79,18 @@ export const SettingsApp: React.FC<SettingsAppProps> = ({
         }
       };
       reader.readAsDataURL(file);
+
+      // Upload to API
+      if (token) {
+          try {
+              const response = await apiService.uploadImage(token, file, 'user.avatar');
+              if (response.success && response.imageUrl) {
+                  setUserAvatar(response.imageUrl);
+              }
+          } catch (error) {
+              console.error("Failed to upload avatar:", error);
+          }
+      }
     }
   };
 

@@ -1,7 +1,6 @@
 
 import { MOCK_USERS, MOCK_FILES, MOCK_ADMIN_CONSOLE, RECENT_ITEMS, MOCK_MESSAGES, MOCK_CONVERSATIONS, MOCK_WORKSHOP_MODULES, MOCK_WORKSHOP_PROJECTS } from '../data/mock';
 import { User, FileItem, Organization, AdminConsoleData, Workspace, NotificationItem, Message, Conversation, AppId, WorkshopModule, WorkshopProject } from '../types';
-import { MessageSquare } from 'lucide-react';
 
 interface AuthResponse {
     success: boolean;
@@ -117,7 +116,6 @@ class ApiService {
             return { success: false, message: error.message || 'Network error' };
         }
     }
-
     public async logout(token?: string): Promise<boolean> {
         if (this.isMock) {
             return true; // Always succeed in mock
@@ -134,7 +132,6 @@ class ApiService {
             return false;
         }
     }
-
     public async checkSession(token?: string): Promise<boolean> {
         console.log(`ApiService: Performing checkSession`);
         if (this.isMock) {
@@ -152,7 +149,6 @@ class ApiService {
             return false;
         }
     }
-
     public async changePassword(email: string, oldPassword: string, newPassword: string, token?: string): Promise<AuthResponse> {
         if (this.isMock) {
             await this.mockDelay();
@@ -185,7 +181,6 @@ class ApiService {
             return { success: false, message: error.message || 'Network error' };
         }
     }
-
     public async syncUserData(token: string, preferences: any): Promise<AuthResponse> {
         if (this.isMock) {
             await this.mockDelay();
@@ -205,6 +200,36 @@ class ApiService {
                 return { success: false, message: data.message || 'Failed to sync user data' };
             }
             return { success: true, message: 'User data synced successfully' };
+        } catch (error: any) {
+            return { success: false, message: error.message || 'Network error' };
+        }
+    }
+    public async uploadImage(token: string, imageFile: File, image_type: string): Promise<{ success: boolean; imageUrl?: string; message?: string }> {
+        console.log('ApiService: uploadImage');
+        if (this.isMock) {
+            await this.mockDelay(1000);
+            // Return a mock URL
+            return { success: true, imageUrl: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?q=80&w=1920&auto=format&fit=crop' };
+        }
+
+        try {
+            const formData = new FormData();
+            formData.append('image', imageFile);
+            formData.append('image_type', image_type);
+            const response = await fetch(`${this.apiUrl}/upload-image`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                    // Do NOT set Content-Type header for FormData, browser sets boundary
+                },
+                body: formData
+            });
+
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(data.message || 'Image upload failed');
+            }
+            return { success: true, imageUrl: data.imageUrl };
         } catch (error: any) {
             return { success: false, message: error.message || 'Network error' };
         }
